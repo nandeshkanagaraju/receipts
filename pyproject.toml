@@ -1,0 +1,82 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "receipts"
+version = "0.1.0"
+description = "Payments analytics over a governed semantic layer: typed plans, deterministic SQL, a receipt for every answer"
+requires-python = ">=3.11,<3.12"
+
+# SDD §4. Versions are pinned in requirements.lock, not here.
+dependencies = [
+  "fastapi",
+  "uvicorn[standard]",
+  "pydantic>=2",
+  "PyYAML",
+  "sqlglot",
+  "duckdb",
+  "psycopg[binary]>=3",
+  "pyarrow",
+  "numpy",
+  "httpx",
+  "mcp",
+  "anthropic",
+  "openai",
+  "opentelemetry-sdk",
+  "opentelemetry-exporter-otlp",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "hypothesis", "ruff", "mypy", "types-PyYAML"]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+# ----------------------------------------------------------------------------
+# pytest
+# ----------------------------------------------------------------------------
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src", "."]
+addopts = "-q --strict-markers --strict-config"
+# SDD §27: no "fast" marker and no subset target. The suite runs whole.
+markers = []
+
+# ----------------------------------------------------------------------------
+# ruff. Step 5: *.md is excluded from every formatter.
+# ----------------------------------------------------------------------------
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+extend-exclude = ["docs", "*.md", ".venv", "web", "data"]
+src = ["src", "kestrel_gen", "mockgateway", "scripts", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.ruff.format]
+exclude = ["*.md", "docs/**"]
+
+# ----------------------------------------------------------------------------
+# mypy. SDD §4: strict on domain, compile, safety, agent, evalkit.
+# ----------------------------------------------------------------------------
+[tool.mypy]
+python_version = "3.11"
+mypy_path = "src"
+packages = ["receipts"]
+ignore_missing_imports = true
+warn_unused_configs = true
+
+[[tool.mypy.overrides]]
+module = [
+  "receipts.domain.*",
+  "receipts.compile.*",
+  "receipts.safety.*",
+  "receipts.agent.*",
+  "receipts.evalkit.*",
+]
+strict = true

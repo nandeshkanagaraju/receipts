@@ -1,0 +1,79 @@
+# Runtime settings. SDD §26. Loaded with extra="forbid" and strict=True: an
+# unknown key or a wrong type raises at startup.
+# Secrets are NEVER here. DSNs and API keys come from the environment.
+
+# D2: the world's "today" is injected, never read from a clock.
+as_of: 2026-09-10
+
+paths:
+  data_dir: data
+  duckdb: data/kestrel.duckdb
+  gateway_sqlite: data/gateway.sqlite
+  manifest: data/MANIFEST.json
+  semantic_dir: semantic
+  prompts_dir: prompts
+  recordings_dir: eval/recordings
+  results_dir: eval/results
+
+adapters:
+  duckdb:
+    read_only: true
+    enable_external_access: false
+  postgres:
+    dsn_env: RECEIPTS_POSTGRES_DSN
+    statement_timeout_ms: 15000
+    application_name: receipts_ro
+
+llm:
+  mode: replay                 # live | record | replay
+  temperature: 0
+  primary:   {provider: anthropic, model: claude-sonnet-5}
+  secondary: {provider: openai,    model: gpt-5}
+  max_tokens:
+    intent: 512
+    planner: 2048
+    repair: 1024
+    composer: 1024
+    baseline: 4096
+  budget_per_question:
+    tokens_in: 12000
+    tokens_out: 2000
+
+freeform:
+  enabled: true
+
+row_limit: 500
+timeout_s: 30.0
+
+why:
+  min_rel_change: "0.02"
+  min_z: "2.0"
+  concentration: "0.4"
+  max_levels: 6
+  query_budget: 40
+  trailing_periods: 28
+  dimensions: [country, region, city, showroom, payment_method, issuing_bank, card_network, model, channel]
+
+routing:
+  prefer_oltp_recent: false
+  postgres_window_days: 90
+
+cache:
+  path: data/cache.sqlite
+  plan_cache_enabled: true
+  result_cache_enabled: true
+
+bridge:
+  base_url_env: RECEIPTS_GATEWAY_URL
+  token_env: RECEIPTS_GATEWAY_TOKEN
+  timeout_s: 10.0
+  max_pages: 20
+
+demo:
+  enabled: true
+  questions_per_minute: 20
+  daily_spend_cap_micro_usd: 5000000
+
+testing:
+  # SDD §27: the whole suite has a wall-clock ceiling, printed every run.
+  suite_ceiling_seconds: 480

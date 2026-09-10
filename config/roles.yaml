@@ -1,0 +1,21 @@
+# Demo roles. SDD §21.
+# `countries` expands to region IDs at load (pure). A JWT carries only the role
+# name; scope is always recomputed server-side from this file (D7).
+
+roles:
+  global_finance:
+    countries: ALL
+    capabilities: [finance, gateway]
+    reporting_currency: USD
+  rm_tamil_nadu:
+    regions: [IN-TN]
+    capabilities: []
+    reporting_currency: INR
+  store_ops_uk:
+    countries: [GB]
+    capabilities: []
+    reporting_currency: GBP
+  admin:
+    countries: ALL
+    capabilities: [finance, gateway, audit]
+    reporting_currency: USD

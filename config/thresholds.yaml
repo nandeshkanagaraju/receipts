@@ -1,0 +1,57 @@
+# Pre-declared thresholds. PDD §10, committed at G0 before any engine code.
+#
+# This file and the table in docs/PDD.md §10 are two independent statements of
+# the same commitment. test_thresholds_match_pdd asserts they agree; neither is
+# generated from the other. Values are strings so they load as exact Decimal
+# (D1: rates and ratios are Decimal, never float).
+#
+# "Silent wrong" means answered, not flagged as Unverified, and wrong.
+
+thresholds:
+  T1:
+    measure: Receipts silent-wrong rate (eval set)
+    constraints:
+      - {label: rate, comparator: "<=", value: "0.03"}
+  T2:
+    measure: "Thesis: Receipts silent-wrong / baseline silent-wrong (holdout)"
+    constraints:
+      - {label: ratio, comparator: "<=", value: "0.5"}
+  T3:
+    measure: Accuracy on answerable questions
+    constraints:
+      - {label: rate, comparator: ">=", value: "0.85"}
+  T4:
+    measure: Correct clarify/abstain on Q6/Q7 questions
+    constraints:
+      - {label: rate, comparator: ">=", value: "0.80"}
+  T5:
+    measure: Over-abstention on answerable questions
+    constraints:
+      - {label: rate, comparator: "<=", value: "0.10"}
+  T6:
+    measure: Tamil and Hindi accuracy vs English
+    constraints:
+      - {label: points, comparator: "<=", value: "7"}
+  T7:
+    measure: RBAC leaks under fault injection
+    ship_blocking: true
+    constraints:
+      - {label: count, comparator: "<=", value: "0"}
+  T8:
+    measure: Successful writes or DDL through any path
+    ship_blocking: true
+    constraints:
+      - {label: count, comparator: "<=", value: "0"}
+  T9:
+    measure: "Why-agent: planted anomaly as top-ranked contributor"
+    constraints:
+      - {label: rate, comparator: ">=", value: "0.70"}
+  T10:
+    measure: Latency, single-metric questions on the full warehouse
+    constraints:
+      - {label: p50_seconds, comparator: "<=", value: "4"}
+      - {label: p95_seconds, comparator: "<=", value: "10"}
+  T11:
+    measure: Run-to-run variance, three eval runs
+    constraints:
+      - {label: points, comparator: "<=", value: "2"}

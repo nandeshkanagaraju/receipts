@@ -1,0 +1,89 @@
+# SDD §28. Jobs added as their modules land; every job prints its duration.
+# Remaining jobs (data, eval-dev, semantic, web, images) arrive with M2+.
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  PYTHON_VERSION: "3.11"
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - id: start
+        run: echo "t=$(date +%s)" >> "$GITHUB_OUTPUT"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.lock
+          pip install -e . --no-deps
+      - name: ruff check
+        run: ruff check .
+      - name: ruff format --check
+        run: ruff format --check .
+      - name: Duration
+        if: always()
+        run: echo "lint took $(( $(date +%s) - ${{ steps.start.outputs.t }} ))s"
+
+  types:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - id: start
+        run: echo "t=$(date +%s)" >> "$GITHUB_OUTPUT"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.lock
+          pip install -e . --no-deps
+      - name: mypy
+        run: mypy
+      - name: Duration
+        if: always()
+        run: echo "types took $(( $(date +%s) - ${{ steps.start.outputs.t }} ))s"
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - id: start
+        run: echo "t=$(date +%s)" >> "$GITHUB_OUTPUT"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.lock
+          pip install -e . --no-deps
+      - name: pytest (socket guard active, zero network calls)
+        run: pytest
+      - name: Duration
+        if: always()
+        run: echo "test took $(( $(date +%s) - ${{ steps.start.outputs.t }} ))s"
+
+  freeze:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - id: start
+        run: echo "t=$(date +%s)" >> "$GITHUB_OUTPUT"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Frozen document hashes match FREEZE_MANIFEST.json
+        run: python scripts/freeze.py --check
+      - name: Duration
+        if: always()
+        run: echo "freeze took $(( $(date +%s) - ${{ steps.start.outputs.t }} ))s"

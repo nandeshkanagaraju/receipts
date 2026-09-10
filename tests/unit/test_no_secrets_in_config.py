@@ -1,0 +1,75 @@
+"""SDD §26 — secrets come only from the environment; config files hold none.
+
+Config may *name* an environment variable (`dsn_env: RECEIPTS_POSTGRES_DSN`);
+it may never hold the value.
+"""
+
+from __future__ import annotations
+
+import re
+from pathlib import Path
+
+from receipts.config import CONFIG_DIR
+
+SECRET_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
+    ("openai-style key", re.compile(r"sk-[A-Za-z0-9_\-]{16,}")),
+    ("anthropic-style key", re.compile(r"sk-ant-[A-Za-z0-9_\-]{16,}")),
+    ("github token", re.compile(r"gh[pousr]_[A-Za-z0-9]{20,}")),
+    ("aws access key id", re.compile(r"AKIA[0-9A-Z]{16}")),
+    ("long hex secret", re.compile(r"\b[0-9a-fA-F]{40,}\b")),
+    ("bearer literal", re.compile(r"[Bb]earer\s+[A-Za-z0-9._\-]{20,}")),
+    ("inline password", re.compile(r"(?i)\b(password|passwd|secret|api_key|token)\s*:\s*\S+")),
+)
+
+ENV_REFERENCE = re.compile(r"(?i)\b\w*_env\s*:\s*[A-Z0-9_]+\s*$")
+
+
+def scan(path: Path) -> list[str]:
+    """Sorted findings for one file; empty means clean."""
+    findings: list[str] = []
+    for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+        stripped = line.strip()
+        if stripped.startswith("#") or ENV_REFERENCE.search(stripped):
+            continue
+        for label, pattern in SECRET_PATTERNS:
+            if pattern.search(line):
+                findings.append(f"{path.name}:{lineno} {label}: {stripped[:60]}")
+    return sorted(findings)
+
+
+def config_files() -> list[Path]:
+    return sorted(CONFIG_DIR.glob("*.yaml"))
+
+
+def test_no_secrets_in_config() -> None:
+    files = config_files()
+    assert files, "precondition: no config files found to scan"
+    findings = [f for p in files for f in scan(p)]
+    print(
+        f"\nscanned {len(files)} config files for {len(SECRET_PATTERNS)} secret shapes: "
+        f"{', '.join(p.name for p in files)}"
+    )
+    assert not findings, "secret-like strings in config:\n" + "\n".join(findings)
+
+
+def test_env_references_are_not_flagged() -> None:
+    """Naming an env var is fine; only values are secrets."""
+    assert not scan(CONFIG_DIR / "settings.yaml")
+    assert "dsn_env" in (CONFIG_DIR / "settings.yaml").read_text(encoding="utf-8")
+
+
+def test_planted_secret_is_detected(tmp_path: Path) -> None:
+    """INJECTION: each secret shape must be caught."""
+    cases = {
+        "openai": "api_key: sk-abcdefghijklmnopqrstuvwxyz012345",
+        "hex": "digest: " + "a" * 40,
+        "aws": "key: AKIAIOSFODNN7EXAMPLE",
+        "bearer": "auth: Bearer abcdefghijklmnopqrstuvwxyz",
+        "inline": "password: hunter2hunter2hunter2",
+    }
+    for name, line in cases.items():
+        p = tmp_path / f"{name}.yaml"
+        p.write_text(f"some_key: fine\n{line}\n", encoding="utf-8")
+        findings = scan(p)
+        print(f"  injection {name}: {len(findings)} finding(s)")
+        assert findings, f"secret shape {name!r} was NOT detected"

@@ -1,0 +1,16 @@
+# Model prices as integer micro-dollars per million tokens. SDD §23.
+# Cost arithmetic is integer throughout; no float touches a price (D1).
+
+models:
+  claude-sonnet-5:
+    input_micro_usd_per_mtok: 3000000
+    output_micro_usd_per_mtok: 15000000
+  claude-opus-5:
+    input_micro_usd_per_mtok: 15000000
+    output_micro_usd_per_mtok: 75000000
+  claude-haiku-4-5-20251001:
+    input_micro_usd_per_mtok: 1000000
+    output_micro_usd_per_mtok: 5000000
+  gpt-5:
+    input_micro_usd_per_mtok: 1250000
+    output_micro_usd_per_mtok: 10000000
