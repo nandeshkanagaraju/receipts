@@ -19,7 +19,10 @@ SETS = ("dev", "eval", "holdout")
 POPULATIONS = ("ANS", "AMB", "UNA", "DENY", "WHY", "LIVE")
 KINDS = {"scalar", "table", "clarify", "abstain", "deny", "why", "live"}
 ROLES = {"rm_tamil_nadu", "store_ops_uk", "global_finance", "admin"}
-PROVENANCE = {"human", "machine_verified", "pending"}
+# SDD §29 plus ADR-009's successor rule: a machine draft nobody has read is
+# `machine_unverified`, which is honest and is NOT freezable — the
+# translations-frozen gate refuses it (scripts/freeze_translations.py).
+PROVENANCE = {"human", "machine_verified", "machine_unverified", "pending"}
 
 # SDD §25.2. holdout is the hand-written portion only: 30 slots are written blind
 # and 6 WHY are generated in M2 (docs/M2_NOTES.md §3-4).
@@ -92,6 +95,10 @@ def test_every_line_parses_against_the_schema() -> None:
                 if prov == "pending":
                     assert not r["variants"].get(lang, ""), (
                         f"{q}: {lang} is marked pending but has text"
+                    )
+                else:
+                    assert r["variants"].get(lang, "").strip(), (
+                        f"{q}: {lang} is {prov!r} but carries no text"
                     )
             e = r["expected"]
             assert e["kind"] in KINDS, f"{q}: bad kind {e['kind']!r}"

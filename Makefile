@@ -9,7 +9,7 @@ RUFF    := .venv/bin/ruff
 MYPY    := .venv/bin/mypy
 SET     ?= dev
 
-.PHONY: setup data test eval eval-holdout lint types up bench freeze-check freeze-questions
+.PHONY: setup data test eval eval-holdout lint types up bench freeze-check freeze-questions freeze-translations
 
 # --- implemented -------------------------------------------------------------
 
@@ -33,6 +33,9 @@ freeze-check:
 
 freeze-questions:
 	$(PY) scripts/freeze_questions.py
+
+freeze-translations:
+	$(PY) scripts/freeze_translations.py
 
 # --- not built yet -----------------------------------------------------------
 # Each names the module that will implement it (docs/BUILD_PROMPTS.md).

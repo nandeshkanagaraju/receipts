@@ -174,10 +174,41 @@ audit compares surface text and a pair can differ in a word it does not know.
 
 ## Translation provenance
 
-`human` · `machine_verified` · `pending`. A variant may only be labelled `human`
-by the person who wrote it. Hindi stays `machine_verified` at best until a
-verifier is found (SDD §29), and T6 is reported separately for human-verified
-variants.
+| Value | Means |
+|---|---|
+| `pending` | not written. The variant is empty, and the schema check enforces that |
+| `machine_unverified` | drafted by a model, **read by nobody**. Honest, and not freezable |
+| `machine_verified` | a machine draft a person has checked |
+| `human` | written by a person, who is the only one who may apply this label |
+
+A variant may only be labelled `human` by the person who wrote it. Hindi stays
+`machine_verified` at best until a verifier is found (SDD §29), and T6 is
+reported separately for human-verified variants.
+
+Any value other than `pending` must carry text: `human` on an empty string is
+the failure the label exists to prevent, and both the schema check and the
+translations freeze refuse it.
+
+## Two freezes, on two clocks
+
+The English and the translations are frozen by different tags, because they are
+finished at different times:
+
+| Tag | Covers | Made by |
+|---|---|---|
+| `questions-frozen` | English wording, structure, roles, traps, expected answers, `docs/GLOSSARY.md`, `docs/M2_NOTES.md` | `make freeze-questions` |
+| `translations-frozen` | `variants.ta`, `variants.hi`, `variants.ta-Latn`, `translation_provenance` | `make freeze-translations` |
+
+`questions-frozen` hashes an **English projection** of each file — the file with
+the translated fields removed — so correcting a Tamil wording after the freeze
+does not disturb it, while changing one English word does. A single freeze would
+force a choice between freezing early and blocking every translation fix, or
+freezing late and leaving the English editable while the system is built.
+
+`translations-frozen` is refused while any **eval or holdout** Tamil variant is
+`pending` or `machine_unverified`: a draft nobody has read is something to
+review, not something to freeze. `dev` is exempt — it is the set you run while
+building, not one anything is reported from.
 
 ## What is checked automatically
 

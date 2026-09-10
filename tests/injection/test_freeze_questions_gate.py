@@ -366,3 +366,157 @@ def test_the_real_manifest_matches_or_is_not_yet_written() -> None:
     state = "recorded" if recorded else f"not yet recorded ({fq.TAG} does not exist)"
     print(f"\nreal manifest question_documents: {state}, {len(problems)} problem(s)")
     assert not problems, "\n".join(problems)
+
+
+# --------------------------------------------------------------------------- #
+# The freeze split: English and structure on one clock, translations on another
+# --------------------------------------------------------------------------- #
+import freeze_translations as ft  # noqa: E402
+
+
+def bilingual(qid: str, en: str, ta: str, prov: str = "machine_unverified") -> dict:
+    return {
+        "qid": qid,
+        "set": "eval",
+        "population": "ANS",
+        "role": "global_finance",
+        "as_of": "2026-09-10",
+        "trap": None,
+        "glossary_covered": True,
+        "variants": {"en": en, "ta": ta, "hi": "", "ta-Latn": ""},
+        "translation_provenance": {"ta": prov, "hi": "pending", "ta-Latn": "pending"},
+        "authored_by": "nandesh",
+        "expected": {
+            "kind": "scalar",
+            "reference_sql": f"{qid}.sql",
+            "reporting_currency": None,
+            "tolerance_rel": 0.001,
+        },
+    }
+
+
+def bilingual_corpus(tmp_path: Path, rows: list[dict], name: str = "split") -> Path:
+    qdir = tmp_path / name
+    qdir.mkdir()
+    for s in fq.SETS:
+        (qdir / f"{s}.jsonl").write_text("", encoding="utf-8")
+    (qdir / "eval.jsonl").write_text(
+        "".join(json.dumps(r, ensure_ascii=False) + "\n" for r in rows), encoding="utf-8"
+    )
+    return qdir
+
+
+BASE = [
+    bilingual("EV-901", "Captured GMV in India in July, in rupees.", "ஜூலையில் இந்தியாவில்"),
+    bilingual("EV-902", "Refund rate in the UK last week.", "கடந்த வாரம் UK ரீஃபண்ட் விகிதம்"),
+]
+
+
+def edit(qdir: Path, qid: str, field: str, value: str) -> None:
+    """Rewrite one field of one question in place."""
+    p = qdir / "eval.jsonl"
+    rows = fq.rows_of(p)
+    for r in rows:
+        if r["qid"] == qid:
+            if field == "en":
+                r["variants"]["en"] = value
+            elif field == "ta":
+                r["variants"]["ta"] = value
+            elif field == "prov":
+                r["translation_provenance"]["ta"] = value
+    p.write_text("".join(json.dumps(r, ensure_ascii=False) + "\n" for r in rows), encoding="utf-8")
+
+
+def test_injection_a_translation_edit_leaves_the_questions_freeze_intact(tmp_path: Path) -> None:
+    """INJECTION: change Tamil after the freeze. The questions digest must not move."""
+    qdir = bilingual_corpus(tmp_path, BASE)
+    before_q = fq.question_digests(qdir)
+    before_t = ft.translation_digests(qdir)
+
+    edit(qdir, "EV-901", "ta", "முற்றிலும் வேறு தமிழ் வாக்கியம்")
+
+    after_q = fq.question_digests(qdir)
+    after_t = ft.translation_digests(qdir)
+    print(
+        f"\ntranslation edited:\n  questions   {before_q == after_q and 'unchanged' or 'CHANGED'}"
+        f"\n  translations {before_t != after_t and 'changed' or 'UNCHANGED'}"
+    )
+    assert after_q == before_q, "a Tamil edit moved the questions digest"
+    assert after_t != before_t, "a Tamil edit did not move the translations digest"
+
+
+def test_injection_an_english_edit_breaks_the_questions_freeze(tmp_path: Path) -> None:
+    """INJECTION: change one English word. The questions digest must move."""
+    qdir = bilingual_corpus(tmp_path, BASE)
+    before_q = fq.question_digests(qdir)
+    before_t = ft.translation_digests(qdir)
+
+    edit(qdir, "EV-901", "en", "Captured GMV in India in August, in rupees.")
+
+    after_q = fq.question_digests(qdir)
+    after_t = ft.translation_digests(qdir)
+    print(
+        f"\nEnglish edited:\n  questions   {before_q != after_q and 'changed' or 'UNCHANGED'}"
+        f"\n  translations {before_t == after_t and 'unchanged' or 'CHANGED'}"
+    )
+    assert after_q != before_q, "an English edit did NOT move the questions digest"
+    assert after_t == before_t, "an English edit moved the translations digest"
+
+
+def test_a_recorded_manifest_catches_the_english_edit_and_not_the_tamil_one(
+    tmp_path: Path,
+) -> None:
+    """END TO END, the way the freeze is actually used: record, then edit, then check."""
+    qdir = bilingual_corpus(tmp_path, BASE)
+    manifest = tmp_path / "FREEZE_MANIFEST.json"
+    manifest.write_text(json.dumps({"questions": fq.question_digests(qdir)}), encoding="utf-8")
+    assert not fq.check_questions(manifest, qdir), "precondition: a fresh record verifies clean"
+
+    edit(qdir, "EV-902", "ta", "திருத்தப்பட்ட தமிழ்")
+    after_translation = fq.check_questions(manifest, qdir)
+    print(f"\nafter a Tamil edit:  {len(after_translation)} problem(s) — expected 0")
+    assert not after_translation, after_translation
+
+    edit(qdir, "EV-902", "en", "Refund rate in the UK last month.")
+    after_english = fq.check_questions(manifest, qdir)
+    print(f"after an English edit: {len(after_english)} problem(s)")
+    for p in after_english:
+        print(f"  {p}")
+    assert after_english, "an English edit slipped past the questions freeze"
+    assert any("eval.jsonl" in p for p in after_english)
+
+
+def test_provenance_gate_refuses_machine_unverified_tamil(tmp_path: Path) -> None:
+    """INJECTION: an eval Tamil variant nobody has read must refuse the tag."""
+    qdir = bilingual_corpus(tmp_path, BASE)
+    problems = ft.gate_provenance(qdir, gated=("eval",))
+    print(f"\nmachine_unverified Tamil -> {len(problems)} problem(s)")
+    for p in problems:
+        print(f"  {p}")
+    assert problems, "the translations gate accepted unverified Tamil"
+    assert "EV-901" in problems[0] and "machine_unverified" in problems[0]
+
+
+def test_provenance_gate_accepts_checked_tamil(tmp_path: Path) -> None:
+    """META for the gate: the same corpus passes once a person has been involved."""
+    rows = [bilingual(r["qid"], r["variants"]["en"], r["variants"]["ta"], "human") for r in BASE]
+    qdir = bilingual_corpus(tmp_path, rows, name="checked")
+    problems = ft.gate_provenance(qdir, gated=("eval",))
+    print(f"\nhuman-checked Tamil -> {len(problems)} problem(s) — expected 0")
+    assert not problems, problems
+
+    # and with the gate emptied, even the unverified corpus would be tagged
+    unchecked = bilingual_corpus(tmp_path, BASE, name="ungated")
+    print(f"meta (no gated sets): {len(ft.gate_provenance(unchecked, gated=()))} problem(s)")
+    assert not ft.gate_provenance(unchecked, gated=()), "the gate fired with nothing gated"
+
+
+def test_a_checked_variant_must_carry_text(tmp_path: Path) -> None:
+    """`human` on an empty string is the failure mode the label exists to prevent."""
+    rows = [bilingual("EV-903", "Units sold in the US in July.", "", "human")]
+    qdir = bilingual_corpus(tmp_path, rows, name="emptyhuman")
+    problems = ft.gate_text_present(qdir, gated=("eval",))
+    print(f"\nempty variant marked human -> {len(problems)} problem(s)")
+    for p in problems:
+        print(f"  {p}")
+    assert problems, "an empty variant labelled human was accepted"

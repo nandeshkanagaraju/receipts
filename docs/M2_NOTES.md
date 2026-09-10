@@ -282,6 +282,31 @@ Two consequences beyond the scorer:
 an explicit instruction, and it names the qid and the scoring rule, not the
 question.)*
 
+### M4 — list-valued answers are compared as sets
+
+Some answers are a **list of things**, not a ranking and not a series: the
+showrooms carrying a pending refund, the refund records still open at the
+gateway, the countries where a condition holds. LIVE questions produce most of
+them (§6.3: a gateway question asks for records, not a total).
+
+**Rule: a list-valued answer is compared as a set.** Membership decides
+correctness; order does not. Two answers with the same members in a different
+order are the same answer, and a scorer that compares position by position marks
+a right answer wrong for a reason the asker would not recognise as a reason.
+
+This is distinct from the two ordered cases, and the three must not be
+conflated:
+
+| Answer shape | Compared how | Why |
+|---|---|---|
+| **Ranking** (`top_k`) | by position, tied values interchangeable | the order *is* the answer |
+| **Series** (`series: true`) | by time key | the days must line up; their order is not in question |
+| **List** (neither flag) | as a **set** | nothing in the question asked for an order |
+
+A list answer therefore carries neither `top_k` nor `series`, which is how the
+scorer tells the three apart. Where a list has a natural order — refund age,
+say — a question that wants it says so, and that makes it a ranking.
+
 ### M4 — the top-k scorer and tied values
 
 `evalkit/scoring.py` compares a table answer against the reference on the top-k

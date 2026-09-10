@@ -19,7 +19,9 @@ Gates:
      place, window or currency swapped buys the evaluation nothing, and after
      the tag it can no longer be rewritten.
 
-On success it records SHA-256 of every question file, every reference-SQL file,
+On success it records SHA-256 of every question file's **English projection**
+— the file with `variants.ta`, `variants.hi`, `variants.ta-Latn` and
+`translation_provenance` removed — plus every reference-SQL file,
 and the two M1 working documents the questions are written against —
 docs/GLOSSARY.md and docs/M2_NOTES.md — in docs/FREEZE_MANIFEST.json, then
 creates the annotated tag.
@@ -226,8 +228,71 @@ def all_gates(
     return problems
 
 
+# Fields the questions freeze deliberately does NOT cover. Translations are
+# drafted, reviewed and corrected on a different clock from the questions: a
+# Tamil wording fix must not require re-freezing the evaluation, and an English
+# wording change must not be able to hide inside a translation commit. They are
+# frozen separately, by scripts/freeze_translations.py.
+TRANSLATED_LANGS = ("ta", "hi", "ta-Latn")
+
+
+def english_projection(row: dict) -> dict:
+    """One question with every translated field removed.
+
+    What remains is what `questions-frozen` pins: the English wording, the
+    structure, the role, the trap, and the expected answer.
+    """
+    out = {k: v for k, v in row.items() if k != "translation_provenance"}
+    out["variants"] = {k: v for k, v in row["variants"].items() if k not in TRANSLATED_LANGS}
+    return out
+
+
+def canonical(rows: list[dict], project) -> str:
+    """Byte-deterministic rendering of a projection: sorted keys, no whitespace."""
+    return "\n".join(
+        json.dumps(project(r), sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+        for r in rows
+    )
+
+
+def sha256_text(text: str) -> str:
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+def rows_of(path: Path) -> list[dict]:
+    return [json.loads(ln) for ln in path.read_text(encoding="utf-8").splitlines() if ln.strip()]
+
+
 def question_digests(qdir: Path = QDIR) -> dict[str, str]:
-    return {f"eval/questions/{p.name}": sha256_file(p) for p in sorted(qdir.glob("*.jsonl"))}
+    """SHA-256 of each file's English projection, not of the file's bytes.
+
+    Hashing the raw file would make every translation edit a change to the
+    frozen evaluation, which would either block translation work after the tag
+    or turn the tag into something nobody dares verify.
+    """
+    return {
+        f"eval/questions/{p.name}": sha256_text(canonical(rows_of(p), english_projection))
+        for p in sorted(qdir.glob("*.jsonl"))
+    }
+
+
+def check_questions(path: Path = MANIFEST, qdir: Path = QDIR) -> list[str]:
+    """Verify recorded question digests against the files; empty means clean."""
+    payload = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
+    recorded = payload.get("questions")
+    if not recorded:
+        return []
+    actual = question_digests(qdir)
+    problems = []
+    for rel in sorted(set(recorded) | set(actual)):
+        want, got = recorded.get(rel), actual.get(rel)
+        if want is None:
+            problems.append(f"{rel}: present on disk but not in the manifest")
+        elif got is None:
+            problems.append(f"{rel}: in the manifest but missing on disk")
+        elif want != got:
+            problems.append(f"{rel}: English or structure changed after {TAG}")
+    return problems
 
 
 def reference_sql_digests(sqldir: Path = SQLDIR) -> dict[str, str]:
@@ -309,6 +374,11 @@ def write_manifest(path: Path = MANIFEST) -> dict[str, dict[str, str]]:
         "question_documents": document_digests(),
     }
     payload.update(sections)
+    payload["questions_projection"] = (
+        "English and structure only: variants.ta, variants.hi, variants.ta-Latn "
+        "and translation_provenance are excluded and are frozen separately by "
+        "scripts/freeze_translations.py (tag: translations-frozen)."
+    )
     payload["holdout_blind"] = blind_status()
     payload["holdout_composition"] = {
         "hand_written": sum(TARGETS["holdout"].values()),
