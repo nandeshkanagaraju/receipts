@@ -44,7 +44,7 @@ ABANDON_RATE = 0.11
 CANCEL_RATE = 0.02
 ACCESSORY_ATTACH = 0.34
 MAX_ACCESSORIES = 3
-REFUND_RATE = 0.043
+REFUND_RATE = 0.062
 PARTIAL_REFUND_SHARE = 0.55
 REFUND_PENDING_AT_GATEWAY = 0.03  # SDD §18.3
 DUPLICATE_CAPTURE_RATE = 0.00035
@@ -56,25 +56,49 @@ FESTIVE_WINDOWS: tuple[tuple[date, date, float], ...] = (
 )
 
 METHOD_MIX: dict[str, dict[str, float]] = {
-    "IN": {"upi": 0.52, "card": 0.22, "netbanking": 0.09, "wallet": 0.09, "emi": 0.08},
+    "IN": {"upi": 0.44, "card": 0.18, "netbanking": 0.07, "wallet": 0.08, "emi": 0.23},
     "AE": {"card": 0.78, "wallet": 0.22},
     "SG": {"card": 0.81, "wallet": 0.19},
-    "MY": {"card": 0.60, "wallet": 0.24, "emi": 0.16},
+    "MY": {"card": 0.56, "wallet": 0.22, "emi": 0.22},
     "GB": {"card": 0.86, "pay_later": 0.14},
     "US": {"card": 0.83, "pay_later": 0.17},
 }
 
 # Probability a single attempt on this method is captured.
 METHOD_SUCCESS: dict[str, float] = {
-    "upi": 0.78,
-    "card": 0.86,
-    "netbanking": 0.81,
-    "wallet": 0.90,
-    "emi": 0.83,
-    "pay_later": 0.88,
+    "upi": 0.72,
+    "card": 0.82,
+    "netbanking": 0.78,
+    "wallet": 0.86,
+    "emi": 0.80,
+    "pay_later": 0.84,
 }
 MAX_ATTEMPTS = 4
-RETRY_PROB = 0.62  # a customer who fails retries this often
+RETRY_PROB = 0.82  # a customer who fails retries this often.
+# upi 0.72 + retry 0.82 reproduces the PDD worked example: order-level ~93%,
+# attempt-level ~71%, ~1.3 attempts per order.
+
+# Per-issuer and per-network quality, so bank-level and network-level questions
+# carry real signal instead of noise around one number. Drawn once from the seed
+# and stable for the run. Without it every bank looks identical, and A1 becomes
+# the only per-bank variation in the world -- which would make the why-agent's
+# job artificial rather than hard.
+BANK_QUALITY_SPREAD = 0.10
+NETWORK_QUALITY_SPREAD = 0.06
+ABANDON_BEFORE_ATTEMPT = 0.015  # left without trying to pay at all
+
+# Price sensitivity of the handset mix, per country. A flat mix would give India
+# the same average order value as the United States, which is wrong by a factor
+# of two and would make every AOV and model-mix question implausible. Higher
+# means the cheaper models take a larger share.
+PRICE_SENSITIVITY: dict[str, float] = {
+    "IN": 1.35,
+    "MY": 1.15,
+    "AE": 0.55,
+    "SG": 0.60,
+    "GB": 0.65,
+    "US": 0.45,
+}
 
 SETTLE_LAG_DAYS: dict[str, tuple[int, int]] = {  # (min, max) per acquiring bank
     b: (1 + i % 3, 3 + i % 4) for i, b in enumerate(BANKS_ACQUIRING)
@@ -204,7 +228,30 @@ def generate_facts(world: World, seed: int, scale: float = 1.0) -> Facts:
     ):
         price_key[(s, c)] = int(p)
     handsets = world.products["sku"][world.handset_mask()]
+    # Weight the handset mix by price sensitivity, per country (see above).
+    _usd = np.array([price_key[(s, "US")] for s in handsets], dtype=np.float64)
+    handset_p: dict[str, np.ndarray] = {}
+    for _c in PRICE_SENSITIVITY:
+        _wgt = _usd ** (-PRICE_SENSITIVITY[_c])
+        handset_p[_c] = _wgt / _wgt.sum()
     accessories = world.products["sku"][~world.handset_mask()]
+
+    all_banks = sorted({b for v in BANKS_ISSUING.values() for b in v})
+    bank_q = dict(
+        zip(
+            all_banks,
+            1.0 + rng.uniform(-BANK_QUALITY_SPREAD, BANK_QUALITY_SPREAD, size=len(all_banks)),
+            strict=True,
+        )
+    )
+    net_q = dict(
+        zip(
+            CARD_NETWORKS,
+            1.0
+            + rng.uniform(-NETWORK_QUALITY_SPREAD, NETWORK_QUALITY_SPREAD, size=len(CARD_NETWORKS)),
+            strict=True,
+        )
+    )
 
     n_customers = max(1000, int(60_000 * scale))
     customers = {
@@ -299,16 +346,21 @@ def generate_facts(world: World, seed: int, scale: float = 1.0) -> Facts:
         oid = np.array([f"ORD-{order_no + i:010d}" for i in range(1, total + 1)], dtype=object)
         order_no += total
 
-        status_draw = rng.random(total)
-        status = np.where(
-            status_draw < ABANDON_RATE,
-            "abandoned",
-            np.where(status_draw < ABANDON_RATE + CANCEL_RATE, "cancelled", "paid"),
-        )
+        # Status is DERIVED from the payment simulation below, not drawn before
+        # it. Drawing first made every method equally successful, which flattened
+        # every per-method and per-bank question in the evaluation and left the
+        # planted anomalies as the only variation in the world.
+        status = np.full(total, "abandoned", dtype=object)
+        draw0 = rng.random(total)
+        status[draw0 < CANCEL_RATE] = "cancelled"
+        never_tried = (draw0 >= CANCEL_RATE) & (draw0 < CANCEL_RATE + ABANDON_BEFORE_ATTEMPT)
         is_test = rng.random(total) < TEST_ROW_RATE
 
-        hs = handsets[rng.integers(0, len(handsets), size=total)]
         ccode = sh_country[sh_idx]
+        hs = np.empty(total, dtype=object)
+        for c in set(ccode):
+            cm = ccode == c
+            hs[cm] = handsets[rng.choice(len(handsets), size=int(cm.sum()), p=handset_p[c])]
         unit = np.array([price_key[(hs[i], ccode[i])] for i in range(total)], dtype=np.int64)
         n_acc = np.where(
             rng.random(total) < ACCESSORY_ATTACH,
@@ -350,7 +402,7 @@ def generate_facts(world: World, seed: int, scale: float = 1.0) -> Facts:
         ob["total_minor"].append(unit + acc_total)
 
         # --- payment attempts: retries until captured or the customer gives up ---
-        tried = status != "cancelled"
+        tried = (status != "cancelled") & (~never_tried)
         ti = np.nonzero(tried)[0]
         if len(ti):
             mix = METHOD_MIX
@@ -359,7 +411,19 @@ def generate_facts(world: World, seed: int, scale: float = 1.0) -> Facts:
                 mm = ccode[ti] == c
                 keys = tuple(mix[c].keys())
                 meth[mm] = _pick(rng, int(mm.sum()), keys, p=list(mix[c].values()))
-            want_paid = status[ti] == "paid"
+            issuers = np.array(
+                [
+                    BANKS_ISSUING[ccode[ti][j]][rng.integers(0, len(BANKS_ISSUING[ccode[ti][j]]))]
+                    for j in range(len(ti))
+                ],
+                dtype=object,
+            )
+            nets = _pick(rng, len(ti), CARD_NETWORKS)
+            p_base = np.array([METHOD_SUCCESS[m] for m in meth])
+            p_bank = np.array([bank_q[b] for b in issuers])
+            p_net = np.where(meth == "card", np.array([net_q[n] for n in nets]), 1.0)
+            p_capture = np.clip(p_base * p_bank * p_net, 0.05, 0.99)
+            captured_any = np.zeros(len(ti), dtype=bool)
             live_next = np.ones(len(ti), dtype=bool)
             for attempt in range(1, MAX_ATTEMPTS + 1):
                 live = live_next
@@ -367,11 +431,8 @@ def generate_facts(world: World, seed: int, scale: float = 1.0) -> Facts:
                     break
                 idx = np.nonzero(live)[0]
                 n_a = len(idx)
-                base_p = np.array([METHOD_SUCCESS[m] for m in meth[idx]])
-                # An order destined to be paid succeeds on its last live attempt.
-                cap = rng.random(n_a) < base_p
-                cap = np.where(want_paid[idx] & (attempt == MAX_ATTEMPTS), True, cap)
-                cap = np.where(~want_paid[idx], False, cap)
+                cap = rng.random(n_a) < p_capture[idx]
+                captured_any[idx[cap]] = True
                 a_ids = np.array(
                     [f"ATT-{attempt_no_global + i:011d}" for i in range(1, n_a + 1)], dtype=object
                 )
@@ -383,18 +444,8 @@ def generate_facts(world: World, seed: int, scale: float = 1.0) -> Facts:
                 ab["attempt_no"].append(np.full(n_a, attempt, dtype=np.int16))
                 ab["method"].append(meth[idx])
                 is_card = meth[idx] == "card"
-                ab["card_network"].append(np.where(is_card, _pick(rng, n_a, CARD_NETWORKS), None))
-                ab["issuing_bank"].append(
-                    np.array(
-                        [
-                            BANKS_ISSUING[ccode[ti][idx][j]][
-                                rng.integers(0, len(BANKS_ISSUING[ccode[ti][idx][j]]))
-                            ]
-                            for j in range(n_a)
-                        ],
-                        dtype=object,
-                    )
-                )
+                ab["card_network"].append(np.where(is_card, nets[idx], None))
+                ab["issuing_bank"].append(issuers[idx])
                 ab["acquiring_bank"].append(_pick(rng, n_a, BANKS_ACQUIRING))
                 ab["emi_tenure_months"].append(
                     np.where(
@@ -412,12 +463,11 @@ def generate_facts(world: World, seed: int, scale: float = 1.0) -> Facts:
                 )
                 ab["is_test"].append(is_test[ti][idx])
 
-                # An order destined to be paid keeps trying until it captures.
-                # Letting it stop early would leave a `paid` order with no
-                # capture, which breaks every success-rate and revenue metric.
-                retry = (~cap) & (want_paid[idx] | (rng.random(n_a) < RETRY_PROB))
+                retry = (~cap) & (rng.random(n_a) < RETRY_PROB)
                 live_next = np.zeros(len(ti), dtype=bool)
                 live_next[idx[retry]] = True
+
+            status[ti[captured_any]] = "paid"
 
         # --- refunds on a fraction of paid orders, on a later business date ---
         paid = np.nonzero(status == "paid")[0]
