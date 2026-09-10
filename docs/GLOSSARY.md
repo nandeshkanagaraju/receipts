@@ -95,6 +95,29 @@ A week starts on **Monday** and ends on Sunday. "Last week" means the most recen
 complete Monday-to-Sunday week, not the last seven days. "The last 7 days" means
 the seven days ending yesterday, and is a different window.
 
+### 1.6a Rolling and comparison windows
+
+Three phrasings that look interchangeable and are not. All examples are against
+the reporting date **2026-09-10** (a Thursday), whose last loaded business date
+is **2026-09-09**.
+
+| Phrase | Window | Note |
+|---|---|---|
+| "last 7 days" | `2026-09-03` … `2026-09-09` | Seven days ending **yesterday**. The reporting day itself is **excluded**: it is not over, and including a partial day understates every daily figure |
+| "last week" | `2026-08-31` … `2026-09-06` | The most recent **complete** Monday–Sunday week |
+| "last N weeks" | `2026-07-13` … `2026-09-06` for N=8 | N **complete** Monday–Sunday weeks. The current partial week is **excluded**, not counted as one of the N |
+
+**"This month versus last month" compares equal-length windows.** "This month" is
+month-to-date — `2026-09-01` … `2026-09-09`, nine days — and the comparison is the
+**same days of the previous month**, `2026-08-01` … `2026-08-09`, also nine days.
+It is *not* the whole of August.
+
+Comparing nine days against thirty-one would show a collapse in every additive
+metric, every month, purely as an artefact of the calendar. Any comparison window
+is the same length as the window it is compared against (SDD §9.1 rule 5). The
+same applies to "versus the same month last year": nine days of September 2026
+against `2025-09-01` … `2025-09-09`.
+
 ### 1.7 "Yesterday", "today", and the local day
 
 **"Yesterday" means the showroom's own local business date, one day before the

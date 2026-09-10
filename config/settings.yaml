@@ -51,7 +51,8 @@ why:
   concentration: "0.4"
   max_levels: 6
   query_budget: 40
-  trailing_periods: 28
+  trailing_periods: 28          # upper bound on the trailing baseline
+  min_trailing_periods: 8       # below this, refuse to judge (ADR-010)
   dimensions: [country, region, city, showroom, payment_method, issuing_bank, card_network, model, channel]
 
 routing:
