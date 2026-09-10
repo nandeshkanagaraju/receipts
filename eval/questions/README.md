@@ -262,3 +262,29 @@ batch of twenty, for human review before they are considered settled. That
 directory is **excluded from `test_question_files.py`** and is **deleted at
 `questions-frozen`** — it is scaffolding for the authoring conversation, not part
 of the evaluation. Nothing loads from it.
+
+### Review branches are snapshots
+
+`_review/` and `_reports/` are gitignored on `main` and force-added on
+`review/*` branches, so a review branch is a **snapshot of one round**, not a
+line of development.
+
+**Never merge `main` into a review branch, and never merge a review branch into
+`main`.** Each round gets a fresh branch cut from `main`:
+
+```
+git switch -c review/<round> main
+git add -f _reports eval/questions/_review
+git commit && git push -u origin review/<round>
+```
+
+Both directions have already gone wrong once, and neither failure was obvious:
+
+| Direction | What happened |
+|---|---|
+| review → main | PR #1 and PR #3 tracked the drafts on `main`. `8a60243` and `bc06b92` untracked them again |
+| main → review | Because `bc06b92` deletes those paths, merging `main` into a review branch **deletes every draft there**, working tree included. It did, and they had to be restored from the previous tip |
+
+A snapshot branch has neither problem: it is cut from `main`, the drafts are
+added once, and it is never merged in either direction. Old rounds stay readable
+at their own URLs, which is the only thing they are for.

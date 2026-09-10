@@ -250,6 +250,41 @@ The totals match SDD §25.2 exactly. Only the authorship is split.
 Things discovered while writing the questions that belong to a module not yet
 built. Recorded here rather than lost.
 
+### M7 — Tamil synonyms must carry the code-mixed form as well as the formal one
+
+The semantic layer's `synonyms` for each metric and dimension must list **both**
+Tamil forms:
+
+1. the **formal Tamil term** — `திருப்பியளிப்பு விகிதம்`, `நிகர வருவாய்`,
+   `செட்டில்மென்ட் தாமதம்`;
+2. the **English term as it appears inside a Tamil sentence** — `refund rate`,
+   `net revenue`, `settlement`, `GMV`, `EMI`, `UPI`, `attach rate`,
+   `issuing bank`, `acquiring bank`, `order`, `showroom`, `storage`.
+
+This is not a courtesy to English. It is how the language is actually written by
+the people this product is for: a Chennai store manager types Tamil grammar with
+English business nouns in Latin script, because that is what the nouns are called
+at work. A layer that only knows `திருப்பியளிப்பு விகிதம்` will fail on
+*"கடந்த மாதம் refund rate எவ்வளவு?"*, which is the more likely sentence of the
+two — and it will fail by falling through to the free-form path, so the failure
+will look like a retrieval miss rather than a vocabulary gap.
+
+The Tamil question variants are drafted in exactly this register, so the eval
+measures it either way. The term table at the top of
+`eval/questions/_review/tamil_*.md` lists which terms are written in English and
+which in Tamil; that table is the checklist for the synonym lists.
+
+Practical consequences:
+
+- **Retrieval is lexical (ADR-004)**, so a missing surface form is a missing
+  match — there is no embedding to bail it out.
+- **Both scripts, per term**, not one canonical choice. The same manager writes
+  it both ways on different days.
+- **The English forms are not synonyms of each other.** `issuing bank` and
+  `acquiring bank` are different dimensions (§1.9), and a synonym list that maps
+  both to "bank" reintroduces the confusion the glossary spent a section
+  removing.
+
 ### M4 — a reference value of zero is compared exactly
 
 `tolerance_rel` is a *relative* tolerance, so it is undefined against a reference

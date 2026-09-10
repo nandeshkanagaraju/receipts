@@ -905,9 +905,19 @@ defensible, plausible, and possibly not what was asked for.
 | "best" / "top" / "worst" store, model, bank, with no metric named | By value, by units, by success rate, by refund rate — all reasonable, all different rankings |
 | "quarter", "Q2", "this quarter", "last quarter", "year" with no calendar named | Fiscal (April start) or calendar — §1.5, §4.6 |
 | "how are we doing", "performance", "growth" with no metric named | Any metric in §2 |
+| a window attached to something **other than the metric's own date key** — "refunds on last month's orders", "what we collected on last week's orders" | The window on the metric's date (refunds *processed* last month) or on the named entity (refunds against orders *placed* last month, processed whenever) — §1.2, §2.4 |
 
 A saved preference resolves the calendar case for a given user; nothing resolves
 the others except asking.
+
+**On the last row.** §1.2 says mixing up the three dates is the most common
+source of a wrong number, and this is the sentence shape that does it. "How much
+did we refund last month" is not ambiguous: §2.4 keys refunded amount on the
+refund date and that is the end of it. "How much did we refund **on last month's
+orders**" is ambiguous, because the window has moved off the refund and onto the
+order, and the two sets differ by every refund that crossed a month boundary.
+The rule is about where the window attaches, not about which words appear: any
+metric can be asked this way, and every one of them needs asking about.
 
 ### 6.3 One exception: "refunds" in a gateway question
 
