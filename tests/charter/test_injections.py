@@ -11,6 +11,7 @@ a finally block.
 from __future__ import annotations
 
 import contextlib
+import re
 from collections.abc import Iterator
 from pathlib import Path
 
@@ -67,6 +68,64 @@ def test_meta_d2_injection_passes_with_guard_off(monkeypatch: pytest.MonkeyPatch
         v = checks.find_clock_reads()
         print(f"\nD2 meta (guard off): {len(v)} violation(s) — expected 0")
         assert not v, "guard-off run still flagged; the injection proves nothing"
+
+
+# --------------------------------------------------------------------------- #
+# D2 in llm/ — the widened scope, and the time.sleep allowance
+# --------------------------------------------------------------------------- #
+LLM_CLOCK_SRC = "import time\n\n\ndef stamp():\n    return time.time()\n"
+LLM_SLEEP_SRC = (
+    "import time\n\n\ndef backoff(attempt):\n    time.sleep(0.5 * attempt)\n    return attempt\n"
+)
+
+
+def test_injection_d2_clock_read_in_llm_is_caught() -> None:
+    """SDD 1.1 widened D2 to cover llm/. time.time() there must now fire."""
+    assert "llm" in checks.ENGINE_PACKAGES, "precondition: llm/ is in D2 scope"
+    with planted("src/receipts/llm/_injected_clock.py", LLM_CLOCK_SRC):
+        v = checks.find_clock_reads()
+        print(f"\nD2/llm injection: {len(v)} violation(s)")
+        for x in v:
+            print(f"  {x}")
+        assert v, "D2 guard did not fire on time.time() in llm/"
+        assert any("llm/_injected_clock" in x.path for x in v)
+
+
+def test_injection_d2_clock_read_in_bridge_is_caught() -> None:
+    assert "bridge" in checks.ENGINE_PACKAGES, "precondition: bridge/ is in D2 scope"
+    with planted("src/receipts/bridge/_injected_clock.py", LLM_CLOCK_SRC):
+        v = [x for x in checks.find_clock_reads() if "bridge/_injected_clock" in x.path]
+        print(f"\nD2/bridge injection: {len(v)} violation(s)")
+        assert v, "D2 guard did not fire on time.time() in bridge/"
+
+
+def test_time_sleep_in_llm_is_not_caught() -> None:
+    """D2 allows time.sleep for retry backoff: it yields, it does not read a clock."""
+    with planted("src/receipts/llm/_injected_sleep.py", LLM_SLEEP_SRC):
+        v = [x for x in checks.find_clock_reads() if "_injected_sleep" in x.path]
+        print(f"\nD2 sleep allowance: {len(v)} violation(s) — expected 0")
+        assert not v, f"time.sleep was wrongly flagged: {[str(x) for x in v]}"
+
+
+def test_meta_d2_llm_injection_passes_with_guard_off(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(checks, "CLOCK_SUFFIXES", ())
+    with planted("src/receipts/llm/_injected_clock.py", LLM_CLOCK_SRC):
+        v = checks.find_clock_reads()
+        print(f"\nD2/llm meta (guard off): {len(v)} violation(s) — expected 0")
+        assert not v, "guard-off run still flagged; the injection proves nothing"
+
+
+def test_d2_scope_matches_the_sdd() -> None:
+    """The package list is a claim about SDD §1 D2; check it against the document."""
+    sdd = (REPO / "docs" / "SDD.md").read_text(encoding="utf-8")
+    row = next(ln for ln in sdd.splitlines() if ln.startswith("| **D2**"))
+    banned = re.search(r"receipts/\{([a-z,_]+)\}", row).group(1).split(",")
+    print(f"\nD2 scope in SDD: {banned}")
+    print(f"D2 scope in code: {list(checks.ENGINE_PACKAGES)}")
+    assert sorted(banned) == sorted(checks.ENGINE_PACKAGES), "charter scope drifted from SDD §1"
+    assert "`time.sleep` for retry backoff is allowed" in row, "SDD no longer allows sleep"
+    for pkg in checks.WALL_CLOCK_ALLOWED:
+        assert f"`{pkg}/`" in row, f"SDD does not list {pkg}/ as wall-clock-allowed"
 
 
 # --------------------------------------------------------------------------- #

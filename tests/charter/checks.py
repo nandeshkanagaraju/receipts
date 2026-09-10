@@ -21,8 +21,8 @@ SDD = REPO / "docs" / "SDD.md"
 
 SKIP_DIRS = {".venv", "__pycache__", "node_modules", ".git", "data", "web", "build", "dist"}
 
-# D2 names these packages explicitly. Wall clock is allowed only in api/ and
-# observability/.
+# D2 (SDD §1) names these packages explicitly. Wall clock is allowed only in the
+# transport and telemetry layers: api/, mcp_server/, observability/.
 ENGINE_PACKAGES = (
     "domain",
     "semantic",
@@ -32,7 +32,13 @@ ENGINE_PACKAGES = (
     "safety",
     "execute",
     "evalkit",
+    "llm",
+    "bridge",
 )
+
+# Packages where a wall-clock read is permitted, listed so the ban and the
+# allowance cannot silently overlap.
+WALL_CLOCK_ALLOWED = ("api", "mcp_server", "observability")
 
 
 @dataclass(frozen=True, order=True)
@@ -153,6 +159,12 @@ CLOCK_SUFFIXES = (
     "time.monotonic_ns",
 )
 
+# D2: "time.sleep for retry backoff is allowed". Sleeping does not read the
+# clock — it yields for a duration — so it cannot leak wall-clock state into a
+# result. Timeouts are likewise durations handed to a client, never a deadline
+# computed from a clock read, which is why time.monotonic stays banned above.
+CLOCK_ALLOWED_SUFFIXES = ("time.sleep",)
+
 
 def d2_roots() -> list[Path]:
     return [REPO / "src" / "receipts" / pkg for pkg in ENGINE_PACKAGES] + [REPO / "kestrel_gen"]
@@ -164,6 +176,8 @@ def find_clock_reads(roots: list[Path] | None = None) -> list[Violation]:
         for node in ast.walk(parse(f)):
             if isinstance(node, ast.Call):
                 name = dotted(node.func)
+                if any(name == s or name.endswith("." + s) for s in CLOCK_ALLOWED_SUFFIXES):
+                    continue
                 if any(name == s or name.endswith("." + s) for s in CLOCK_SUFFIXES):
                     out.append(Violation(rel(f), node.lineno, f"clock read: {name}()"))
     return sorted(out)
