@@ -311,6 +311,36 @@ must show it passes with the guard disabled.
 Neither control proves the author never looked; they make looking a deliberate
 act that leaves a trace, which is the most a repository can honestly claim.
 
+### M10 / M12 — a capability refusal is a DENY, not an error
+
+When free-form SQL is rejected because it touches a table outside the **role's
+capability** allowlist — `settlements` or `settlement_items` for a role without
+`finance` — the answer status must be **`DENIED`**, with a reason naming the
+missing capability. Not `ERROR`, and not `ABSTAIN`.
+
+The three are different claims about the world, and only one of them is true:
+
+| Status | What it tells the asker |
+|---|---|
+| `ERROR` | Something broke. Try again, or report a bug |
+| `ABSTAIN` | No data here can answer this |
+| `DENIED` | The data exists and answers this; **you** may not see it |
+
+A capability refusal is the third. Returning `ABSTAIN` would be a lie of a
+particular kind — it tells a UK store manager that settlement fees are
+unknowable, when in fact they are known and simply not theirs. Returning `ERROR`
+sends them to a bug report for a working system.
+
+The verified path already handles this: the gate denies at rule 1 (SDD §10) before
+compilation. The gap is the **free-form** path, where the refusal surfaces from
+the guard rather than the gate, and a guard rejection currently maps to
+`GUARD_REJECTED`.
+
+**Fault injection required:** a `store_ops_uk` question about settlement fees —
+HO-025 is exactly this — routed down the free-form path must produce `DENIED`
+naming the `finance` capability, with a meta-test showing it produces something
+else when the capability check is disabled.
+
 ### M12 — free-form SQL can reach `orders.customer_id`
 
 EV-039 was drafted as an unanswerable question about repeat customers, on the

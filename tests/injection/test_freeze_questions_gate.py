@@ -93,3 +93,82 @@ def test_real_corpus_is_currently_refused() -> None:
         print(f"  {p}")
     assert problems, "the real corpus should not be freezable while sets are missing"
     assert not fq.tag_exists(), f"{fq.TAG} must not exist yet"
+
+
+# --------------------------------------------------------------------------- #
+# The blind-question gate
+# --------------------------------------------------------------------------- #
+def write_blind(qdir: Path, n: int) -> Path:
+    p = qdir / fq.BLIND
+    p.write_text(
+        "".join(
+            json.dumps({"qid": f"HO-B{i:02d}", "population": "ANS"}) + "\n" for i in range(1, n + 1)
+        ),
+        encoding="utf-8",
+    )
+    return p
+
+
+def test_blind_gate_accepts_the_full_file(tmp_path: Path) -> None:
+    qdir = build_corpus(tmp_path)
+    write_blind(qdir, fq.HOLDOUT_BLIND_TARGET)
+    problems = fq.gate_blind(qdir, allow_missing=False)
+    print(f"\n{fq.HOLDOUT_BLIND_TARGET} blind questions -> {len(problems)} problem(s)")
+    assert not problems, f"a complete blind file was refused: {problems}"
+
+
+def test_injection_short_blind_file_is_refused(tmp_path: Path) -> None:
+    """INJECTION: 29 of 30 must be caught, and the count reported."""
+    qdir = build_corpus(tmp_path)
+    write_blind(qdir, fq.HOLDOUT_BLIND_TARGET - 1)
+    problems = fq.gate_blind(qdir, allow_missing=False)
+    print(f"\n29 blind questions -> {len(problems)} problem(s)")
+    for p in problems:
+        print(f"  {p}")
+    assert problems, "a short blind file was NOT refused"
+    assert "29" in problems[0] and str(fq.HOLDOUT_BLIND_TARGET) in problems[0]
+
+
+def test_injection_missing_blind_file_is_refused_without_the_flag(tmp_path: Path) -> None:
+    qdir = build_corpus(tmp_path)
+    assert not (qdir / fq.BLIND).exists(), "precondition: no blind file"
+    problems = fq.gate_blind(qdir, allow_missing=False)
+    print(f"\nmissing blind file, no flag -> {len(problems)} problem(s)")
+    assert problems, "a missing blind file was NOT refused"
+    assert fq.BLIND_ENV in problems[0], "the refusal does not say how to declare the absence"
+
+
+def test_missing_blind_file_is_accepted_when_declared(tmp_path: Path) -> None:
+    qdir = build_corpus(tmp_path)
+    problems = fq.gate_blind(qdir, allow_missing=True)
+    print(f"declared missing -> {len(problems)} problem(s) — expected 0")
+    assert not problems, "declaring the absence should permit the freeze"
+    status = fq.blind_status(qdir)
+    assert status["present"] is False and status["declared_missing"] is True
+    assert "LIMITATIONS" in str(status["note"]), "the manifest note must point at LIMITATIONS.md"
+
+
+def test_meta_with_the_blind_gate_off_a_short_file_would_be_accepted(tmp_path: Path) -> None:
+    """Guard off: allow_missing swallows the absence, so the refusal above is the gate."""
+    qdir = build_corpus(tmp_path)
+    write_blind(qdir, fq.HOLDOUT_BLIND_TARGET - 1)
+    refused = fq.gate_blind(qdir, allow_missing=False)
+    assert refused, "precondition: the short file is refused with the gate on"
+    (qdir / fq.BLIND).unlink()
+    passed = fq.gate_blind(qdir, allow_missing=True)
+    print(f"\nblind meta: gate on -> {len(refused)}, declared-missing -> {len(passed)}")
+    assert not passed, "guard-off run still refused; the injection proves nothing"
+
+
+def test_env_var_is_honoured(tmp_path: Path, monkeypatch: object) -> None:
+    qdir = build_corpus(tmp_path)
+    import os
+
+    os.environ.pop(fq.BLIND_ENV, None)
+    assert fq.gate_blind(qdir), "no flag set: absence must be refused"
+    os.environ[fq.BLIND_ENV] = "yes"
+    try:
+        assert not fq.gate_blind(qdir), f"{fq.BLIND_ENV}=yes must permit the absence"
+        print(f"\n{fq.BLIND_ENV}=yes honoured from the environment")
+    finally:
+        os.environ.pop(fq.BLIND_ENV, None)
