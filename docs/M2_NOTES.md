@@ -20,15 +20,25 @@ population scores zero through no fault of the agent.
 | A2 | Refund spike on one model at two Dubai showrooms | `2026-08-01` … `2026-08-31` (last calendar month) | DV-058 | global_finance |
 | A3 | Settlement delay, one acquiring bank's EMI transactions | `2026-08-31` … `2026-09-06` (last complete week) | DV-059 | global_finance |
 | A5 | Card decline spike in the UK after an auth change | `2026-08-01` … `2026-08-31` (last calendar month) | DV-040 | store_ops_uk |
-| A6 | Duplicate captures at one showroom, later refunded | `2026-08-01` … `2026-08-31`, at a **Tamil Nadu** showroom | DV-022 | rm_tamil_nadu |
+| A4 | Launch-week sales surge for one model in Singapore | `2026-08-01` … `2026-08-31` (last calendar month) | EV-046 | global_finance |
+| A6 | Duplicate captures at one showroom, later refunded | `2026-08-01` … `2026-08-31`, at a **Tamil Nadu** showroom | DV-022, EV-047 | rm_tamil_nadu |
 
 A6's region matters: DV-022 asks for duplicate captures in Tamil Nadu under the
 `rm_tamil_nadu` role, which is scoped to `IN-TN`. Planted anywhere else, the
 scoped answer is zero and the question is trivial.
 
-A4 (launch-week surge, Singapore) is not yet pinned by a frozen dev question. It
-must be pinned by an eval WHY question, and this table updated in the same
-commit, before the generator freezes at G1.
+**All six planted anomalies A1–A6 are now pinned by a frozen question.** A4 is
+pinned by EV-046 and A6 gains a second question, EV-047, at the same window as
+DV-022.
+
+Three eval WHY questions deliberately ask about an anomaly at a **coarser scope**
+than the dev question for the same anomaly, so the agent must locate the
+dimension as well as confirm the change:
+
+| Anomaly | Dev question | Eval question | Difference |
+|---|---|---|---|
+| A2 | DV-058 names the UAE | EV-048 names **no country** — "one of our phone models" | The agent must find the country *and* the model |
+| A6 | DV-022 counts duplicates in TN | EV-047 asks why refunds rose at a TN showroom | Duplicate captures are the cause, not the asked-for metric |
 
 ### 1.1 Magnitude: anomalies must clear the why-agent's confirm gate
 
@@ -54,7 +64,8 @@ named window **or** size it so the aggregate still clears both gates:
 | A5 | **Month** (DV-040 asks "last month") | Same test at month level for UK card failures across `2026-08-01`…`08-31`, against the prior 28 months — note the data only starts 2025-03, so fewer trailing periods are available and the z calculation must handle a short history explicitly rather than silently |
 | A2 | **Month** (DV-058) | UAE refund rate for `2026-08` must clear both gates at country level |
 | A3 | **Week** (DV-059) | Unsettled amount at the end of `2026-09-06` must clear both gates |
-| A6 | **Month** (DV-022) | DV-022 is an ANS count question, not a WHY, so no z-gate applies — it only needs to be non-zero and non-trivial under `IN-TN` scope |
+| A4 | **Month** (EV-046) | Singapore captured GMV for `2026-08` must clear both gates at country level. A launch-week surge concentrated in one week must still move the month |
+| A6 | **Month** (DV-022, EV-047) | DV-022 is an ANS count, so no z-gate applies there. EV-047 **is** a WHY: the refund rate at the affected TN showroom for `2026-08` must clear both gates at showroom level |
 
 `test_anomaly_magnitudes_clear_thresholds` (M2) asserts this against the built
 artifact rather than trusting the generator's parameters, and prints the realised

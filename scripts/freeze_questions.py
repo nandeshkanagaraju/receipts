@@ -50,6 +50,14 @@ TRAPS = (
 )
 TRAP_MIN = 3
 
+# SDD §25.2. holdout is the hand-written portion: 30 slots are written blind and
+# 6 WHY are generated in M2 (docs/M2_NOTES.md §3-4).
+TARGETS: dict[str, dict[str, int]] = {
+    "dev": {"ANS": 36, "AMB": 8, "UNA": 6, "DENY": 4, "WHY": 4, "LIVE": 2},
+    "eval": {"ANS": 90, "AMB": 20, "UNA": 15, "DENY": 10, "WHY": 10, "LIVE": 5},
+    "holdout": {"ANS": 32, "AMB": 7, "UNA": 6, "DENY": 6, "WHY": 0, "LIVE": 3},
+}
+
 
 def sha256_file(path: Path) -> str:
     h = hashlib.sha256()
@@ -87,6 +95,23 @@ def gate_traps(qdir: Path = QDIR, minimum: int = TRAP_MIN) -> list[str]:
     )
 
 
+def gate_populations(qdir: Path = QDIR, tolerance: float = 0.10) -> list[str]:
+    """Every set within 10% of its SDD §25.2 target. Empty means the gate passes."""
+    problems = []
+    for name, targets in TARGETS.items():
+        p = qdir / f"{name}.jsonl"
+        if not p.exists():
+            continue
+        rows = [json.loads(ln) for ln in p.read_text(encoding="utf-8").splitlines() if ln.strip()]
+        counts = Counter(r.get("population") for r in rows)
+        for pop, target in targets.items():
+            realised = counts.get(pop, 0)
+            slack = max(1, round(target * tolerance))
+            if abs(realised - target) > slack:
+                problems.append(f"{name}/{pop}: realised {realised}, target {target}")
+    return sorted(problems)
+
+
 def gate_files_present(qdir: Path = QDIR) -> list[str]:
     problems = []
     for name in SETS:
@@ -119,7 +144,7 @@ def gate_tests() -> list[str]:
 
 
 def all_gates(qdir: Path = QDIR, minimum: int = TRAP_MIN, run_tests: bool = True) -> list[str]:
-    problems = gate_files_present(qdir) + gate_traps(qdir, minimum)
+    problems = gate_files_present(qdir) + gate_populations(qdir) + gate_traps(qdir, minimum)
     if run_tests:
         problems += gate_tests()
     return problems

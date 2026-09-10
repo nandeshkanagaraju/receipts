@@ -114,22 +114,34 @@ def test_qids_unique_across_all_sets() -> None:
 # --------------------------------------------------------------------------- #
 # 2. realised counts vs SDD §25.2, within 10%
 # --------------------------------------------------------------------------- #
-def test_population_counts_within_ten_percent_of_target() -> None:
+def test_no_population_exceeds_its_target() -> None:
+    """Always-on: a set may be short while it is being written, never long.
+
+    Under-target means unfinished; that is checked at freeze time by
+    `make freeze-questions`, the same place the corpus-wide trap rule lives.
+    Over-target means a question was misfiled or duplicated, which is a defect
+    at any point, so it is asserted here. Counts are printed either way.
+    """
     sets = written_sets()
     assert sets, "no question files written yet"
-    problems: list[str] = []
+    over: list[str] = []
     print()
     for name, rows in sets.items():
         counts = Counter(r["population"] for r in rows)
-        print(f"{name}.jsonl — {len(rows)} questions")
+        total_target = sum(TARGETS[name].values())
+        print(f"{name}.jsonl — {len(rows)}/{total_target} questions written")
         for pop in POPULATIONS:
             target, realised = TARGETS[name][pop], counts.get(pop, 0)
             slack = max(1, round(target * 0.10))
-            ok = abs(realised - target) <= slack
-            print(f"  {pop:5} realised {realised:3}  target {target:3}  {'ok' if ok else 'OUT'}")
-            if not ok:
-                problems.append(f"{name}/{pop}: realised {realised}, target {target}")
-    assert not problems, "population counts out of tolerance:\n" + "\n".join(problems)
+            state = (
+                "ok" if realised == target else ("OVER" if realised > target + slack else "short")
+            )
+            print(f"  {pop:5} realised {realised:3}  target {target:3}  {state}")
+            if realised > target + slack:
+                over.append(f"{name}/{pop}: realised {realised}, target {target}")
+    assert not over, "populations over target — misfiled or duplicated questions:\n" + "\n".join(
+        over
+    )
 
 
 # --------------------------------------------------------------------------- #
