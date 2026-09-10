@@ -55,12 +55,18 @@ def read_manifest(path: Path = MANIFEST) -> dict[str, str]:
 
 
 def write_manifest(path: Path = MANIFEST, repo: Path = REPO) -> dict[str, str]:
+    """Rewrite the `documents` section, preserving every other section.
+
+    scripts/freeze_questions.py owns `questions` and `reference_sql` in the same
+    file; regenerating the document hashes must not silently drop them.
+    """
     digests = compute(repo)
-    payload = {
-        "algorithm": "sha256",
-        "note": "Byte-for-byte hashes of the frozen specs. Regenerate deliberately.",
-        "documents": digests,
-    }
+    payload: dict[str, object] = {}
+    if path.exists():
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    payload["algorithm"] = "sha256"
+    payload["note"] = "Byte-for-byte hashes of frozen artifacts. Regenerate deliberately."
+    payload["documents"] = digests
     path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return digests
 

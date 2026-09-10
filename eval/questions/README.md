@@ -149,11 +149,22 @@ question declares `compare: true`, every series question declares `series: true`
 and carries no `top_k`, and every `glossary_covered: false` ANS question has an
 `interpretation`.
 
-**Trap coverage is evaluated across all three sets.** While `eval.jsonl` and
-`holdout.jsonl` are unwritten, `test_every_trap_appears_at_least_three_times`
-**fails**, and says so in those words. That is deliberate: a green tick for trap
-coverage while two thirds of the questions do not exist would be a false claim.
-The suite goes green when the sets are complete.
+**Trap coverage is checked at two levels.** The always-on suite asserts every
+trap appears **at least once in `dev.jsonl`**. The corpus-wide rule — every trap
+**at least three times across dev + eval + holdout** — cannot be met mid-module,
+so it is a precondition of freezing rather than a permanently red test:
+
+```
+make freeze-questions        # gates, then manifest + questions-frozen tag
+python scripts/freeze_questions.py --check   # gates only, changes nothing
+```
+
+`scripts/freeze_questions.py` refuses to create the tag unless all three files
+exist and are non-empty, every trap reaches three occurrences corpus-wide, and
+the whole of `test_question_files.py` passes. On success it records SHA-256 of
+every question file and every reference-SQL file in `docs/FREEZE_MANIFEST.json`
+and creates the annotated tag. Freezing is the point of no return, so every gate
+runs before the tag, never after.
 
 ---
 
