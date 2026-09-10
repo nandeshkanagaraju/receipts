@@ -38,3 +38,6 @@ eval/questions/_review/
 # eval/sealed/      sealed holdout truth is committed, read only by evalkit.scoring (SDD §6)
 # eval/results/     committed reports; CI asserts byte-identical output (SDD §28)
 # truth/            constructed ground truth, recorded at generation time (D11)
+
+# ---- generator output (rebuilt by `make data`) ----
+truth/

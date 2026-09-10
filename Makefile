@@ -45,7 +45,7 @@ define NOT_BUILT
 endef
 
 data:
-	$(call NOT_BUILT,data,M2 — synthetic world generator)
+	set -a; . ./.env; set +a; /usr/bin/time -l $(PY) -m kestrel_gen --seed 20260910 --scale $${SCALE:-0.55} --out data
 
 eval:
 	$(call NOT_BUILT,eval SET=$(SET),M4 — scoring/reports/harness)

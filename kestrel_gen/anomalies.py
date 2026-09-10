@@ -60,6 +60,24 @@ A8_NOTE = (
 SEALED_TYPES = ("S1", "S2", "S3", "S4")
 MIN_CO_OCCURRENCE = 10  # M2 TEST item 4: rate amplification floor
 
+# Per-anomaly minimums, guaranteed by construction rather than left to the draw.
+# A rare anomaly is not a small anomaly: if the qualifying population is thin the
+# planted effect must still be large enough to find, or the question that asks
+# about it is unanswerable and scores zero through no fault of the agent.
+A1_MIN_FLIPS = 60
+A2_MIN_REFUNDS = 45  # enough for Dubai's refund rate to clear >=2% and |z|>=2
+A5_MIN_FLIPS = 60
+A6_MIN_PAIRS = 25
+
+
+class AnomalyTooThin(RuntimeError):
+    """The qualifying population is too small to plant a findable anomaly.
+
+    Raised rather than planting a token effect. A generator that quietly plants
+    three rows produces an evaluation whose WHY questions cannot be answered,
+    and nothing anywhere says so.
+    """
+
 
 @dataclass
 class AnomalyRecord:
@@ -90,6 +108,22 @@ class AnomalyRecord:
 class Planted:
     records: list[AnomalyRecord] = field(default_factory=list)
     constructed: dict[str, Any] = field(default_factory=dict)
+    constructed_demoted: int = 0
+
+
+def _require(name: str, got: int, minimum: int, of: int, enforce: bool = True) -> None:
+    """The minimum is absolute, not "as many as happen to qualify".
+
+    Capping it at the qualifying population would make the guarantee vacuous
+    exactly when it matters: a thin population is precisely the case where the
+    anomaly ends up too small to find.
+    """
+    if enforce and got < minimum:
+        raise AnomalyTooThin(
+            f"{name}: planted {got} rows, need at least {minimum} "
+            f"(qualifying population {of}). Raise --scale, or widen the anomaly's "
+            f"population; do not lower the minimum."
+        )
 
 
 def _in_window(dates: np.ndarray, lo: date, hi: date) -> np.ndarray:
@@ -192,11 +226,16 @@ def draw_sealed(env: dict[str, str], world) -> list[dict[str, Any]]:
     return out
 
 
-def apply_known(facts, world, seed: int) -> Planted:
+def apply_known(facts, world, seed: int, enforce: bool = True) -> Planted:
     """Plant A1–A8 and record each as it is planted (D11).
 
     Every record is built from the same arrays and masks that made the change.
     Nothing here re-queries the data to discover what it did.
+
+    `enforce=False` is for cheap small-scale runs — determinism checks at
+    scale 0.001, where the qualifying populations are genuinely a handful of
+    rows. The real artifact is always built with the minimums enforced, and
+    M2's TEST asserts the realised counts on it.
     """
     rng = np.random.default_rng(np.random.PCG64(seed + 977))
     out = Planted()
@@ -224,10 +263,14 @@ def apply_known(facts, world, seed: int) -> Planted:
     a1_rows = 0
     if a1_bank is not None:
         hit = m & (a["issuing_bank"] == a1_bank) & (a["status"] == "captured")
-        flip = hit & (rng.random(len(hit)) < A1_SUCCESS_DROP)
-        a["status"][flip] = "failed"
-        a["failure_reason"][flip] = "issuer_declined"
-        a1_rows = int(flip.sum())
+        hit_idx = np.nonzero(hit)[0]
+        want = max(A1_MIN_FLIPS, int(round(len(hit_idx) * A1_SUCCESS_DROP)))
+        want = min(want, len(hit_idx))
+        pick = rng.choice(hit_idx, size=want, replace=False) if want else np.array([], dtype=int)
+        a["status"][pick] = "failed"
+        a["failure_reason"][pick] = "issuer_declined"
+        a1_rows = int(len(pick))
+    _require("A1 upi_success_dip", a1_rows, A1_MIN_FLIPS, int(m.sum()), enforce)
     out.records.append(
         AnomalyRecord(
             "A1",
@@ -242,27 +285,46 @@ def apply_known(facts, world, seed: int) -> Planted:
 
     # --- A2: refund spike, ONE model, two Dubai showrooms ---
     dubai = [s for s in world.showrooms["showroom_id"] if city_name[city_of[s]] == A2_CITY]
-    a2_showrooms = sorted(dubai)[:A2_SHOWROOMS]
+    # The two BUSIEST Dubai showrooms, not the first two by id. A defective batch
+    # lands where the volume is, and picking arbitrarily leaves a pool too thin to
+    # plant a findable anomaly in -- which the size guarantee then refuses.
+    dubai_volume: dict[str, int] = dict.fromkeys(dubai, 0)
+    for i, oid in enumerate(o["order_id"]):
+        s_ = sr_of_order[oid]
+        if (
+            s_ in dubai_volume
+            and o["status"][i] == "paid"
+            and not o["is_test"][i]
+            and A2_WINDOW[0] <= o["business_date"][i] <= A2_WINDOW[1]
+        ):
+            dubai_volume[s_] += 1
+    a2_showrooms = sorted(sorted(dubai_volume, key=lambda k: -dubai_volume[k])[:A2_SHOWROOMS])
     sku_model = dict(zip(world.products["sku"], world.products["model_name"], strict=True))
     handset_of = {}
     for oid, sku in zip(facts.order_items["order_id"], facts.order_items["sku"], strict=True):
         if oid not in handset_of and sku_model.get(sku):
             handset_of[oid] = sku_model[sku]
-    models = sorted({m for m in handset_of.values() if m})
-    a2_model = models[int(rng.integers(0, len(models)))] if models else None
-    cand = [
-        i
-        for i, oid in enumerate(o["order_id"])
-        if o["status"][i] == "paid"
-        and not o["is_test"][i]
-        and sr_of_order[oid] in a2_showrooms
-        and handset_of.get(oid) == a2_model
-        and A2_WINDOW[0] <= o["business_date"][i] <= A2_WINDOW[1]
-    ]
-    extra = int(len(cand) * (A2_REFUND_MULTIPLIER - 1) / A2_REFUND_MULTIPLIER)
+    # Pick the model with the most qualifying orders rather than at random. A
+    # rare model plants a handful of refunds no agent could find, and the choice
+    # is still opaque to anyone who has not read this file.
+    by_model: dict[str, list[int]] = {}
+    for i, oid in enumerate(o["order_id"]):
+        if (
+            o["status"][i] == "paid"
+            and not o["is_test"][i]
+            and sr_of_order[oid] in a2_showrooms
+            and A2_WINDOW[0] <= o["business_date"][i] <= A2_WINDOW[1]
+        ):
+            mdl = handset_of.get(oid)
+            if mdl:
+                by_model.setdefault(mdl, []).append(i)
+    a2_model = max(sorted(by_model), key=lambda k: len(by_model[k])) if by_model else None
+    cand = by_model.get(a2_model, [])
+    extra = max(A2_MIN_REFUNDS, int(len(cand) * (A2_REFUND_MULTIPLIER - 1) / A2_REFUND_MULTIPLIER))
+    extra = min(extra, len(cand))
     a2_rows = 0
     if cand and extra:
-        pick = rng.choice(np.array(cand), size=min(extra, len(cand)), replace=False)
+        pick = rng.choice(np.array(cand), size=extra, replace=False)
         n = len(pick)
         base = len(r["refund_id"])
         add = {
@@ -281,6 +343,8 @@ def apply_known(facts, world, seed: int) -> Planted:
             r[k] = np.concatenate([r[k], add[k]])
         a2_rows = n
         del base
+
+    _require("A2 refund_spike", a2_rows, A2_MIN_REFUNDS, len(cand), enforce)
     out.records.append(
         AnomalyRecord(
             "A2",
@@ -345,10 +409,14 @@ def apply_known(facts, world, seed: int) -> Planted:
     a5_rows = 0
     if a5_net is not None:
         hit = m5 & (a["card_network"] == a5_net) & (a["status"] == "captured")
-        flip = hit & (rng.random(len(hit)) < A5_SUCCESS_DROP)
-        a["status"][flip] = "failed"
-        a["failure_reason"][flip] = "authentication_failed"
-        a5_rows = int(flip.sum())
+        hit_idx = np.nonzero(hit)[0]
+        want = min(max(A5_MIN_FLIPS, int(round(len(hit_idx) * A5_SUCCESS_DROP))), len(hit_idx))
+        pick = rng.choice(hit_idx, size=want, replace=False) if want else np.array([], dtype=int)
+        a["status"][pick] = "failed"
+        a["failure_reason"][pick] = "authentication_failed"
+        a5_rows = int(len(pick))
+
+    _require("A5 card_decline_spike", a5_rows, A5_MIN_FLIPS, int(m5.sum()), enforce)
     out.records.append(
         AnomalyRecord(
             "A5",
@@ -363,7 +431,13 @@ def apply_known(facts, world, seed: int) -> Planted:
 
     # --- A6: duplicate captures at ONE Tamil Nadu showroom, later refunded ---
     tn = [s_ for s_ in world.showrooms["showroom_id"] if city_region[city_of[s_]] == A6_REGION]
-    a6_showroom = sorted(tn)[int(rng.integers(0, len(tn)))] if tn else None
+    tn_counts: dict[str, int] = dict.fromkeys(tn, 0)
+    for i in range(len(a["attempt_id"])):
+        if a["status"][i] == "captured" and not a["is_test"][i]:
+            s_ = sr_of_order[a["order_id"][i]]
+            if s_ in tn_counts and A6_WINDOW[0] <= a["business_date"][i] <= A6_WINDOW[1]:
+                tn_counts[s_] += 1
+    a6_showroom = max(sorted(tn_counts), key=lambda k: tn_counts[k]) if tn else None
     dup_pairs: list[tuple[str, str]] = []
     if a6_showroom:
         idx = [
@@ -375,7 +449,13 @@ def apply_known(facts, world, seed: int) -> Planted:
             and A6_WINDOW[0] <= a["business_date"][i] <= A6_WINDOW[1]
         ]
         pick = (
-            list(rng.choice(np.array(idx), size=min(A6_DUPLICATES, len(idx)), replace=False))
+            list(
+                rng.choice(
+                    np.array(idx),
+                    size=min(max(A6_MIN_PAIRS, A6_DUPLICATES), len(idx)),
+                    replace=False,
+                )
+            )
             if idx
             else []
         )
@@ -392,6 +472,13 @@ def apply_known(facts, world, seed: int) -> Planted:
             ]
             for k in a:
                 a[k] = np.concatenate([a[k], add[k]])
+    _require(
+        "A6 duplicate_captures",
+        len(dup_pairs),
+        A6_MIN_PAIRS,
+        tn_counts.get(a6_showroom, 0),
+        enforce,
+    )
     out.records.append(
         AnomalyRecord(
             "A6",
@@ -439,6 +526,20 @@ def apply_known(facts, world, seed: int) -> Planted:
         )
     )
 
+    # A1 and A5 flip captures to failures. An order whose ONLY capture was
+    # flipped is no longer paid -- leaving status alone would recreate exactly
+    # the paid-without-capture defect the invariant tests exist to catch, this
+    # time introduced by the anomaly rather than by the simulation.
+    captured_orders = {
+        oid for oid, st in zip(a["order_id"], a["status"], strict=True) if st == "captured"
+    }
+    demoted = 0
+    for i in range(len(o["order_id"])):
+        if o["status"][i] == "paid" and o["order_id"][i] not in captured_orders:
+            o["status"][i] = "abandoned"
+            demoted += 1
+    out.constructed_demoted = demoted
+
     out.constructed = {
         "a1_issuing_bank": a1_bank,
         "a2_showroom_ids": a2_showrooms,
@@ -451,3 +552,89 @@ def apply_known(facts, world, seed: int) -> Planted:
         "test_order_ids_sample": sorted(o["order_id"][o["is_test"]].tolist())[:200],
     }
     return out
+
+
+# --------------------------------------------------------------------------- #
+# Canaries (SDD §12.4)
+# --------------------------------------------------------------------------- #
+CANARY_VALUES: dict[str, int] = {
+    # region family -> a distinctive captured amount in minor units
+    "AE": 7_777_777,
+    "SG": 6_666_666,
+    "MY": 5_555_555,
+    "US": 4_444_444,
+    "GB": 3_333_333,
+    "IN": 2_222_222,
+}
+CANARY_DATE = date(2026, 7, 15)
+
+
+def plant_canaries(facts, world, seed: int) -> list[dict[str, Any]]:
+    """Plant one distinctively-valued captured attempt per country.
+
+    A canary is a value no ordinary row would carry, in a place a scoped role
+    cannot see. `test_canaries_never_leak` sweeps every answer, receipt and trace
+    for these numbers: one appearance is a scope failure that no amount of
+    plausible-looking output can excuse.
+
+    Every country gets one, so the sweep works for any role: `rm_tamil_nadu`
+    should never emit the AE/SG/MY/US/GB values, and `store_ops_uk` should never
+    emit the IN/AE/SG/MY/US ones.
+    """
+    rng = np.random.default_rng(np.random.PCG64(seed + 4241))
+    o, a = facts.orders, facts.payment_attempts
+    sh_country = dict(
+        zip(world.showrooms["showroom_id"], world.showrooms["country_code"], strict=True)
+    )
+    sr_of_order = dict(zip(o["order_id"], o["showroom_id"], strict=True))
+
+    planted: list[dict[str, Any]] = []
+    add: dict[str, list] = {k: [] for k in a}
+    for country, value in sorted(CANARY_VALUES.items()):
+        cand = [
+            i
+            for i, oid in enumerate(o["order_id"])
+            if sh_country[sr_of_order[oid]] == country
+            and o["status"][i] != "paid"
+            and not o["is_test"][i]
+        ]
+        if not cand:
+            continue
+        i = int(cand[int(rng.integers(0, len(cand)))])
+        o["status"][i] = "paid"
+        oid = str(o["order_id"][i])
+        aid = f"ATT-CANARY-{country}"
+        row = {
+            "attempt_id": aid,
+            "order_id": oid,
+            "attempt_no": np.int16(9),
+            "method": "card",
+            "card_network": "Vantiv",
+            "issuing_bank": "Canary Bank",
+            "acquiring_bank": "Anchor Acquiring",
+            "emi_tenure_months": None,
+            "amount_minor": np.int64(value),
+            "currency": str(o["currency"][i]),
+            "status": "captured",
+            "failure_reason": None,
+            "created_at_utc": o["created_at_utc"][i],
+            "business_date": CANARY_DATE,
+            "gateway_payment_id": f"pay_canary_{country}",
+            "is_test": False,
+        }
+        for k in add:
+            add[k].append(row[k])
+        planted.append(
+            {
+                "country_code": country,
+                "attempt_id": aid,
+                "order_id": oid,
+                "amount_minor": int(value),
+                "currency": str(o["currency"][i]),
+                "business_date": str(CANARY_DATE),
+            }
+        )
+    if planted:
+        for k in a:
+            a[k] = np.concatenate([a[k], np.array(add[k], dtype=a[k].dtype)])
+    return planted
