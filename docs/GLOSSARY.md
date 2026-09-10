@@ -312,6 +312,29 @@ business date.
 
 ---
 
+### 2.4a Refund age
+
+**What is counted:** how long a refund has been outstanding, in whole days.
+
+**Definition:** the reporting date minus the refund's **creation** business date.
+A refund created on 2026-09-01, read on the reporting date 2026-09-10, is **9
+days** old.
+
+Note this keys on the date the refund was *created*, not the date it was
+processed. An unprocessed refund has no processed date, and age is precisely the
+question one asks about refunds that have not completed.
+
+**Denominator:** not a ratio.
+
+**Currency:** none; this is a count of days.
+
+**Excluded:** test transactions.
+
+**Where it is used:** listing refunds still pending at the payment gateway
+(§6.3). Age is a property of each refund record, not an aggregate.
+
+---
+
 ### 2.5 Net revenue
 
 **What is counted:** captured GMV in the window, minus refunds processed in the
@@ -807,6 +830,8 @@ directly using the default, and state in the answer which reading was used.
 | "orders", unqualified | All statuses, not just paid | §2.1 |
 | "collected", "took", "made" | Captured, not settled | §2.3, §4.2 |
 | "units" | Includes accessories | §2.2 |
+| "sales", unqualified | **Captured GMV** — money, not units. Disclose the reading and offer units sold as the sibling, since "how much did we sell" and "how many did we sell" are both ordinary meanings | §2.3, §2.2 |
+| "refunds" as a noun | **Refunded amount** — the value refunded, on the refund date | §2.4 |
 | per-bank / per-method order breakdowns | Attributed to the final attempt | §1.9 |
 | any money figure spanning currencies | Converted per §1.4, currency disclosed | §1.3, §4.4 |
 | any day-based window | Showroom-local business date | §1.7, §4.5 |
@@ -827,3 +852,14 @@ defensible, plausible, and possibly not what was asked for.
 
 A saved preference resolves the calendar case for a given user; nothing resolves
 the others except asking.
+
+### 6.3 One exception: "refunds" in a gateway question
+
+"Refunds" defaults to the refunded-amount metric (§6.1), but in a **live gateway
+question** it means the individual refund **records** — "which refunds are still
+pending", "how old are the pending refunds". These ask for a list of rows, not a
+total, and answering with a single amount would be wrong.
+
+The distinguishing signal is the gateway: a question about what is *pending at
+the payment gateway* is asking about records. A question about how much was
+refunded is asking for the metric.
