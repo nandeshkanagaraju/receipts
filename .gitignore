@@ -1,0 +1,34 @@
+# ---- generated data artifacts (rebuilt by `make data`, never committed) ----
+data/
+*.duckdb
+*.duckdb.wal
+*.parquet
+
+# ---- Python ----
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# ---- web (SDD §22: built into static files served by the API) ----
+node_modules/
+web/dist/
+
+# ---- secrets (SDD §26: secrets come only from the environment) ----
+.env
+.env.*
+!.env.example
+
+# ---- OS noise ----
+.DS_Store
+
+# ---- deliberately NOT ignored, listed here so nobody adds them later ----
+# eval/recordings/  model responses are committed: replay must work offline (D16, ADR-005)
+# eval/sealed/      sealed holdout truth is committed, read only by evalkit.scoring (SDD §6)
+# eval/results/     committed reports; CI asserts byte-identical output (SDD §28)
+# truth/            constructed ground truth, recorded at generation time (D11)
