@@ -3,6 +3,12 @@
 Pure. Every draw comes from a numpy Generator seeded by the caller, so the same
 seed and scale reproduce the same world byte for byte (D3, D5).
 
+**Every iteration over a set is sorted.** Python randomises string hashing per
+process, so iterating a bare `set` visits countries in a different order each
+run, draws from the generator in a different order, and produces a different
+world from the same seed. D4 warns about exactly this. It is invisible in a
+single run and fatal to reproducibility.
+
 Money is int minor units everywhere (D1). Probabilities are float, which is
 allowed: a probability is not money. The only place the two meet is
 `_money_from_float`, which rounds half-even into minor units exactly once and is
@@ -144,6 +150,18 @@ def business_dates(start: date = START, end: date = END) -> np.ndarray:
     return np.array([start + timedelta(days=i) for i in range(n)], dtype=object)
 
 
+def price_lookup_oracle(
+    price_key: dict[tuple[str, str], int], skus: np.ndarray, countries: np.ndarray
+) -> np.ndarray:
+    """The original per-row dict lookup, kept only as a test oracle.
+
+    Not used by the generator. It exists so a test can prove the vectorised path
+    returns the same integers, rather than the two agreeing because they share an
+    implementation.
+    """
+    return np.array([price_key[(skus[i], countries[i])] for i in range(len(skus))], dtype=np.int64)
+
+
 def _money_from_float(values: np.ndarray) -> np.ndarray:
     """The one float -> minor-unit conversion. Half-even, then int64 (D1)."""
     return np.rint(values).astype(np.int64)
@@ -253,6 +271,22 @@ def generate_facts(world: World, seed: int, scale: float = 1.0) -> Facts:
         )
     )
 
+    # Dense (sku x country) matrix indexed by integer codes, replacing one dict
+    # lookup per order. That comprehension was 7.3s of an 11.9s profile. It draws
+    # nothing from the generator, so the random stream is untouched.
+    sku_index = {s: i for i, s in enumerate(world.products["sku"])}
+    country_index = {c: i for i, c in enumerate(world.countries["country_code"])}
+    price_matrix = np.zeros((len(sku_index), len(country_index)), dtype=np.int64)
+    for (s_, c_), v_ in price_key.items():
+        price_matrix[sku_index[s_], country_index[c_]] = v_
+
+    def price_lookup(skus: np.ndarray, countries: np.ndarray) -> np.ndarray:
+        si = np.fromiter((sku_index[s] for s in skus), dtype=np.int64, count=len(skus))
+        ci = np.fromiter(
+            (country_index[c] for c in countries), dtype=np.int64, count=len(countries)
+        )
+        return price_matrix[si, ci]
+
     n_customers = max(1000, int(60_000 * scale))
     customers = {
         "customer_id": np.array([f"CUS-{i:09d}" for i in range(1, n_customers + 1)], dtype=object),
@@ -333,7 +367,7 @@ def generate_facts(world: World, seed: int, scale: float = 1.0) -> Facts:
             continue
 
         sh_idx = np.repeat(np.arange(n_sh), counts)
-        offsets = {tz: _utc_offset_seconds(tz, d) for tz in set(sh_tz)}
+        offsets = {tz: _utc_offset_seconds(tz, d) for tz in sorted(set(sh_tz))}
         off = np.array([offsets[sh_tz[i]] for i in sh_idx], dtype=np.int64)
 
         # Trading hours 09:00-21:00 local.
@@ -358,10 +392,10 @@ def generate_facts(world: World, seed: int, scale: float = 1.0) -> Facts:
 
         ccode = sh_country[sh_idx]
         hs = np.empty(total, dtype=object)
-        for c in set(ccode):
+        for c in sorted(set(ccode)):
             cm = ccode == c
             hs[cm] = handsets[rng.choice(len(handsets), size=int(cm.sum()), p=handset_p[c])]
-        unit = np.array([price_key[(hs[i], ccode[i])] for i in range(total)], dtype=np.int64)
+        unit = price_lookup(hs, ccode)
         n_acc = np.where(
             rng.random(total) < ACCESSORY_ATTACH,
             rng.integers(1, MAX_ACCESSORIES + 1, size=total),
@@ -390,9 +424,7 @@ def generate_facts(world: World, seed: int, scale: float = 1.0) -> Facts:
             if not m.any():
                 continue
             a_sku = accessories[rng.integers(0, len(accessories), size=int(m.sum()))]
-            a_price = np.array(
-                [price_key[(a_sku[j], ccode[m][j])] for j in range(len(a_sku))], dtype=np.int64
-            )
+            a_price = price_lookup(a_sku, ccode[m])
             ib["order_id"].append(oid[m])
             ib["line_no"].append(np.full(int(m.sum()), k + 1, dtype=np.int16))
             ib["sku"].append(a_sku)
@@ -407,7 +439,7 @@ def generate_facts(world: World, seed: int, scale: float = 1.0) -> Facts:
         if len(ti):
             mix = METHOD_MIX
             meth = np.empty(len(ti), dtype=object)
-            for c in set(ccode[ti]):
+            for c in sorted(set(ccode[ti])):
                 mm = ccode[ti] == c
                 keys = tuple(mix[c].keys())
                 meth[mm] = _pick(rng, int(mm.sum()), keys, p=list(mix[c].values()))
