@@ -24,6 +24,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import subprocess
 import sys
 from collections import Counter
@@ -34,6 +35,12 @@ QDIR = REPO / "eval" / "questions"
 SQLDIR = REPO / "eval" / "reference_sql"
 MANIFEST = REPO / "docs" / "FREEZE_MANIFEST.json"
 TAG = "questions-frozen"
+BLIND = "holdout_blind.jsonl"
+BLIND_ENV = "BLIND_MISSING"
+
+# docs/M2_NOTES.md §4. The holdout SET is 90; only 54 are hand-written here.
+HOLDOUT_BLIND_TARGET = 30
+HOLDOUT_SEALED_WHY = 6
 
 SETS = ("dev", "eval", "holdout")
 TRAPS = (
@@ -112,6 +119,33 @@ def gate_populations(qdir: Path = QDIR, tolerance: float = 0.10) -> list[str]:
     return sorted(problems)
 
 
+def gate_blind(qdir: Path = QDIR, allow_missing: bool | None = None) -> list[str]:
+    """The 30 blind questions must be present, or their absence declared.
+
+    They are the only part of the evaluation not written by the author, so a
+    holdout frozen without them is a materially weaker test than the one the PDD
+    describes. Freezing anyway is allowed — the alternative is blocking the whole
+    project on someone else's availability — but it must be a declared decision,
+    recorded in LIMITATIONS.md and in the manifest, not a silent omission.
+    """
+    if allow_missing is None:
+        allow_missing = os.environ.get(BLIND_ENV, "").lower() == "yes"
+    p = qdir / BLIND
+    if p.exists():
+        rows = [ln for ln in p.read_text(encoding="utf-8").splitlines() if ln.strip()]
+        if len(rows) != HOLDOUT_BLIND_TARGET:
+            return [f"{BLIND}: {len(rows)} questions, expected {HOLDOUT_BLIND_TARGET}"]
+        return []
+    if allow_missing:
+        return []
+    return [
+        f"{BLIND} is missing. The 30 blind questions are the only part of the "
+        f"evaluation not written by the author. Set {BLIND_ENV}=yes to freeze "
+        f"without them; the absence is then recorded in LIMITATIONS.md and the "
+        f"manifest, and the holdout result must be reported on those terms."
+    ]
+
+
 def gate_files_present(qdir: Path = QDIR) -> list[str]:
     problems = []
     for name in SETS:
@@ -144,7 +178,12 @@ def gate_tests() -> list[str]:
 
 
 def all_gates(qdir: Path = QDIR, minimum: int = TRAP_MIN, run_tests: bool = True) -> list[str]:
-    problems = gate_files_present(qdir) + gate_populations(qdir) + gate_traps(qdir, minimum)
+    problems = (
+        gate_files_present(qdir)
+        + gate_populations(qdir)
+        + gate_traps(qdir, minimum)
+        + gate_blind(qdir)
+    )
     if run_tests:
         problems += gate_tests()
     return problems
@@ -158,10 +197,34 @@ def reference_sql_digests(sqldir: Path = SQLDIR) -> dict[str, str]:
     return {f"eval/reference_sql/{p.name}": sha256_file(p) for p in sorted(sqldir.glob("*.sql"))}
 
 
+def blind_status(qdir: Path = QDIR) -> dict[str, object]:
+    p = qdir / BLIND
+    if p.exists():
+        n = len([ln for ln in p.read_text(encoding="utf-8").splitlines() if ln.strip()])
+        return {"present": True, "count": n}
+    return {
+        "present": False,
+        "count": 0,
+        "declared_missing": True,
+        "note": (
+            "Frozen without the 30 blind questions. The holdout is the author's "
+            "own work throughout; see LIMITATIONS.md."
+        ),
+    }
+
+
 def write_manifest(path: Path = MANIFEST) -> dict[str, dict[str, str]]:
     payload: dict = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
     sections = {"questions": question_digests(), "reference_sql": reference_sql_digests()}
     payload.update(sections)
+    payload["holdout_blind"] = blind_status()
+    payload["holdout_composition"] = {
+        "hand_written": sum(TARGETS["holdout"].values()),
+        "blind": HOLDOUT_BLIND_TARGET,
+        "sealed_why_generated_in_m2": HOLDOUT_SEALED_WHY,
+        "total": sum(TARGETS["holdout"].values()) + HOLDOUT_BLIND_TARGET + HOLDOUT_SEALED_WHY,
+        "note": "Sealed WHY questions are checked at M2's freeze, not here.",
+    }
     payload.setdefault("algorithm", "sha256")
     path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return sections

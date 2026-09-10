@@ -270,6 +270,47 @@ This was applied when writing eval: EV-012 and EV-058 began as rankings over
 duplicate captures, a metric that is near-zero almost everywhere, and were
 rewritten as scalars measuring different quantities.
 
+### End of M3 — leakage protection for the holdout
+
+**Apply at the end of M3, once the reference SQL exists.** Recorded now so it is
+not forgotten at the point it stops being possible to do honestly.
+
+The holdout runs **once**, at G5, and whatever it says gets published (PDD §5).
+That only means anything if the questions and their answers were never available
+while the system was being built. The risk is not deliberate cheating; it is the
+ordinary drift of an assistant reading a file to be helpful, or an author
+glancing at a reference query to debug something unrelated, and thereafter being
+unable to un-know it.
+
+**1. Deny reads at the tool level.** Add to `.claude/settings.json` permission
+deny rules for `Read` on:
+
+```
+eval/questions/holdout.jsonl
+eval/questions/holdout_blind*
+eval/reference_sql/HO-*
+eval/sealed/**
+```
+
+The point is that the block sits **outside** the thing being blocked. A rule the
+assistant is asked to respect is a request; a rule the harness enforces is a
+control.
+
+**2. A charter test that nothing outside `evalkit` references those paths.**
+An AST scan over `receipts/` and `kestrel_gen/` for string literals or path
+constructions naming `holdout`, `holdout_blind` or `sealed`. Only
+`evalkit.questions`, `evalkit.harness` and `evalkit.scoring` may name them, and
+`eval/sealed/` only from `evalkit.scoring` — which SDD §6 already requires and
+`test_sealed_read_only_by_scoring` already enforces.
+
+Pair it with an injection: a module under `receipts/agent/` that reads
+`eval/sealed/holdout_anomalies.json` must make the test fire, and a meta-test
+must show it passes with the guard disabled.
+
+**3. Both are worth stating in `LIMITATIONS.md`** — the mitigation and its limit.
+Neither control proves the author never looked; they make looking a deliberate
+act that leaves a trace, which is the most a repository can honestly claim.
+
 ### M12 — free-form SQL can reach `orders.customer_id`
 
 EV-039 was drafted as an unanswerable question about repeat customers, on the
