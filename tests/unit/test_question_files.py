@@ -251,20 +251,134 @@ def test_uncovered_ans_questions_carry_an_interpretation() -> None:
 
 
 # --------------------------------------------------------------------------- #
-# _review/ is scaffolding, not data
+# Drafts are scaffolding, not data: nothing under them is tracked on main
 # --------------------------------------------------------------------------- #
+# Authoring drafts and batch reports live on `review/*` branches and are
+# gitignored here. Merging a review branch into main tracks them, which is how
+# `ea459fa` happened (undone by `8a60243`) and how PR #3 happened. The rule is a
+# directory rule, so the check is a directory check: an earlier version probed
+# one literal filename, and when the drafts were renamed it passed on a tree
+# carrying fourteen of them.
+DRAFT_DIRS = ("_reports", "eval/questions/_review")
+
+MERGED_REVIEW_BRANCH = """\
+{n} path(s) under {dirs} are tracked here.
+
+These directories are authoring scaffolding: drafts and batch reports, written
+per batch, deleted at `questions-frozen`, and never part of the evaluation. They
+belong on the `review/*` branches, which force-add them; on this branch they are
+gitignored (.gitignore lines 33-34).
+
+Tracked paths here almost always mean a review branch was merged into main. To
+undo it, keeping the files on disk and on the review branches:
+
+    git rm -r --cached {dirs_arg}
+    git commit -m "chore: untrack the authoring drafts from main"
+
+Tracked now:
+{paths}"""
+
+
+def tracked_drafts(repo: Path = REPO, enabled: bool = True) -> list[str]:
+    """Paths git tracks under the draft directories; empty means clean.
+
+    `enabled` is a parameter so a meta-test can turn the check off and show the
+    same tree passes, which is what proves the check is doing the refusing.
+    """
+    if not enabled:
+        return []
+    import subprocess
+
+    out = subprocess.run(
+        ["git", "ls-files", "--", *DRAFT_DIRS],
+        cwd=repo,
+        capture_output=True,
+        text=True,
+    )
+    return sorted(line for line in out.stdout.splitlines() if line.strip())
+
+
 def test_review_directory_is_ignored_and_not_loaded() -> None:
     import subprocess
 
-    review = QDIR / "_review"
-    if review.exists():
+    # 1. the ignore rule covers both directories. --no-index asks the rule, not
+    #    the index, so this stays true on a branch that force-adds them.
+    for d in DRAFT_DIRS:
+        probe = f"{d}/a-file-that-need-not-exist.md"
         out = subprocess.run(
-            ["git", "check-ignore", str(review / "batch01.md")],
+            ["git", "check-ignore", "--no-index", "-v", probe],
             cwd=REPO,
             capture_output=True,
             text=True,
         )
-        assert out.returncode == 0, "eval/questions/_review/ is not gitignored"
-    loaded = {p.name for s in SETS for p in [QDIR / f"{s}.jsonl"] if p.exists()}
-    print(f"\nquestion files loaded: {sorted(loaded)}; _review/ excluded")
-    assert not any("_review" in n for n in loaded)
+        assert out.returncode == 0, f"{d}/ is not covered by .gitignore"
+        print(f"\n{d}/ ignored by {out.stdout.strip().split(chr(9))[0]}")
+
+    # 2. and nothing under them is tracked on this branch.
+    tracked = tracked_drafts()
+    print(f"tracked paths under {list(DRAFT_DIRS)}: {len(tracked)}")
+    assert not tracked, MERGED_REVIEW_BRANCH.format(
+        n=len(tracked),
+        dirs=" and ".join(f"{d}/" for d in DRAFT_DIRS),
+        dirs_arg=" ".join(DRAFT_DIRS),
+        paths="\n".join(f"  {p}" for p in tracked),
+    )
+
+    # 3. the loader reads the three set files from QDIR itself, never a
+    #    subdirectory of it. Stated as a property so a future glob cannot widen
+    #    it silently.
+    loaded = [QDIR / f"{s}.jsonl" for s in SETS]
+    assert all(p.parent == QDIR for p in loaded), "a question file moved into a subdirectory"
+    print(f"question files loaded: {sorted(p.name for p in loaded if p.exists())}; drafts excluded")
+
+
+def test_injection_a_forced_add_under_either_directory_is_caught(tmp_path: Path) -> None:
+    """INJECTION: force-add one file under each draft directory in a scratch repo."""
+    import subprocess
+
+    repo = tmp_path / "repo"
+    for d in DRAFT_DIRS:
+        (repo / d).mkdir(parents=True)
+    (repo / ".gitignore").write_text("\n".join(f"{d}/" for d in DRAFT_DIRS) + "\n", "utf-8")
+    subprocess.run(["git", "init", "-q"], cwd=repo, check=True)
+
+    assert not tracked_drafts(repo), "precondition: the scratch repo tracks no drafts"
+
+    planted = []
+    for d in DRAFT_DIRS:
+        rel = f"{d}/planted.md"
+        (repo / rel).write_text("draft\n", encoding="utf-8")
+        subprocess.run(["git", "add", "-f", rel], cwd=repo, check=True)
+        planted.append(rel)
+
+    found = tracked_drafts(repo)
+    print(f"\ninjection: force-added {len(planted)} draft(s) -> {len(found)} tracked")
+    for f in found:
+        print(f"  {f}")
+    assert found == sorted(planted), f"the check missed a forced add: {found}"
+
+    # META: with the check disabled, the same repo reports clean.
+    off = tracked_drafts(repo, enabled=False)
+    print(f"meta (check off): {len(off)} tracked — expected 0")
+    assert not off, "the check still fired with enabled=False"
+
+
+def test_the_check_reads_the_directory_not_one_filename(tmp_path: Path) -> None:
+    """A file whose name no earlier probe knew must still be caught.
+
+    The version this replaced probed `_review/batch01.md`; the drafts had been
+    renamed to `eval_batch01.md` and `holdout_batch01.md`, so it passed on a tree
+    carrying fourteen tracked drafts.
+    """
+    import subprocess
+
+    repo = tmp_path / "repo"
+    (repo / DRAFT_DIRS[1]).mkdir(parents=True)
+    subprocess.run(["git", "init", "-q"], cwd=repo, check=True)
+    rel = f"{DRAFT_DIRS[1]}/a-name-no-probe-would-guess.md"
+    (repo / rel).write_text("draft\n", encoding="utf-8")
+    subprocess.run(["git", "add", "-f", rel], cwd=repo, check=True)
+
+    found = tracked_drafts(repo)
+    print(f"\nunguessable filename -> {found}")
+    assert found == [rel], f"a directory check must not depend on the name: {found}"

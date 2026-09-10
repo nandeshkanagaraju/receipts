@@ -37,8 +37,14 @@ def scan(path: Path) -> list[str]:
     return sorted(findings)
 
 
-def config_files() -> list[Path]:
-    return sorted(CONFIG_DIR.glob("*.yaml"))
+def config_files(config_dir: Path = CONFIG_DIR) -> list[Path]:
+    """Every file under config/, at any depth and whatever its extension.
+
+    Not `glob("*.yaml")`: the rule is "no secrets in config", not "no secrets in
+    files ending .yaml". A `.yml`, a `.env`, or anything under `config/env/`
+    would have been scanned by nobody, and would have passed silently.
+    """
+    return sorted(p for p in config_dir.rglob("*") if p.is_file())
 
 
 def test_no_secrets_in_config() -> None:
@@ -50,6 +56,37 @@ def test_no_secrets_in_config() -> None:
         f"{', '.join(p.name for p in files)}"
     )
     assert not findings, "secret-like strings in config:\n" + "\n".join(findings)
+
+
+def test_the_scan_covers_the_directory_not_one_extension(tmp_path: Path) -> None:
+    """INJECTION: a secret in a config file the old `*.yaml` glob would not see.
+
+    Two shapes at once — an extension nobody listed, and a subdirectory.
+    """
+    (tmp_path / "settings.yaml").write_text("some_key: fine\n", encoding="utf-8")
+    (tmp_path / "extra.yml").write_text("api_key: sk-abcdefghijklmnopqrstuvwxyz012345\n", "utf-8")
+    (tmp_path / "env").mkdir()
+    (tmp_path / "env" / "prod.conf").write_text("key: AKIAIOSFODNN7EXAMPLE\n", encoding="utf-8")
+
+    seen = config_files(tmp_path)
+    findings = [f for p in seen for f in scan(p)]
+    print(f"\nscanned {len(seen)} file(s): {[p.name for p in seen]}")
+    for f in findings:
+        print(f"  {f}")
+    assert len(seen) == 3, f"the scan missed a file: {[str(p) for p in seen]}"
+    # Assert which files were caught, not how many findings: one planted line
+    # legitimately matches two patterns (openai-style key and inline password),
+    # so a count is brittle in a way the property is not.
+    caught = {f.split(":")[0] for f in findings}
+    assert caught == {"extra.yml", "prod.conf"}, f"planted files caught: {sorted(caught)}"
+
+    # META: the old, extension-scoped discovery misses both.
+    old_style = sorted(tmp_path.glob("*.yaml"))
+    print(
+        f'meta (old `glob("*.yaml")`): {[p.name for p in old_style]} '
+        f"-> {len([f for p in old_style for f in scan(p)])} finding(s)"
+    )
+    assert not [f for p in old_style for f in scan(p)], "the old glob would have caught it"
 
 
 def test_env_references_are_not_flagged() -> None:
