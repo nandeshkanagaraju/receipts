@@ -135,10 +135,14 @@ window.
 
 ### 1.7a Attributing an order to a product
 
+**The product dimensions are `model`, `storage size` and `colour`.** All three are
+governed: they are defined here, so the semantic layer exposes all three, and a
+question that breaks a metric down by any of them is answerable from the
+definitions rather than falling back to free-form SQL.
+
 An order carries one handset and may carry accessories alongside it. Breaking
-**order-level money** down by a product dimension — model, storage size, colour —
-therefore needs a rule, because the order's money is one number and its lines are
-several.
+**order-level money** down by a product dimension therefore needs a rule, because
+the order's money is one number and its lines are several.
 
 **Kestrel's rule:** captured GMV, refunded amount and net revenue broken down by
 a product dimension are attributed **entirely to the order's handset**. The whole
