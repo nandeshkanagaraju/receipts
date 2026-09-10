@@ -60,6 +60,18 @@ named window **or** size it so the aggregate still clears both gates:
 artifact rather than trusting the generator's parameters, and prints the realised
 relative change and z for each anomaly at the granularity its question uses.
 
+## 1.2 Entities the frozen questions require
+
+Some questions test behaviour that only exists if the generator builds the world
+a particular way. These are constraints, not observations.
+
+| Requirement | Needed by | Why |
+|---|---|---|
+| **Two showrooms named "Kestrel Anna Nagar"** — one in Chennai, one in Madurai, **both in `IN-TN`** | DV-052 | DV-052 asks "What was captured GMV for Anna Nagar last month?" and must produce a **clarify**, not an answer. The ambiguity is entity-level: two showrooms share a name. Both sit inside `IN-TN`, so the `rm_tamil_nadu` role can see both — the question must clarify rather than resolve by scope. One showroom, or two in different regions, and the question stops testing anything |
+
+The name collision is realistic: Anna Nagar is a locality name found in more than
+one Tamil Nadu city, and retailers name branches after localities.
+
 ## 2. Sealed anomalies S1–S4
 
 Types are known now and are public. **Parameters — network, country, model, city,

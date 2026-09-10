@@ -106,6 +106,7 @@ class WhySettings(Strict):
     max_levels: int
     query_budget: int
     trailing_periods: int
+    min_trailing_periods: int
     dimensions: StrTuple
 
 

@@ -50,6 +50,17 @@ knowing where the sealed anomaly is.
   carry no `reference_sql`.
 - `trap` is `null` when the question exercises no definitional trap.
 
+### Documented extensions (ADR-009)
+
+`docs/SDD.md` is frozen at `specs-frozen`, so these three fields are recorded in
+`docs/adr/009-question-format-extensions.md` rather than by editing the spec.
+
+| Field | Where | Meaning |
+|---|---|---|
+| `interpretation` | top level | One sentence — numerator, denominator, date key, currency, exclusions — required on every ANS question with `glossary_covered: false`. M3's reference SQL follows it. **If it cannot be pinned down in one sentence, the question is AMB, not ANS.** |
+| `expected.compare` | in `expected` | `true` when the question asks for a *change*, not a level. Reference SQL returns current **and** comparison values; the M4 scorer checks both, so a system that silently drops the comparison cannot score as correct. |
+| `expected.series` | in `expected` | `true` when the question asks for a time series at a grain. Series are matched **by time key, not by rank**, and carry **no `top_k`** — a rank comparison would pass a result whose days were right but misordered, which for a series is the entire answer. |
+
 ## Populations (SDD §25.2)
 
 | Population | Meaning | dev | eval | holdout | Scored as |
@@ -133,7 +144,16 @@ variants.
 line parses against the schema; qids are unique; realised counts per set and
 population are within 10% of the targets above (printing both); every trap
 appears at least three times; the `glossary_covered: false` share is at least
-20% per set; and no variant text is duplicated.
+20% per set; and no variant text is duplicated. It also enforces ADR-009: every comparison
+question declares `compare: true`, every series question declares `series: true`
+and carries no `top_k`, and every `glossary_covered: false` ANS question has an
+`interpretation`.
+
+**Trap coverage is evaluated across all three sets.** While `eval.jsonl` and
+`holdout.jsonl` are unwritten, `test_every_trap_appears_at_least_three_times`
+**fails**, and says so in those words. That is deliberate: a green tick for trap
+coverage while two thirds of the questions do not exist would be a false claim.
+The suite goes green when the sets are complete.
 
 ---
 
