@@ -42,7 +42,7 @@ Two priorities from your brief drove specific choices:
 | HO-029 | ANS | global_finance | How many phones did we sell across all countries yesterday? |
 | HO-030 | ANS | store_ops_uk | Phones sold by storage size in the UK last month. |
 | HO-031 | ANS | global_finance | Captured GMV by issuing bank for EMI orders in India last month, in rupees. |
-| HO-032 | ANS | global_finance | Unsettled amount by acquiring bank at the end of last week, in US dollars. |
+| HO-032 | ANS | global_finance | Unsettled amount by acquiring bank at the end of July, in US dollars. |
 | HO-033 | ANS | store_ops_uk | How many UK orders last month were paid on a different method from the one they first tried? |
 | HO-034 | ANS | rm_tamil_nadu | Refund rate by payment method in Tamil Nadu last month. |
 | HO-035 | ANS | global_finance | What was our refund rate in India in fiscal Q3 of FY2026? |
@@ -93,7 +93,7 @@ Two priorities from your brief drove specific choices:
 
 | | holdout 54 | eval 150, scaled to 54 |
 |---|---|---|
-| trap `attempts_vs_orders` | 3 | 3.6 |
+| trap `attempts_vs_orders` | 3 | 4.0 |
 | trap `authorised_vs_captured` | 1 | 1.4 |
 | trap `capture_vs_settlement` | 4 | 3.6 |
 | trap `duplicate_captures` | 1 | 1.4 |
@@ -188,19 +188,14 @@ Neither set is frozen yet, so both are still fixable. It is your call and I
 have changed nothing: the brief was batch 2, and rewriting an eval question is
 not that.
 
-### 2. HO-032 sits on A3's window and dimension
+### 2. HO-032 sat on A3's window and dimension — moved on your ruling
 
-HO-032 asks for unsettled amount by acquiring bank as at 2026-09-06. That is
-exactly the snapshot DV-059 asks *why* about, and `docs/M2_NOTES.md` §1.1 pins
-A3 — a settlement delay on one acquiring bank's EMI transactions — inside that
-week. So the holdout answer will be shaped by a planted anomaly, and the top of
-its ranking is A3's bank.
+**Resolved.** The snapshot moved from **2026-09-06 to 2026-07-31**. The old
+date was A3's window and DV-059's subject, so the top of the by-bank ranking
+would have been the planted bank. July is clear of all six planted windows.
 
-This is arithmetic either way and the reference SQL computes whatever is there,
-so I do not think it is a defect. It is worth your eye because it means one
-holdout ANS question is measured on data with a deliberate spike in it. The
-alternative — moving the snapshot to the end of August — makes it a window swap
-of EV-055 and rule 7 refuses it.
+It stays distinct from EV-055 (the same metric as a global scalar at the end of
+July) by dimension, and the audit agrees: 264 questions, 0 collisions.
 
 ### 3. HO-043's correct answer is zero
 
@@ -334,7 +329,7 @@ higher than eval's own proportion and I would rather you decide than assume.
 
 ### HO-032 — ANS
 
-> **Unsettled amount by acquiring bank at the end of last week, in US dollars.**
+> **Unsettled amount by acquiring bank at the end of July, in US dollars.**
 
 | field | value |
 |---|---|
@@ -344,14 +339,14 @@ higher than eval's own proportion and I would rather you decide than assume.
 | kind | `table` · top_k `10` |
 | reporting_currency | `USD` |
 | nearest question (of 237) | `EV-055` |
-| how it differs | EV-055 is the same snapshot metric as one global scalar at the end of a month; this evaluates it as at 2026-09-06 and splits by acquiring bank, so each bank's unsettled captures are valued at their own capture-date rate |
+| how it differs | EV-055 is the same snapshot metric as one global scalar; this splits it by acquiring bank, so each bank's unsettled captures are valued at their own capture-date rate |
 
-**flagged** — sits on A3's window and dimension: unsettled amount at 2026-09-06 by acquiring bank is the snapshot DV-059 asks 'why' about. Deliberate; the arithmetic is unaffected, but the reviewer should know the two touch.
+**flagged** — snapshot moved from 2026-09-06 to 2026-07-31 on your ruling: the earlier date was A3's window and DV-059's subject, so the top of the ranking would have been the planted bank
 
 <details><summary>raw JSONL line</summary>
 
 ```json
-{"qid": "HO-032", "set": "holdout", "population": "ANS", "role": "global_finance", "as_of": "2026-09-10", "trap": "capture_vs_settlement", "glossary_covered": true, "variants": {"en": "Unsettled amount by acquiring bank at the end of last week, in US dollars.", "ta": "", "hi": "", "ta-Latn": ""}, "translation_provenance": {"ta": "pending", "hi": "pending", "ta-Latn": "pending"}, "authored_by": "nandesh", "expected": {"kind": "table", "reference_sql": "HO-032.sql", "reporting_currency": "USD", "tolerance_rel": 0.001, "top_k": 10}}
+{"qid": "HO-032", "set": "holdout", "population": "ANS", "role": "global_finance", "as_of": "2026-09-10", "trap": "capture_vs_settlement", "glossary_covered": true, "variants": {"en": "Unsettled amount by acquiring bank at the end of July, in US dollars.", "ta": "", "hi": "", "ta-Latn": ""}, "translation_provenance": {"ta": "pending", "hi": "pending", "ta-Latn": "pending"}, "authored_by": "nandesh", "expected": {"kind": "table", "reference_sql": "HO-032.sql", "reporting_currency": "USD", "tolerance_rel": 0.001, "top_k": 10}}
 ```
 </details>
 
