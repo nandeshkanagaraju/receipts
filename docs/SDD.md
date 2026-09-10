@@ -1,6 +1,6 @@
 # Receipts — Software Design Document
 
-**Version** 1.1 (review round 1 of 2) · **Changes in 1.1** one-screen Vite + React front end served by FastAPI (§22, ADR-008, §28)
+**Version** 1.1 (review round 1 of 2) · **Changes in 1.1** one-screen Vite + React front end served by FastAPI (§22, ADR-008, §28); single multi-stage Docker image (§3, §28); D2 scope covers `llm/` and `bridge/`; `config.py`, PyYAML, uvicorn, PyJWT added (§3, §4)
 **Date** 10 September 2026
 **Derives from** `docs/PDD.md` v1.2. Where this document and the PDD disagree, the PDD wins and this document gets fixed.
 **Read with** `docs/diagrams/receipts_platform_architecture.svg` and `docs/diagrams/receipts_agent_pipeline.svg`
@@ -16,7 +16,7 @@ Numbered rules the code must obey. Each names the test that enforces it. A rule 
 | # | Rule | Enforcing test |
 |---|---|---|
 | **D1** | Money is `int` in minor units, always paired with a currency code. FX rates and ratios are `Decimal`. `float` never touches money, including in SQL (`DECIMAL`/`BIGINT` only). | `test_no_float_money` (AST scan of `receipts/` and `kestrel_gen/` for `float` on money-typed fields), `test_money_columns_are_integer` (schema check) |
-| **D2** | No clock reads in the engine. `as_of: date` is injected. `datetime.now`, `date.today`, `time.time` are banned in `receipts/{domain,semantic,language,agent,compile,safety,execute,evalkit}` and `kestrel_gen/`. Wall clock is allowed only in `api/` and `observability/`. | `test_no_clock_reads_in_engine` |
+| **D2** | No clock reads in the engine. `as_of: date` is injected. `datetime.now`, `date.today`, `time.time` are banned in `receipts/{domain,semantic,language,agent,compile,safety,execute,evalkit,llm,bridge}` and `kestrel_gen/`. Timeouts are durations passed to clients, never computed from clock reads; `time.sleep` for retry backoff is allowed. Wall clock is allowed only in the transport and telemetry layers: `api/`, `mcp_server/`, and `observability/`. | `test_no_clock_reads_in_engine` |
 | **D3** | IDs are deterministic: content hashes of canonical tuples, or ordered counters in the generator. `uuid4`, `random` without a seeded generator, and `id()` are banned. | `test_ids_are_deterministic` |
 | **D4** | Every list that leaves a function is sorted by an explicit key. No reliance on set or dict iteration order. SQL results carry an explicit `ORDER BY`. | `test_compiled_sql_has_order_by`, `test_outputs_sorted` |
 | **D5** | Compilation is pure: the same `ResolvedPlan`, `Scope`, catalog version, and dialect produce byte-identical SQL. | `test_compile_deterministic` (Hypothesis property test) |
@@ -73,6 +73,7 @@ receipts/
 │   ├── world.py [P]  distributions.py [P]  anomalies.py [P]  truth.py [P]
 │   └── write.py [IO] cli.py [IO]
 ├── src/receipts/
+│   ├── config.py      [IO] strict settings loader (§26)
 │   ├── domain/        types.py [P]  ids.py [P]  money.py [P]
 │   ├── semantic/      loader.py [IO]  catalog.py [P]  lint.py [P]
 │   ├── language/      detect.py [P]  normalize.py [P]  lexicon/{ta,hi}.txt
@@ -94,7 +95,7 @@ receipts/
 ├── web/          Vite + React single-page app, built into static files served by the API (§22)
 ├── tests/        unit/ property/ injection/ integration/ e2e/ charter/
 ├── scripts/      freeze.py  double_compute.py  bench.py
-├── docker/       compose.yaml  api.Dockerfile  web.Dockerfile  postgres/init.sql
+├── docker/       compose.yaml  api.Dockerfile (multi-stage: Node stage builds web/, Python stage serves it)  postgres/init.sql
 └── .github/workflows/ci.yml
 ```
 
@@ -104,7 +105,7 @@ receipts/
 
 ## 4. Stack
 
-Python 3.11, FastAPI, Pydantic v2, sqlglot, duckdb, psycopg 3, pyarrow, numpy, httpx, the official `mcp` Python SDK, `anthropic` (primary) and `openai` (secondary) SDKs, OpenTelemetry SDK, pytest, Hypothesis, ruff, mypy (strict on `domain`, `compile`, `safety`, `agent`, `evalkit`). Front end: Vite, React, TypeScript, Tailwind, Recharts, openapi-typescript, Playwright. Docker Compose for local and demo.
+Python 3.11, FastAPI with uvicorn, Pydantic v2, PyYAML, PyJWT (declared directly, not relied on transitively), sqlglot, duckdb, psycopg 3, pyarrow, numpy, httpx, the official `mcp` Python SDK, `anthropic` (primary) and `openai` (secondary) SDKs, OpenTelemetry SDK, pytest, Hypothesis, ruff, mypy (strict on `domain`, `compile`, `safety`, `agent`, `evalkit`). Front end: Vite, React, TypeScript, Tailwind, Recharts, openapi-typescript, Playwright. Docker Compose for local and demo.
 
 Dependency versions are pinned in `requirements.lock` and `web/package-lock.json`. pyarrow is pinned exactly because data digests depend on it (§5.4).
 
@@ -794,7 +795,7 @@ Variance (T11): `make eval-live SET=eval RUNS=3` runs in live mode and reports m
 | semantic | layer lint and glossary coverage |
 | freeze | document and generator hashes match `FREEZE_MANIFEST.json` |
 | web | build and Playwright journeys against the API in replay mode |
-| images | Docker builds |
+| images | Builds the single multi-stage API image (web app included); no separate web image |
 
 ---
 

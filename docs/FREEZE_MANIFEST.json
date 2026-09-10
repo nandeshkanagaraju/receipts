@@ -3,7 +3,7 @@
   "documents": {
     "docs/BUILD_PROMPTS.md": "5465ba0f022f2e771df3b8d088115c3daab7b9c18109967cb65a40a8c499d902",
     "docs/PDD.md": "5b12d19e36c824ce89520364cae4cea6ba89784c9960bf74008612de635b3cad",
-    "docs/SDD.md": "95e75931336b1fc4d77bc9430845bc8c0ec185687d5e51a253951317010f2a10"
+    "docs/SDD.md": "df9ff81ea382519f42af050fafb9018480581df1bf30156c4ab6df101737a9df"
   },
   "note": "Byte-for-byte hashes of the frozen specs. Regenerate deliberately."
 }
