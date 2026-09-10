@@ -1,37 +1,63 @@
 # Batch 01 — dev.jsonl, DV-001–DV-020
 
 **File:** `eval/questions/dev.jsonl` (lines 1–20)  
-**Status:** draft, awaiting approval. This review file is deleted at `questions-frozen`.
+**Status:** draft, awaiting approval. Deleted at `questions-frozen`.
 
-## What changed since your review
+## Changes in this revision
 
-- **DV-002 duplicate:** paste artifact. The file has 20 lines, no duplicate qids,
-  and DV-002 carries its own role and text. No change made.
-- **DV-004** — "collect" kept, and `GLOSSARY.md` §5 now maps *collected / took /
-  brought in / made* → captured GMV, explicitly **not** settled money. The word
-  now resolves to one metric, so the question stays ANS.
-- **DV-007** — `GLOSSARY.md` §2.2 now states outright that units **include
-  accessories**, with the consequence spelled out (units > handsets; an
-  accessory-heavy showroom ranks higher on units than on phones).
-- **DV-010** — new `GLOSSARY.md` §1.9: an order is attributed to the method,
-  network and issuing bank of its **final attempt**. Applied to every order-level
-  per-bank/per-method breakdown, so per-bank rates reconcile to the overall rate.
-- **DV-011, DV-012** — kept in ANS, each now carries an `interpretation` sentence
-  that M3's reference SQL must follow.
-- **DV-019** — window added: "last week" = `2026-08-31 … 2026-09-06`. Recorded in
-  `docs/M2_NOTES.md` as a binding constraint on where A1 is planted.
-- **"Success rate"** unchanged: order-level per §4.1.
-- **"Revenue"** stays ambiguous, now formalised in new `GLOSSARY.md` §6 —
-  §6.1 lists terms with an official default (answer and disclose), §6.2 lists
-  terms that must be clarified (revenue, best/top/worst, unqualified quarter,
-  performance/growth).
+**GLOSSARY §1.9 replaced — final-attempt attribution was wrong.** Your catch: an
+order that tried UPI, failed, then paid by card left UPI's denominator entirely,
+so UPI's success rate *rose* exactly when UPI was failing. §1.9 now specifies
+**"tried" attribution** for every per-method / per-bank / per-network order-level
+success rate: denominator = orders with at least one non-test attempt on that
+method/bank/network; numerator = those with a captured attempt on the *same* one.
+The section states explicitly that per-method rates **do not sum or reconcile to
+the overall rate** — the denominators overlap, their union exceeds the order
+count, so they do not partition the orders. Value and count metrics are separated
+out: they follow the money to the capturing attempt, and those breakdowns *do*
+sum to the total.
+
+**Questions in this batch that depend on §1.9:**
+
+| qid | Why it depends | Effect of the change |
+|---|---|---|
+| DV-001 | "UPI success rate in Chennai" — per-method order-level rate | Denominator is now orders that *tried* UPI, not orders that *ended* on UPI. Larger denominator; lower rate during a UPI incident |
+| DV-010 | "Card success rate by issuing bank" — per-bank order-level rate | Same per bank; an order that tried two banks now appears in both denominators |
+| DV-019 | WHY on A1, decomposing UPI success by bank | The anomaly becomes visible: under the old rule the dip partly hid itself |
+| DV-040 | WHY on A5, card failures in the UK | Same, for card/network decomposition |
+
+**Not affected, and now explicitly so:** DV-028 (attempt-level — attempts carry
+their own bank, no attribution rule needed); DV-008 and DV-025 (EMI *share* is a
+value metric, attributed to the capture, covered by the new "value follows the
+money" clause).
+
+**Other glossary fixes landing in this batch:**
+
+- **§5 rewritten to map phrases, not words**, in five tables (money, counts,
+  payments, time, and phrases that deliberately have no entry). "How much did we
+  take" -> captured GMV; "how many orders did we take" -> orders_count; "how long
+  did settlement take" -> settlement lag. A word-level map collapsed all three.
+- **§2.1 orders_count** now carries a status table: `paid`, `abandoned` and
+  `cancelled` all count, and "orders we got paid for" is called out as a
+  different number.
+- **§2.10 failure_rate_by_reason** — denominator nailed as *all attempts of any
+  outcome*, with the consequence spelled out: per-reason rates sum to the overall
+  attempt failure rate, not to 100%. A set summing to 100% is the
+  share-of-failures, which is undefined here.
+- **DV-009 reworded** to "Payment failure **rate** by reason..." so it matches the
+  metric. It was a count question pointed at a rate metric.
+- **§2.2** — "phone", "phone model", "handset", "device" mean handsets only;
+  "units" includes accessories.
+- **§2.14 unsettled_amount** — now explicitly a **snapshot at the end of the
+  window** (captured on or before D, unsettled at D, no lower bound), with FX at
+  each amount's own capture date so it reconciles with captured GMV.
 
 ## Batch summary
 
 - Populations: AMB 3 · ANS 12 · DENY 1 · LIVE 1 · UNA 2 · WHY 1
 - Roles: global_finance 6 · rm_tamil_nadu 9 · store_ops_uk 5
 - `glossary_covered: false`: 5/20 = 25%
-- Traps touched: attempts_vs_orders 3 · authorised_vs_captured 1 · capture_vs_settlement 1 · emi 1 · fiscal_calendar 1 · local_time 1 · multi_currency 1 · partial_refunds 1
+- Traps: attempts_vs_orders 3 · authorised_vs_captured 1 · capture_vs_settlement 1 · emi 1 · fiscal_calendar 1 · local_time 1 · multi_currency 1 · partial_refunds 1
 
 ---
 
@@ -221,7 +247,7 @@
 
 ## DV-009 — ANS
 
-> **Payment failures by reason in Chennai over the last 7 days.**
+> **Payment failure rate by reason in Chennai over the last 7 days.**
 
 | field | value |
 |---|---|
@@ -238,7 +264,7 @@
 <details><summary>raw JSONL line</summary>
 
 ```json
-{"qid": "DV-009", "set": "dev", "population": "ANS", "role": "rm_tamil_nadu", "as_of": "2026-09-10", "trap": null, "glossary_covered": true, "variants": {"en": "Payment failures by reason in Chennai over the last 7 days.", "ta": "", "hi": "", "ta-Latn": ""}, "translation_provenance": {"ta": "pending", "hi": "pending", "ta-Latn": "pending"}, "authored_by": "nandesh", "expected": {"kind": "table", "reference_sql": "DV-009.sql", "reporting_currency": null, "tolerance_rel": 0.001, "top_k": 5}}
+{"qid": "DV-009", "set": "dev", "population": "ANS", "role": "rm_tamil_nadu", "as_of": "2026-09-10", "trap": null, "glossary_covered": true, "variants": {"en": "Payment failure rate by reason in Chennai over the last 7 days.", "ta": "", "hi": "", "ta-Latn": ""}, "translation_provenance": {"ta": "pending", "hi": "pending", "ta-Latn": "pending"}, "authored_by": "nandesh", "expected": {"kind": "table", "reference_sql": "DV-009.sql", "reporting_currency": null, "tolerance_rel": 0.001, "top_k": 5}}
 ```
 </details>
 

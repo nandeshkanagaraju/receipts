@@ -1,31 +1,29 @@
 # Batch 02 — dev.jsonl, DV-021–DV-040
 
 **File:** `eval/questions/dev.jsonl` (lines 21–40)  
-**Status:** draft, awaiting approval. This review file is deleted at `questions-frozen`.
+**Status:** draft, awaiting approval. Deleted at `questions-frozen`.
 
-## Notes on this batch
+## Changes in this revision
 
-- Completes trap coverage: `duplicate_captures` (DV-022) and `test_transactions`
-  (DV-023) were the two untouched after batch 1.
-- **DV-028** asks for attempt-level success explicitly, as the deliberate
-  counterpart to DV-001's unqualified (order-level) phrasing. Same region, same
-  metric family, different number — the pair is the attempts-vs-orders trap made
-  visible in the eval itself.
-- **DV-032** and **DV-033** are the `glossary_covered: false` questions here, both
-  with `interpretation`. Authorised-not-captured is computable but not a Kestrel
-  metric; distinct-bank-count likewise.
-- **DV-039** is the mirror of DV-018: a UK role asking about Chennai. Both
-  directions of denial are now covered, so DENY cannot be passed by a rule that
-  only ever refuses one region.
-- **DV-040** names A5 with window "last month" = `2026-08-01 … 2026-08-31`, also
-  recorded in `docs/M2_NOTES.md`.
+- **DV-029** now rests on the new §2.2 rule: "phone model" means handsets only,
+  so "top 10 phone models by units sold" ranks handset SKUs and excludes
+  accessory lines. Its `trap` field was cleared — it exercises a definition, not
+  one of the ten PDD §6.2 traps.
+- **DV-022** — `docs/M2_NOTES.md` now records that A6 must be planted at a **Tamil
+  Nadu** showroom inside `2026-08-01`...`08-31`. Planted elsewhere, the `IN-TN`
+  scoped answer is zero and the question is trivial.
+- **DV-040** — M2_NOTES now also constrains A5's *magnitude*: the UK card-failure
+  change must clear both why-agent gates (at least 2% relative **and** |z| >= 2)
+  at **month** level, since that is the granularity the question asks about.
+
+Nothing else in DV-021–DV-040 changed.
 
 ## Batch summary
 
 - Populations: AMB 3 · ANS 13 · DENY 1 · UNA 2 · WHY 1
 - Roles: global_finance 7 · rm_tamil_nadu 5 · store_ops_uk 8
 - `glossary_covered: false`: 5/20 = 25%
-- Traps touched: attempts_vs_orders 1 · authorised_vs_captured 1 · capture_vs_settlement 1 · duplicate_captures 1 · emi 1 · fiscal_calendar 1 · local_time 1 · partial_refunds 2 · test_transactions 1
+- Traps: attempts_vs_orders 1 · authorised_vs_captured 1 · capture_vs_settlement 1 · duplicate_captures 1 · emi 1 · fiscal_calendar 1 · local_time 1 · partial_refunds 2 · test_transactions 1
 
 ---
 

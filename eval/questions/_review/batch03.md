@@ -61,7 +61,7 @@ order value — the glossary defines the mean, not the median).
 <details><summary>raw JSONL line</summary>
 
 ```json
-{"qid": "DV-041", "set": "dev", "population": "ANS", "role": "rm_tamil_nadu", "as_of": "2026-09-10", "trap": null, "glossary_covered": true, "variants": {"en": "How does our captured GMV this month compare with last month?", "ta": "", "hi": "", "ta-Latn": ""}, "translation_provenance": {"ta": "pending", "hi": "pending", "ta-Latn": "pending"}, "authored_by": "nandesh", "expected": {"kind": "scalar", "reference_sql": "DV-041.sql", "reporting_currency": "INR", "tolerance_rel": 0.001}}
+{"qid": "DV-041", "set": "dev", "population": "ANS", "role": "rm_tamil_nadu", "as_of": "2026-09-10", "trap": null, "glossary_covered": true, "variants": {"en": "How does our captured GMV this month compare with last month?", "ta": "", "hi": "", "ta-Latn": ""}, "translation_provenance": {"ta": "pending", "hi": "pending", "ta-Latn": "pending"}, "authored_by": "nandesh", "expected": {"kind": "scalar", "reference_sql": "DV-041.sql", "reporting_currency": "INR", "tolerance_rel": 0.001, "compare": true}}
 ```
 </details>
 
@@ -84,7 +84,7 @@ order value — the glossary defines the mean, not the median).
 <details><summary>raw JSONL line</summary>
 
 ```json
-{"qid": "DV-042", "set": "dev", "population": "ANS", "role": "global_finance", "as_of": "2026-09-10", "trap": "multi_currency", "glossary_covered": true, "variants": {"en": "Captured GMV by country last month versus the same month last year, in US dollars.", "ta": "", "hi": "", "ta-Latn": ""}, "translation_provenance": {"ta": "pending", "hi": "pending", "ta-Latn": "pending"}, "authored_by": "nandesh", "expected": {"kind": "table", "reference_sql": "DV-042.sql", "reporting_currency": "USD", "tolerance_rel": 0.001, "top_k": 6}}
+{"qid": "DV-042", "set": "dev", "population": "ANS", "role": "global_finance", "as_of": "2026-09-10", "trap": "multi_currency", "glossary_covered": true, "variants": {"en": "Captured GMV by country last month versus the same month last year, in US dollars.", "ta": "", "hi": "", "ta-Latn": ""}, "translation_provenance": {"ta": "pending", "hi": "pending", "ta-Latn": "pending"}, "authored_by": "nandesh", "expected": {"kind": "table", "reference_sql": "DV-042.sql", "reporting_currency": "USD", "tolerance_rel": 0.001, "top_k": 6, "compare": true}}
 ```
 </details>
 
@@ -107,7 +107,7 @@ order value — the glossary defines the mean, not the median).
 <details><summary>raw JSONL line</summary>
 
 ```json
-{"qid": "DV-043", "set": "dev", "population": "ANS", "role": "store_ops_uk", "as_of": "2026-09-10", "trap": "attempts_vs_orders", "glossary_covered": true, "variants": {"en": "How did payment success rate in the UK last week compare with the week before?", "ta": "", "hi": "", "ta-Latn": ""}, "translation_provenance": {"ta": "pending", "hi": "pending", "ta-Latn": "pending"}, "authored_by": "nandesh", "expected": {"kind": "scalar", "reference_sql": "DV-043.sql", "reporting_currency": null, "tolerance_rel": 0.001}}
+{"qid": "DV-043", "set": "dev", "population": "ANS", "role": "store_ops_uk", "as_of": "2026-09-10", "trap": "attempts_vs_orders", "glossary_covered": true, "variants": {"en": "How did payment success rate in the UK last week compare with the week before?", "ta": "", "hi": "", "ta-Latn": ""}, "translation_provenance": {"ta": "pending", "hi": "pending", "ta-Latn": "pending"}, "authored_by": "nandesh", "expected": {"kind": "scalar", "reference_sql": "DV-043.sql", "reporting_currency": null, "tolerance_rel": 0.001, "compare": true}}
 ```
 </details>
 
@@ -121,7 +121,7 @@ order value — the glossary defines the mean, not the median).
 | as_of | `2026-09-10` |
 | trap | `local_time` |
 | glossary_covered | `true` |
-| kind | `table` · top_k `7` |
+| kind | `table` |
 | reporting_currency | `None` |
 | tolerance_rel | `0.001` |
 | reference_sql | `DV-044.sql` |
@@ -130,7 +130,7 @@ order value — the glossary defines the mean, not the median).
 <details><summary>raw JSONL line</summary>
 
 ```json
-{"qid": "DV-044", "set": "dev", "population": "ANS", "role": "rm_tamil_nadu", "as_of": "2026-09-10", "trap": "local_time", "glossary_covered": true, "variants": {"en": "Show me our daily order count for the last 7 days.", "ta": "", "hi": "", "ta-Latn": ""}, "translation_provenance": {"ta": "pending", "hi": "pending", "ta-Latn": "pending"}, "authored_by": "nandesh", "expected": {"kind": "table", "reference_sql": "DV-044.sql", "reporting_currency": null, "tolerance_rel": 0.001, "top_k": 7}}
+{"qid": "DV-044", "set": "dev", "population": "ANS", "role": "rm_tamil_nadu", "as_of": "2026-09-10", "trap": "local_time", "glossary_covered": true, "variants": {"en": "Show me our daily order count for the last 7 days.", "ta": "", "hi": "", "ta-Latn": ""}, "translation_provenance": {"ta": "pending", "hi": "pending", "ta-Latn": "pending"}, "authored_by": "nandesh", "expected": {"kind": "table", "reference_sql": "DV-044.sql", "reporting_currency": null, "tolerance_rel": 0.001, "series": true}}
 ```
 </details>
 
@@ -144,7 +144,7 @@ order value — the glossary defines the mean, not the median).
 | as_of | `2026-09-10` |
 | trap | `None` |
 | glossary_covered | `true` |
-| kind | `table` · top_k `8` |
+| kind | `table` |
 | reporting_currency | `GBP` |
 | tolerance_rel | `0.001` |
 | reference_sql | `DV-045.sql` |
@@ -153,7 +153,7 @@ order value — the glossary defines the mean, not the median).
 <details><summary>raw JSONL line</summary>
 
 ```json
-{"qid": "DV-045", "set": "dev", "population": "ANS", "role": "store_ops_uk", "as_of": "2026-09-10", "trap": null, "glossary_covered": true, "variants": {"en": "Weekly captured GMV in the UK for the last 8 weeks.", "ta": "", "hi": "", "ta-Latn": ""}, "translation_provenance": {"ta": "pending", "hi": "pending", "ta-Latn": "pending"}, "authored_by": "nandesh", "expected": {"kind": "table", "reference_sql": "DV-045.sql", "reporting_currency": "GBP", "tolerance_rel": 0.001, "top_k": 8}}
+{"qid": "DV-045", "set": "dev", "population": "ANS", "role": "store_ops_uk", "as_of": "2026-09-10", "trap": null, "glossary_covered": true, "variants": {"en": "Weekly captured GMV in the UK for the last 8 weeks.", "ta": "", "hi": "", "ta-Latn": ""}, "translation_provenance": {"ta": "pending", "hi": "pending", "ta-Latn": "pending"}, "authored_by": "nandesh", "expected": {"kind": "table", "reference_sql": "DV-045.sql", "reporting_currency": "GBP", "tolerance_rel": 0.001, "series": true}}
 ```
 </details>
 
