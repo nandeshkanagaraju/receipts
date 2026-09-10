@@ -21,6 +21,8 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[1]
 MANIFEST = REPO / "docs" / "FREEZE_MANIFEST.json"
 
+SEALED_DIR = "eval/sealed"
+
 FROZEN_DOCS = (
     "docs/PDD.md",
     "docs/SDD.md",
@@ -47,6 +49,46 @@ def compute(repo: Path = REPO) -> dict[str, str]:
     return dict(sorted(out.items()))
 
 
+def sealed_digests(repo: Path = REPO) -> dict[str, str]:
+    """SHA-256 per file in eval/sealed/. Hashes only, never contents (ADR-012).
+
+    An empty result is not an error: the directory is generator output and is
+    absent on a fresh clone. What must never happen is a file changing after the
+    freeze without anyone noticing, and a hash catches that without revealing
+    what the file says.
+    """
+    d = repo / SEALED_DIR
+    if not d.is_dir():
+        return {}
+    return {
+        f"{SEALED_DIR}/{p.name}": sha256_file(p)
+        for p in sorted(d.iterdir())
+        if p.is_file() and p.name != ".gitkeep"
+    }
+
+
+def check_sealed(path: Path = MANIFEST, repo: Path = REPO) -> list[str]:
+    """Compare recorded sealed hashes with the files on disk."""
+    if not path.exists():
+        return []
+    recorded = json.loads(path.read_text(encoding="utf-8")).get("sealed_files", {})
+    if not recorded:
+        return []
+    actual = sealed_digests(repo)
+    if not actual:
+        return []
+    problems = []
+    for rel in sorted(set(recorded) | set(actual)):
+        want, got = recorded.get(rel), actual.get(rel)
+        if want is None:
+            problems.append(f"{rel}: present but not recorded at freeze")
+        elif got is None:
+            problems.append(f"{rel}: recorded at freeze but missing now")
+        elif want != got:
+            problems.append(f"{rel}: sealed file changed since the freeze")
+    return problems
+
+
 def read_manifest(path: Path = MANIFEST) -> dict[str, str]:
     if not path.exists():
         raise FileNotFoundError(f"freeze manifest missing: {path}")
@@ -67,6 +109,9 @@ def write_manifest(path: Path = MANIFEST, repo: Path = REPO) -> dict[str, str]:
     payload["algorithm"] = "sha256"
     payload["note"] = "Byte-for-byte hashes of frozen artifacts. Regenerate deliberately."
     payload["documents"] = digests
+    sealed = sealed_digests(repo)
+    if sealed:
+        payload["sealed_files"] = sealed
     path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return digests
 
@@ -75,7 +120,7 @@ def check(path: Path = MANIFEST, repo: Path = REPO) -> list[str]:
     """Return a sorted list of human-readable mismatches; empty means clean."""
     recorded = read_manifest(path)
     actual = compute(repo)
-    problems: list[str] = []
+    problems: list[str] = check_sealed(path, repo)
     for rel in sorted(set(recorded) | set(actual)):
         want, got = recorded.get(rel), actual.get(rel)
         if want is None:

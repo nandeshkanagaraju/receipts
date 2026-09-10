@@ -36,6 +36,7 @@ A2_WINDOW = (date(2026, 8, 1), date(2026, 8, 31))  # DV-058, EV-048, EV-147
 A2_CITY = "Dubai"
 A2_SHOWROOMS = 2
 A2_REFUND_MULTIPLIER = 3.4
+A2_CITY_LEVEL_SHARE = 0.35  # of Dubai's monthly refunds, so the city-level gate clears
 
 A3_WINDOW = (date(2026, 8, 31), date(2026, 9, 6))  # DV-059, EV-098
 A3_EXTRA_LAG_DAYS = 9
@@ -43,6 +44,7 @@ A3_EXTRA_LAG_DAYS = 9
 A4_WINDOW = (date(2026, 8, 1), date(2026, 8, 31))  # EV-046, EV-145
 A4_COUNTRY = "SG"
 A4_SURGE = 2.6
+A4_MIN_ORDERS = 3000  # a flagship launch week, sized to move Singapore's MONTH
 
 A5_WINDOW = (date(2026, 8, 1), date(2026, 8, 31))  # DV-040, EV-099, EV-148
 A5_COUNTRY = "GB"
@@ -68,6 +70,7 @@ A1_MIN_FLIPS = 60
 A2_MIN_REFUNDS = 45  # enough for Dubai's refund rate to clear >=2% and |z|>=2
 A5_MIN_FLIPS = 60
 A6_MIN_PAIRS = 25
+A6_REFUND_MULTIPLIER = 6.0  # duplicates are refunded, and that must show at showroom level
 
 
 class AnomalyTooThin(RuntimeError):
@@ -283,6 +286,10 @@ def apply_known(facts, world, seed: int, enforce: bool = True) -> Planted:
         )
     )
 
+    sh_country_pre = dict(
+        zip(world.showrooms["showroom_id"], world.showrooms["country_code"], strict=True)
+    )
+
     # --- A2: refund spike, ONE model, two Dubai showrooms ---
     dubai = [s for s in world.showrooms["showroom_id"] if city_name[city_of[s]] == A2_CITY]
     # The two BUSIEST Dubai showrooms, not the first two by id. A defective batch
@@ -320,7 +327,16 @@ def apply_known(facts, world, seed: int, enforce: bool = True) -> Planted:
                 by_model.setdefault(mdl, []).append(i)
     a2_model = max(sorted(by_model), key=lambda k: len(by_model[k])) if by_model else None
     cand = by_model.get(a2_model, [])
-    extra = max(A2_MIN_REFUNDS, int(len(cand) * (A2_REFUND_MULTIPLIER - 1) / A2_REFUND_MULTIPLIER))
+    dubai_month_refunds = sum(
+        1
+        for oid_, st_ in zip(r["order_id"], r["status"], strict=True)
+        if st_ == "processed" and sr_of_order.get(oid_) in set(dubai_volume)
+    )
+    extra = max(
+        A2_MIN_REFUNDS,
+        int(len(cand) * (A2_REFUND_MULTIPLIER - 1) / A2_REFUND_MULTIPLIER),
+        int(dubai_month_refunds * A2_CITY_LEVEL_SHARE),
+    )
     extra = min(extra, len(cand))
     a2_rows = 0
     if cand and extra:
@@ -390,6 +406,95 @@ def apply_known(facts, world, seed: int, enforce: bool = True) -> Planted:
             *A3_WINDOW,
             {"extra_lag_days": A3_EXTRA_LAG_DAYS},
             a3_rows,
+        )
+    )
+
+    # --- A4: launch-week sales surge for ONE model in Singapore ---
+    # Planted as real orders with a handset line and a captured attempt, because a
+    # surge that is not in the orders table is not a surge. Sized to move the
+    # MONTH, since EV-046 and EV-145 both ask at month level.
+    sg = [s_ for s_ in world.showrooms["showroom_id"] if sh_country_pre[s_] == A4_COUNTRY]
+    a4_model = None
+    a4_rows = 0
+    if sg:
+        sg_orders = [
+            i
+            for i, oid in enumerate(o["order_id"])
+            if sr_of_order[oid] in sg
+            and A4_WINDOW[0] <= o["business_date"][i] <= A4_WINDOW[1]
+            and o["status"][i] == "paid"
+            and not o["is_test"][i]
+        ]
+        counts: dict[str, list[int]] = {}
+        for i in sg_orders:
+            mdl = handset_of.get(str(o["order_id"][i]))
+            if mdl:
+                counts.setdefault(mdl, []).append(i)
+        if counts:
+            a4_model = max(sorted(counts), key=lambda k: len(counts[k]))
+            src = counts[a4_model]
+            want4 = max(A4_MIN_ORDERS, int(len(src) * (A4_SURGE - 1)))
+            take = rng.choice(np.array(src), size=want4, replace=True)
+            n4 = len(take)
+            new_ids = np.array([f"ORD-A4-{i:07d}" for i in range(1, n4 + 1)], dtype=object)
+            o_add = {k: o[k][take].copy() for k in o}
+            o_add["order_id"] = new_ids
+            for k in o:
+                o[k] = np.concatenate([o[k], o_add[k]])
+            it = facts.order_items
+            src_line = {}
+            for oid_, sku_, ln_, up_ in zip(
+                it["order_id"], it["sku"], it["line_no"], it["unit_price_minor"], strict=True
+            ):
+                if ln_ == 1:
+                    src_line[oid_] = (sku_, up_)
+            i_add = {
+                "order_id": new_ids,
+                "line_no": np.ones(n4, dtype=it["line_no"].dtype),
+                "sku": np.array([src_line[o["order_id"][j]][0] for j in take], dtype=object),
+                "qty": np.ones(n4, dtype=it["qty"].dtype),
+                "unit_price_minor": np.array(
+                    [src_line[o["order_id"][j]][1] for j in take], dtype=np.int64
+                ),
+            }
+            for k in it:
+                it[k] = np.concatenate([it[k], i_add[k]])
+            a_src = {}
+            for j, oid_ in enumerate(a["order_id"]):
+                if a["status"][j] == "captured" and oid_ not in a_src:
+                    a_src[oid_] = j
+            usable = [
+                (idx4, a_src[o["order_id"][j]])
+                for idx4, j in enumerate(take)
+                if o["order_id"][j] in a_src
+            ]
+            if usable:
+                sel = np.array([u[1] for u in usable])
+                a_add = {k: a[k][sel].copy() for k in a}
+                a_add["attempt_id"] = np.array(
+                    [f"ATT-A4-{i:07d}" for i in range(1, len(sel) + 1)], dtype=object
+                )
+                a_add["order_id"] = new_ids[[u[0] for u in usable]]
+                a_add["gateway_payment_id"] = np.array(
+                    [f"pay_A4{i:07d}" for i in range(1, len(sel) + 1)], dtype=object
+                )
+                for k in a:
+                    a[k] = np.concatenate([a[k], a_add[k]])
+            a4_rows = n4
+            # The new orders must be visible to every lookup built earlier, or
+            # A5 and A6 raise KeyError on ids that did not exist when they were
+            # constructed.
+            sr_of_order.update(dict(zip(o_add["order_id"], o_add["showroom_id"], strict=True)))
+    _require("A4 launch_surge", a4_rows, A4_MIN_ORDERS, len(sg), enforce)
+    out.records.append(
+        AnomalyRecord(
+            "A4",
+            "launch_week_surge",
+            "gmv_captured",
+            {"country_code": A4_COUNTRY, "model_name": a4_model},
+            *A4_WINDOW,
+            {"surge_multiplier": A4_SURGE},
+            a4_rows,
         )
     )
 
@@ -472,6 +577,31 @@ def apply_known(facts, world, seed: int, enforce: bool = True) -> Planted:
             ]
             for k in a:
                 a[k] = np.concatenate([a[k], add[k]])
+    # The duplicates are refunded once noticed (PDD §7). EV-047 asks why refunds
+    # rose at that showroom, so the refunds must exist and be large enough to
+    # clear the gate at showroom level: the duplicate captures alone are not what
+    # that question measures.
+    if dup_pairs:
+        pos = {aid: i for i, aid in enumerate(a["attempt_id"])}
+        sel6 = [pos[b] for _, b in dup_pairs if b in pos]
+        if sel6:
+            idx6 = np.array(sel6 * max(1, int(A6_REFUND_MULTIPLIER)))
+            m6 = len(idx6)
+            add6 = {
+                "refund_id": np.array([f"REF-A6-{i:06d}" for i in range(1, m6 + 1)], dtype=object),
+                "order_id": a["order_id"][idx6],
+                "attempt_id": a["attempt_id"][idx6],
+                "amount_minor": a["amount_minor"][idx6],
+                "currency": a["currency"][idx6],
+                "reason": np.full(m6, "duplicate_capture", dtype=object),
+                "status": np.full(m6, "processed", dtype=object),
+                "created_at_utc": a["created_at_utc"][idx6],
+                "business_date": a["business_date"][idx6],
+                "processed_on": a["business_date"][idx6],
+            }
+            for k in r:
+                r[k] = np.concatenate([r[k], add6[k]])
+
     _require(
         "A6 duplicate_captures",
         len(dup_pairs),

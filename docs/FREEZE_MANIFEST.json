@@ -5,5 +5,8 @@
     "docs/PDD.md": "5b12d19e36c824ce89520364cae4cea6ba89784c9960bf74008612de635b3cad",
     "docs/SDD.md": "df9ff81ea382519f42af050fafb9018480581df1bf30156c4ab6df101737a9df"
   },
-  "note": "Byte-for-byte hashes of the frozen specs. Regenerate deliberately."
+  "note": "Byte-for-byte hashes of frozen artifacts. Regenerate deliberately.",
+  "sealed_files": {
+    "eval/sealed/holdout_anomalies.json": "cd25eb23b2a82b00bfb31f80b5ee2157b151a2d3c69131e3027e03acbe33ae6f"
+  }
 }

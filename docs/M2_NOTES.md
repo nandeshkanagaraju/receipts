@@ -456,6 +456,23 @@ HO-025 is exactly this — routed down the free-form path must produce `DENIED`
 naming the `finance` capability, with a meta-test showing it produces something
 else when the capability check is disabled.
 
+### M21 — publish the sealed files and the seed after the holdout
+
+`eval/sealed/` is untracked and the freeze records only SHA-256 hashes of its
+contents (ADR-012). That is the right posture *while building*, and the wrong one
+afterwards: a holdout nobody can inspect is a claim, not a result.
+
+**At G5, once the holdout has run its single time, commit the sealed files and
+publish the seed** currently in `.env`. Then anyone can regenerate the world,
+re-derive S1–S4, and check the scoring for themselves.
+
+Verify the recorded hashes first. If a sealed file no longer matches the hash
+taken at `gen-frozen`, the holdout was scored against something other than what
+was sealed, and the result is void — say so rather than publishing it.
+
+This is written down now, before the numbers exist, because the incentive not to
+publish only appears afterwards.
+
 ### M12 — free-form SQL can reach `orders.customer_id`
 
 EV-039 was drafted as an unanswerable question about repeat customers, on the

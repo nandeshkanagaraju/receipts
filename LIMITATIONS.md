@@ -43,6 +43,50 @@ reader can discount accordingly.
 
 ---
 
+## The sealed holdout depends on one file and one seed surviving to G5
+
+`eval/sealed/` is deliberately **not** committed (ADR-012). Putting the holdout's
+answers in the repository's permanent history would mean anyone with access could
+read them, and removing them later would mean rewriting history.
+
+The cost is a real single point of failure: the sealed file and the seed in
+`.env` must both survive unchanged until G5. Lose the seed and the sealed
+anomalies cannot be regenerated as sealed, and the holdout is no longer the thing
+that was sealed.
+
+What we do about it is record a SHA-256 per sealed file in
+`docs/FREEZE_MANIFEST.json` at `gen-frozen` — hashes only, never contents. That
+cannot reconstruct the parameters, but at G5 it proves the file being scored
+against is the file that was sealed. **If the hash does not match, the holdout
+result is void and we will say so rather than publish a number we cannot stand
+behind.**
+
+**Commitment:** after the holdout has run once at G5, the sealed files *and* the
+seed are published in this repository, so the run can be reproduced and checked
+by anyone. That is written down here, and in `docs/M2_NOTES.md`, before there is
+any incentive not to do it.
+
+---
+
+## The generated world is smaller than specified
+
+The generator was built to produce about 7M orders and 10M+ payment attempts
+(PDD §7). The committed artifact holds **2.28M orders and 2.65M attempts** — the
+M2 cut-line, which permits ~3M attempts instead of 10M.
+
+A single time-boxed run at full scale was made and abandoned at **15 minutes**,
+still inside fact generation. Memory was never the constraint: it peaked around
+0.22 GB. The cost is time, and it is superlinear in a way the profile does not
+fully explain.
+
+This weakens one claim and no others: the warehouse is not demonstrating 10M+
+row performance. Every anomaly, canary, trap and question is present and
+findable at this scale, and the size guarantees in the generator refuse to plant
+an anomaly too thin to find. Latency figures (T10) should be read as measured on
+a 2.6M-attempt warehouse, not the one the PDD describes.
+
+---
+
 ## Hindi variants are not human-verified
 
 Every eval and holdout question exists in English, Tamil and Hindi. Tamil is
