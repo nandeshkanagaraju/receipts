@@ -887,7 +887,8 @@ directly using the default, and state in the answer which reading was used.
 | "units" | Includes accessories | §2.2 |
 | "sales", unqualified | **Captured GMV** — money, not units. Disclose the reading and offer units sold as the sibling, since "how much did we sell" and "how many did we sell" are both ordinary meanings | §2.3, §2.2 |
 | "refunds" as a noun | **Refunded amount** — the value refunded, on the refund date | §2.4 |
-| per-bank / per-method order breakdowns | Attributed to the final attempt | §1.9 |
+| per-method / per-bank **success rates** | **"Tried" attribution** — the order sits in the denominator of every method, bank and network it attempted, and in the numerator of the one that captured. Per-method rates therefore do not sum to the overall rate | §1.9, §2.8 |
+| "EMI orders", "card-paid orders", and per-method **value** splits | The **paying** method — the attempt that captured. An order that tried UPI and paid by card is a card order | §5.3a, §1.9 |
 | any money figure spanning currencies | Converted per §1.4, currency disclosed | §1.3, §4.4 |
 | any day-based window | Showroom-local business date | §1.7, §4.5 |
 | every metric | Test transactions excluded | §1.1, §4.8 |

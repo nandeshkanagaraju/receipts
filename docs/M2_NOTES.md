@@ -250,6 +250,38 @@ The totals match SDD §25.2 exactly. Only the authorship is split.
 Things discovered while writing the questions that belong to a module not yet
 built. Recorded here rather than lost.
 
+### M4 — a reference value of zero is compared exactly
+
+`tolerance_rel` is a *relative* tolerance, so it is undefined against a reference
+of zero: `abs(got - 0) <= 0.001 * 0` is `got == 0` for an exact float and a
+false negative for anything else, and dividing by the reference to form a
+relative error divides by zero.
+
+**Rule: when the reference value is 0, compare exactly. No tolerance, absolute
+or relative.** A zero reference is not a rounding target — it is a claim that the
+quantity does not exist — so "close to zero" is the wrong test in both
+directions: 0.4 units of currency is not zero, and there is nothing to be within
+0.1% of.
+
+This is not hypothetical. GLOSSARY §2.11 says EMI is offered only in India and
+Malaysia, so **an EMI share for the UK or the UAE is legitimately zero rather
+than missing**, and one holdout question (HO-043) asks for exactly that. The
+distinction it tests is worth stating: a system that abstains there is wrong,
+because the number is known and it is zero.
+
+Two consequences beyond the scorer:
+
+- **M3** must write reference SQL that returns a row containing 0, not zero rows.
+  An empty result and a result of zero are different claims, and the scorer
+  cannot tell them apart after the fact.
+- **The same rule applies to a zero *component*** of a table answer — a country
+  with no EMI inside an EMI-share-by-country result is an exact-zero cell, not a
+  cell within tolerance.
+
+*(This is the only place a holdout question is named in this file. It is here on
+an explicit instruction, and it names the qid and the scoring rule, not the
+question.)*
+
 ### M4 — the top-k scorer and tied values
 
 `evalkit/scoring.py` compares a table answer against the reference on the top-k

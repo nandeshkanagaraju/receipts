@@ -14,9 +14,19 @@ Gates:
      holdout. This is the corpus-wide rule that cannot be met mid-module, which
      is why it lives here rather than in the always-on suite.
   3. All three question files exist and are non-empty.
+  4. No two questions collide under the rule-7 skeleton audit
+     (`scripts/skeleton_audit.py`): a question that is another question with the
+     place, window or currency swapped buys the evaluation nothing, and after
+     the tag it can no longer be rewritten.
 
-On success it records SHA-256 of every question file and every reference-SQL file
-in docs/FREEZE_MANIFEST.json, then creates the annotated tag.
+On success it records SHA-256 of every question file, every reference-SQL file,
+and the two M1 working documents the questions are written against —
+docs/GLOSSARY.md and docs/M2_NOTES.md — in docs/FREEZE_MANIFEST.json, then
+creates the annotated tag.
+
+The glossary is editable until this tag and fixed after it, for the same reason
+the questions are: the reference SQL is written from it, so a glossary that
+moves after the answers are computed makes the score unreproducible.
 """
 
 from __future__ import annotations
@@ -30,11 +40,19 @@ import sys
 from collections import Counter
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import skeleton_audit  # noqa: E402
+
 REPO = Path(__file__).resolve().parents[1]
 QDIR = REPO / "eval" / "questions"
 SQLDIR = REPO / "eval" / "reference_sql"
 MANIFEST = REPO / "docs" / "FREEZE_MANIFEST.json"
 TAG = "questions-frozen"
+
+# M1 working documents. Editable until the tag, fixed after it: the reference SQL
+# is written from GLOSSARY.md, and M2_NOTES.md carries the generator constraints
+# the frozen questions impose, so both must be pinned when the answers are.
+QUESTION_DOCS = ("docs/GLOSSARY.md", "docs/M2_NOTES.md")
 BLIND = "holdout_blind.jsonl"
 BLIND_ENV = "BLIND_MISSING"
 
@@ -146,6 +164,19 @@ def gate_blind(qdir: Path = QDIR, allow_missing: bool | None = None) -> list[str
     ]
 
 
+def gate_collisions(qdir: Path = QDIR, enabled: bool = True) -> list[str]:
+    """No question is another question with a filter swapped (authoring rule 7).
+
+    `enabled` is a parameter so a meta-test can turn the gate off and show that
+    the same corpus would otherwise have been tagged.
+    """
+    if not enabled:
+        return []
+    return sorted(
+        skeleton_audit.describe(k, members) for k, members in skeleton_audit.collisions(qdir)
+    )
+
+
 def gate_files_present(qdir: Path = QDIR) -> list[str]:
     problems = []
     for name in SETS:
@@ -177,12 +208,18 @@ def gate_tests() -> list[str]:
     return []
 
 
-def all_gates(qdir: Path = QDIR, minimum: int = TRAP_MIN, run_tests: bool = True) -> list[str]:
+def all_gates(
+    qdir: Path = QDIR,
+    minimum: int = TRAP_MIN,
+    run_tests: bool = True,
+    check_collisions: bool = True,
+) -> list[str]:
     problems = (
         gate_files_present(qdir)
         + gate_populations(qdir)
         + gate_traps(qdir, minimum)
         + gate_blind(qdir)
+        + gate_collisions(qdir, check_collisions)
     )
     if run_tests:
         problems += gate_tests()
@@ -195,6 +232,47 @@ def question_digests(qdir: Path = QDIR) -> dict[str, str]:
 
 def reference_sql_digests(sqldir: Path = SQLDIR) -> dict[str, str]:
     return {f"eval/reference_sql/{p.name}": sha256_file(p) for p in sorted(sqldir.glob("*.sql"))}
+
+
+def document_digests(repo: Path = REPO) -> dict[str, str]:
+    """Hash the M1 working documents. A missing one is an error, never a skip."""
+    out = {}
+    for rel in QUESTION_DOCS:
+        p = repo / rel
+        if not p.exists():
+            raise FileNotFoundError(f"question document missing: {rel}")
+        out[rel] = sha256_file(p)
+    return dict(sorted(out.items()))
+
+
+def check_documents(path: Path = MANIFEST, repo: Path = REPO, tag: str = TAG) -> list[str]:
+    """Verify the recorded document hashes; sorted problems, empty means clean.
+
+    Before the tag the section is legitimately absent — the documents are still
+    being written. After it, an absent section is itself the failure: it would
+    mean the tag was created without pinning what the questions were written
+    against.
+    """
+    payload = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
+    recorded = payload.get("question_documents")
+    if recorded is None:
+        if tag_exists(tag):
+            return [
+                f"{tag} exists but the manifest records no question_documents; "
+                f"the glossary the answers were written from is unpinned"
+            ]
+        return []
+    actual = document_digests(repo)
+    problems = []
+    for rel in sorted(set(recorded) | set(actual)):
+        want, got = recorded.get(rel), actual.get(rel)
+        if want is None:
+            problems.append(f"{rel}: present on disk but not in the manifest")
+        elif got is None:
+            problems.append(f"{rel}: in the manifest but missing on disk")
+        elif want != got:
+            problems.append(f"{rel}: manifest {want[:16]}… != actual {got[:16]}…")
+    return problems
 
 
 def blind_status(qdir: Path = QDIR) -> dict[str, object]:
@@ -215,7 +293,11 @@ def blind_status(qdir: Path = QDIR) -> dict[str, object]:
 
 def write_manifest(path: Path = MANIFEST) -> dict[str, dict[str, str]]:
     payload: dict = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
-    sections = {"questions": question_digests(), "reference_sql": reference_sql_digests()}
+    sections = {
+        "questions": question_digests(),
+        "reference_sql": reference_sql_digests(),
+        "question_documents": document_digests(),
+    }
     payload.update(sections)
     payload["holdout_blind"] = blind_status()
     payload["holdout_composition"] = {
