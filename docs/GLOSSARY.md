@@ -133,6 +133,32 @@ The reporting date is a fixed, injected date. It is never read from a system
 clock, so the same question asked against the same data always covers the same
 window.
 
+### 1.7a Attributing an order to a product
+
+An order carries one handset and may carry accessories alongside it. Breaking
+**order-level money** down by a product dimension — model, storage size, colour —
+therefore needs a rule, because the order's money is one number and its lines are
+several.
+
+**Kestrel's rule:** captured GMV, refunded amount and net revenue broken down by
+a product dimension are attributed **entirely to the order's handset**. The whole
+order value sits against that handset's model, storage and colour; the accessory
+lines contribute nothing to the split.
+
+So "captured GMV by model" reads as *the value of orders whose handset was that
+model* — including the case and charger bought with it. It is not an allocation
+of the order across its lines, and the parts do not need apportioning, because
+every order has exactly one handset.
+
+**Units sold is not affected** (§2.2). Units counts lines, so an accessory is its
+own unit and belongs to itself, not to the handset it was bought with. This is the
+one place where a product breakdown of units and a product breakdown of money
+describe different things, and the difference is intended: "which model sold the
+most units" and "which model brought in the most money" are different questions.
+
+**Attach rate is not affected either** (§2.12): it is a count of orders, not a
+split of money.
+
 ### 1.8 Freshness
 
 Data covers business dates from 1 March 2025 to 9 September 2026 inclusive. The
@@ -526,8 +552,10 @@ at least one accessory line.
 
 **Denominator:** paid orders in the window containing at least one phone line.
 
-Accessory-only orders are in neither the numerator nor the denominator: nothing
-was attached to anything.
+Accessory-only orders would be in neither the numerator nor the denominator —
+nothing was attached to anything. In Kestrel's data this case does not arise:
+every order carries exactly one handset (§1.7a). The rule is stated so the metric
+remains well defined if that ever changes.
 
 **Date key:** order business date.
 
@@ -792,6 +820,29 @@ invitation to guess.
 | how much on **EMI** / **instalments** / **easy payments** | EMI share, on **full order value** | §2.11 |
 | how long does **settlement take** / what is our **settlement lag** | Settlement lag, keyed on settlement date | §2.13 |
 | are people **buying accessories with** phones / **attach rate** | Accessory attach rate | §2.12 |
+
+### 5.3a "EMI orders", "card-paid orders", and other method-qualified orders
+
+A phrase like **"EMI orders"**, **"card-paid orders"** or **"orders paid by UPI"**
+means orders whose **captured** attempt used that method — the method the money
+actually came in on.
+
+**This is deliberately not the "tried" rule.** §1.9 attributes an order to every
+method it *attempted*, and that rule applies **only to success rates**, where the
+question is whether a method worked. Everywhere else — filtering a set of orders,
+splitting value by method, averaging order value for a method — the order belongs
+to the method that paid.
+
+The two rules answer different questions and would give different answers on the
+same order:
+
+| An order that tried UPI, failed, then paid by card | |
+|---|---|
+| UPI success rate (§1.9, tried) | Counts as a **UPI failure** and a card success |
+| "card-paid orders" (this rule) | Is a **card order**. It is not a UPI order |
+
+An order that was never captured has no paying method and is in no method-
+qualified set at all.
 
 ### 5.4 Time
 

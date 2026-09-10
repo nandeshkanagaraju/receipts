@@ -16,7 +16,7 @@ population scores zero through no fault of the agent.
 
 | Anomaly | What it is (PDD §7) | Must be planted within | Named by | Role |
 |---|---|---|---|---|
-| A1 | UPI success dip, one issuing bank, Tamil Nadu | `2026-08-31` … `2026-09-06` (last complete Mon–Sun week) | DV-019 | rm_tamil_nadu |
+| A1 | UPI success dip, one issuing bank, Tamil Nadu | `2026-08-31` … `2026-09-06` (last complete Mon–Sun week) | DV-019, EV-097 | rm_tamil_nadu |
 | A2 | Refund spike on one model at two Dubai showrooms | `2026-08-01` … `2026-08-31` (last calendar month) | DV-058 | global_finance |
 | A3 | Settlement delay, one acquiring bank's EMI transactions | `2026-08-31` … `2026-09-06` (last complete week) | DV-059 | global_finance |
 | A5 | Card decline spike in the UK after an auth change | `2026-08-01` … `2026-08-31` (last calendar month) | DV-040 | store_ops_uk |
@@ -68,6 +68,38 @@ named window **or** size it so the aggregate still clears both gates:
 | A2 | **Month, city level** (EV-048) | Dubai **refund rate** for `2026-08` must clear both gates. See §1.2a: a global-level threshold is unachievable at any realistic size |
 | A6 | **Month** (DV-022, EV-047) | DV-022 is an ANS count, so no z-gate applies there. EV-047 **is** a WHY and asks at **Tamil Nadu** level: TN **refunded amount** for `2026-08` must clear both gates against trailing months, **and the affected showroom must be the top contributor** when the agent decomposes by showroom. A move that clears the gate but leaves the planted showroom second scores as a miss |
 
+### 1.1a Anomalies must be concentrated, not smeared
+
+A planted anomaly has to have **one** answer, or the question that asks about it
+has none.
+
+- **A1 must sit in a single issuing bank.** EV-097 asks "why did UPI success drop
+  for one of our issuing banks last week" and enters the anomaly by naming the
+  bank dimension rather than the city. If the dip is spread across several banks,
+  no single bank is the top contributor and the question stops being well posed.
+  One bank, in Tamil Nadu, in the named week.
+- **A5 must sit in a single card network** in the UK — a new authentication flow
+  rolled out by one network. EV-099 asks about "one card network", and DV-040
+  asks about UK card failures overall; both are answerable only if the effect is
+  attributable to one network rather than to cards generally.
+- **A2 must sit in a single handset model** at two Dubai showrooms. Under §1.7a
+  the order's money is attributed entirely to its handset, so the model dimension
+  is well defined for refunds.
+
+### 1.1b Every order has one handset
+
+The world is generated so that **every order carries exactly one handset line and
+zero to three accessory lines. There are no accessory-only orders.**
+
+This is what makes `GLOSSARY.md` §1.7a work: order-level money broken down by
+model, storage or colour is attributed entirely to the order's handset, with no
+apportioning, because there is always exactly one to attribute to. Questions that
+depend on it: DV-047, EV-034, EV-048, EV-074, and every product-dimension
+question in eval batch 3.
+
+Accessories still exist as their own units (§2.2) and drive the attach rate
+(§2.12); they simply never appear without a handset.
+
 ### 1.2 Entities the frozen questions require
 
 Some questions test behaviour that only exists if the generator builds the world
@@ -83,6 +115,41 @@ The name collisions are realistic. Anna Nagar is a locality name found in more
 than one Tamil Nadu city, and retailers name branches after localities. Phone
 makers reuse material words — Onyx, Graphite, Midnight — as both model names and
 finish names, which is exactly why the ambiguity bites in practice.
+
+### 1.3 Named entities the questions require, and the test that enforces it
+
+A question naming an entity the generated world does not contain is unanswerable,
+and the failure looks exactly like a system bug. **M2's TEST must include a test
+that loads every question file, extracts every named city, showroom, model,
+colour, bank and network, and asserts each exists in the generated world.** It
+runs against the real `data/` artifact; a missing entity fails, it never skips.
+
+Entities named across `dev.jsonl` and `eval.jsonl` as of the eval freeze:
+
+| Kind | Named |
+|---|---|
+| Country | India · UK · UAE · Singapore · Malaysia · US |
+| Region | Tamil Nadu (`IN-TN`) |
+| City | Chennai · Coimbatore · Madurai · Velachery · Anna Nagar · Dubai · Manchester |
+| Showroom | **Kestrel Anna Nagar** ×2 — one in Chennai, one in Madurai (§1.2) |
+| Model | **Kestrel Onyx** (§1.2) |
+| Colour | **Onyx Black**, used on models other than Kestrel Onyx (§1.2) |
+| Method | UPI · card · wallet · EMI · pay-later |
+
+Notes on the ones that are not obvious:
+
+- **Velachery** and **Anna Nagar** are Chennai localities. Velachery is used in
+  EV-085 as an unambiguous entity, so it must exist as exactly **one** showroom
+  or city; Anna Nagar must exist as **two** showrooms, which is the point of
+  DV-052.
+- **Manchester** appears in DV-037, a UNA question about staff. It still has to
+  exist, or the question abstains for the wrong reason — "no such store" instead
+  of "no staff data".
+- **Coimbatore** and **Madurai** must be cities in `IN-TN` with showrooms, since
+  EV-003, EV-022, EV-052 and EV-112 filter on them under the Tamil Nadu role.
+- Issuing banks, acquiring banks and card networks are never named in a question
+  — always asked for as a dimension — so the generator is free in its choice of
+  names. The test should still assert the dimensions are non-empty.
 
 ### 1.2a EV-048: a global-level threshold is not achievable, and why
 
@@ -134,7 +201,7 @@ it.
 
 | Id | Type |
 |---|---|
-| S1 | Card success-rate dip for one card network in one country, lasting a few days |
+| S1 | Card success-rate dip for one card network in one country, lasting a few days. **The country draw excludes `GB`**, so S1 cannot collide with A5, which is a UK card-network effect. A holdout question and an eval question pointing at the same signal would make both unscoreable |
 | S2 | Refund-rate spike on one phone model in one city |
 | S3 | Order-volume drop at a single showroom for one week |
 | S4 | EMI share **rising** in one region after a promotion |
@@ -182,6 +249,26 @@ The totals match SDD §25.2 exactly. Only the authorship is split.
 
 Things discovered while writing the questions that belong to a module not yet
 built. Recorded here rather than lost.
+
+### M4 — the top-k scorer and tied values
+
+`evalkit/scoring.py` compares a table answer against the reference on the top-k
+`(key, value)` pairs **in order** (SDD §25.3). Sparse metrics break that: if six
+countries have duplicate captures and five of them are zero, any ordering of
+those five is equally correct, and a scorer comparing position by position marks
+five of six wrong for a right answer.
+
+**Rule: tied values are interchangeable in order.** Ranks are compared as
+**groups of equal value** — the set of keys at each distinct value must match,
+and the order *within* a tie group is ignored. Order *between* groups still
+matters.
+
+**Question-writing consequence:** if more than half of a top-k would be ties at
+zero, the question is a bad ranking regardless of how the scorer behaves, because
+it is mostly asking the system to order noise. Shrink k, or ask something dense.
+This was applied when writing eval: EV-012 and EV-058 began as rankings over
+duplicate captures, a metric that is near-zero almost everywhere, and were
+rewritten as scalars measuring different quantities.
 
 ### M12 — free-form SQL can reach `orders.customer_id`
 
