@@ -28,8 +28,10 @@ web/dist/
 .DS_Store
 
 # ---- authoring scaffolding, never part of the artifact ----
-_reports/                 # end-of-module reports, written for the human reader
-eval/questions/_review/   # question drafts under review; deleted at questions-frozen
+# _reports/ holds end-of-module reports written for the reader, not the build.
+# _review/ holds question drafts under review; deleted at questions-frozen.
+_reports/
+eval/questions/_review/
 
 # ---- deliberately NOT ignored, listed here so nobody adds them later ----
 # eval/recordings/  model responses are committed: replay must work offline (D16, ADR-005)
