@@ -56,7 +56,12 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
+      # Tags, not just the tip: freeze_questions.tag_exists() reads them, and a
+      # guard that stops guarding because the clone is shallow is not a guard.
       - uses: actions/checkout@v4
+        with:
+          fetch-tags: true
+          fetch-depth: 0
       - id: start
         run: echo "t=$(date +%s)" >> "$GITHUB_OUTPUT"
       - uses: actions/setup-python@v5

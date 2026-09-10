@@ -245,18 +245,28 @@ def document_digests(repo: Path = REPO) -> dict[str, str]:
     return dict(sorted(out.items()))
 
 
-def check_documents(path: Path = MANIFEST, repo: Path = REPO, tag: str = TAG) -> list[str]:
+def check_documents(
+    path: Path = MANIFEST,
+    repo: Path = REPO,
+    tag: str = TAG,
+    frozen: bool | None = None,
+) -> list[str]:
     """Verify the recorded document hashes; sorted problems, empty means clean.
 
     Before the tag the section is legitimately absent — the documents are still
     being written. After it, an absent section is itself the failure: it would
     mean the tag was created without pinning what the questions were written
     against.
+
+    `frozen` says whether the tag exists. It is a parameter because a test must
+    be able to state the case rather than depend on the checkout having fetched
+    tags — CI clones shallow, and a guard that quietly stops guarding when the
+    tag is merely absent from the clone is not a guard.
     """
     payload = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
     recorded = payload.get("question_documents")
     if recorded is None:
-        if tag_exists(tag):
+        if tag_exists(tag) if frozen is None else frozen:
             return [
                 f"{tag} exists but the manifest records no question_documents; "
                 f"the glossary the answers were written from is unpinned"

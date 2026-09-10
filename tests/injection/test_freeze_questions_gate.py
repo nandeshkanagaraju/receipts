@@ -339,16 +339,20 @@ def test_meta_with_no_recorded_section_the_same_edit_passes(tmp_path: Path) -> N
     target.write_text(("X" if original[0] != "X" else "Y") + original[1:], encoding="utf-8")
 
     manifest.write_text(json.dumps({"questions": {}}, indent=2) + "\n", encoding="utf-8")
-    off = fq.check_documents(manifest, repo, tag="a-tag-that-does-not-exist")
+    off = fq.check_documents(manifest, repo, frozen=False)
     print(f"\nmeta (no question_documents recorded): {len(off)} problem(s) — expected 0")
     assert not off, "the guard fired with nothing recorded to compare against"
 
 
 def test_a_tagged_repo_with_no_recorded_documents_is_a_failure(tmp_path: Path) -> None:
-    """Absence is only innocent before the tag. After it, it is the failure."""
+    """Absence is only innocent before the tag. After it, it is the failure.
+
+    `frozen=True` states the case rather than borrowing a real tag: a shallow CI
+    clone has no tags, so a test that asked git would pass for the wrong reason.
+    """
     repo, manifest = build_doc_repo(tmp_path)
     manifest.write_text(json.dumps({"questions": {}}, indent=2) + "\n", encoding="utf-8")
-    problems = fq.check_documents(manifest, repo, tag="specs-frozen")  # a tag that does exist
+    problems = fq.check_documents(manifest, repo, frozen=True)
     print(f"\ntagged but unrecorded -> {len(problems)} problem(s)")
     for p in problems:
         print(f"  {p}")
