@@ -97,7 +97,7 @@ cash; EV-099 asks about one card **network** rather than card failures overall.
 
 | # | Check | Result |
 |---|---|---|
-| 1 | phrases map to §5, else interpretation | **pass** — 12 uncovered in this batch, each with a one-sentence interpretation |
+| 1 | phrases map to §5, else interpretation | **pass** — 10 uncovered in this batch, each with a one-sentence interpretation |
 | 2 | windows glossary-defined vs as_of | **pass** — named months, `last week` (Mon–Sun), `last N weeks` (complete), `last 7 days` (excludes as_of), MTD-vs-same-days |
 | 3 | per-method success uses tried attribution (§1.9) | **pass** — EV-066, EV-078, EV-097 |
 | 4 | compare / series flags | **pass** — compare 9/5, series 6/3, no `top_k` on a series |
@@ -110,7 +110,7 @@ cash; EV-099 asks about one card **network** rather than card failures overall.
 
 - Populations: AMB 7 · ANS 30 · DENY 4 · LIVE 1 · UNA 5 · WHY 3
 - Roles: global_finance 25 · rm_tamil_nadu 15 · store_ops_uk 10
-- `glossary_covered: false`: 12/50 = 24%
+- `glossary_covered: false`: 10/50 = 20%
 - Traps: attempts_vs_orders 3 · authorised_vs_captured 2 · capture_vs_settlement 5 · duplicate_captures 2 · emi 3 · fiscal_calendar 3 · local_time 2 · partial_refunds 4 · test_transactions 2
 
 ### Quotas across the whole eval set
@@ -643,18 +643,16 @@ cash; EV-099 asks about one card **network** rather than card failures overall.
 |---|---|
 | role | `global_finance` |
 | trap | `None` |
-| glossary_covered | `false` |
+| glossary_covered | `true` |
 | kind | `table` · top_k `5` |
 | reporting_currency | `SGD` |
 | nearest question | `EV-021` |
-| how it differs | EV-021 groups captured GMV by payment method, a governed dimension; this groups by a product attribute the glossary does not expose |
-
-**interpretation** — Captured GMV by storage size = sum of captured non-test amounts at Singapore showrooms in the window, grouped by the storage_gb of the order's HANDSET (GLOSSARY §1.7a: order-level money is attributed entirely to the handset), keyed on capture business date, in SGD. Storage size is a product attribute, not a governed dimension.
+| how it differs | EV-021 groups captured GMV by payment method; this groups by storage size, the product dimension where handset attribution applies (GLOSSARY §1.7a) |
 
 <details><summary>raw JSONL line</summary>
 
 ```json
-{"qid": "EV-074", "set": "eval", "population": "ANS", "role": "global_finance", "as_of": "2026-09-10", "trap": null, "glossary_covered": false, "variants": {"en": "Captured GMV by storage size in Singapore last month, in Singapore dollars.", "ta": "", "hi": "", "ta-Latn": ""}, "translation_provenance": {"ta": "pending", "hi": "pending", "ta-Latn": "pending"}, "authored_by": "nandesh", "expected": {"kind": "table", "reference_sql": "EV-074.sql", "reporting_currency": "SGD", "tolerance_rel": 0.001, "top_k": 5}, "interpretation": "Captured GMV by storage size = sum of captured non-test amounts at Singapore showrooms in the window, grouped by the storage_gb of the order's HANDSET (GLOSSARY §1.7a: order-level money is attributed entirely to the handset), keyed on capture business date, in SGD. Storage size is a product attribute, not a governed dimension."}
+{"qid": "EV-074", "set": "eval", "population": "ANS", "role": "global_finance", "as_of": "2026-09-10", "trap": null, "glossary_covered": true, "variants": {"en": "Captured GMV by storage size in Singapore last month, in Singapore dollars.", "ta": "", "hi": "", "ta-Latn": ""}, "translation_provenance": {"ta": "pending", "hi": "pending", "ta-Latn": "pending"}, "authored_by": "nandesh", "expected": {"kind": "table", "reference_sql": "EV-074.sql", "reporting_currency": "SGD", "tolerance_rel": 0.001, "top_k": 5}}
 ```
 </details>
 
@@ -666,18 +664,16 @@ cash; EV-099 asks about one card **network** rather than card failures overall.
 |---|---|
 | role | `rm_tamil_nadu` |
 | trap | `None` |
-| glossary_covered | `false` |
+| glossary_covered | `true` |
 | kind | `table` · top_k `8` |
 | reporting_currency | `None` |
 | nearest question | `EV-011` |
-| how it differs | EV-011 groups units by city, a governed dimension; this groups by a product attribute outside the glossary |
-
-**interpretation** — Units sold by colour = total quantity across order lines of non-test paid orders at Tamil Nadu showrooms in the window, grouped by the colour of the product on EACH LINE. Units count lines, so unlike money (GLOSSARY §1.7a) accessories belong to themselves rather than to the handset. Colour is a product attribute, not a governed dimension.
+| how it differs | EV-011 groups units by city; this groups by colour, and because units count lines rather than orders the colour read is per-line, not per-handset |
 
 <details><summary>raw JSONL line</summary>
 
 ```json
-{"qid": "EV-075", "set": "eval", "population": "ANS", "role": "rm_tamil_nadu", "as_of": "2026-09-10", "trap": null, "glossary_covered": false, "variants": {"en": "Units sold by colour in Tamil Nadu last month.", "ta": "", "hi": "", "ta-Latn": ""}, "translation_provenance": {"ta": "pending", "hi": "pending", "ta-Latn": "pending"}, "authored_by": "nandesh", "expected": {"kind": "table", "reference_sql": "EV-075.sql", "reporting_currency": null, "tolerance_rel": 0.001, "top_k": 8}, "interpretation": "Units sold by colour = total quantity across order lines of non-test paid orders at Tamil Nadu showrooms in the window, grouped by the colour of the product on EACH LINE. Units count lines, so unlike money (GLOSSARY §1.7a) accessories belong to themselves rather than to the handset. Colour is a product attribute, not a governed dimension."}
+{"qid": "EV-075", "set": "eval", "population": "ANS", "role": "rm_tamil_nadu", "as_of": "2026-09-10", "trap": null, "glossary_covered": true, "variants": {"en": "Units sold by colour in Tamil Nadu last month.", "ta": "", "hi": "", "ta-Latn": ""}, "translation_provenance": {"ta": "pending", "hi": "pending", "ta-Latn": "pending"}, "authored_by": "nandesh", "expected": {"kind": "table", "reference_sql": "EV-075.sql", "reporting_currency": null, "tolerance_rel": 0.001, "top_k": 8}}
 ```
 </details>
 

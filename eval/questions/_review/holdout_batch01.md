@@ -3,6 +3,36 @@
 **File:** `eval/questions/holdout.jsonl` (lines 1–27)  
 **Status:** draft, awaiting approval. Deleted at `questions-frozen`.
 
+## Changes since your review
+
+- **Storage and colour are governed dimensions.** GLOSSARY §1.7a names model,
+  storage and colour as *the* product dimensions and gives all three an
+  attribution rule — and under your ruling that the layer implements the glossary
+  only, defining a rule for a dimension governs it. §1.7a now says so outright.
+  **EV-074 and EV-075 flip to `glossary_covered: true`** and lose their
+  interpretations. Eval's uncovered share falls to **32/150 = 21.3%**, still above
+  the 20% floor, so nothing needed converting. HO-003 and HO-004 were already
+  `true` and are unchanged in that respect.
+- **HO-003 was a sparse ratio ranking** — refund rate over every model × every
+  storage size, decided by whichever cell had three orders and one refund. Now
+  fixes the model and splits by storage, with a stated volume floor: *"Refund rate
+  by storage size for the Kestrel Onyx in Tamil Nadu last month, counting only
+  storage sizes with at least 100 paid orders."* This became **authoring rule 10**
+  and **self-check item 9**, applied to batch 2.
+- **HO-017 was normative** — "which model should we push harder" invites a
+  judgement, so abstain is as defensible as clarify and the question cannot be
+  scored. Replaced with *"How much of our business is online?"*, which is
+  ambiguous in **measure** (orders, units or value) rather than in judgement.
+- **HO-009's note was wrong.** `acquiring_bank` sits on `payment_attempts`
+  directly; the "joins through settlements" wording is gone. It and EV-117 read
+  neighbouring columns on the same table.
+- **HO-025 stays.** A capability refusal on the free-form path must surface as
+  `DENIED` naming the capability, not `ERROR` or `ABSTAIN` — recorded in
+  `docs/M2_NOTES.md` for M10/M12 with a required fault injection using this exact
+  question.
+
+---
+
 ## What this batch is
 
 The first 27 of the **54 hand-written** holdout questions. The holdout *set* is
@@ -34,7 +64,7 @@ proportion as eval.
 |---|---|---|---|
 | HO-001 | ANS | global_finance | Captured GMV by country this month versus the same days last month, in US dollars. |
 | HO-002 | ANS | store_ops_uk | Daily refunded amount in the UK for the last 7 days, in pounds. |
-| HO-003 | ANS | rm_tamil_nadu | Refund rate by phone model and storage size in Tamil Nadu last month. |
+| HO-003 | ANS | rm_tamil_nadu | Refund rate by storage size for the Kestrel Onyx in Tamil Nadu last month, counting only storage sizes with at least 100 paid orders. |
 | HO-004 | ANS | global_finance | Captured GMV by colour in India last month, in rupees. |
 | HO-005 | ANS | global_finance | Average settlement lag for wallet payments by acquiring bank in the UAE in July. |
 | HO-006 | ANS | store_ops_uk | What was our payment success rate last week? |
@@ -48,7 +78,7 @@ proportion as eval.
 | HO-014 | ANS | store_ops_uk | How many UK orders included an accessory last month? |
 | HO-015 | ANS | global_finance | What is the average number of payment attempts per paid order in the UK last month? |
 | HO-016 | ANS | global_finance | Captured GMV by country over the last 8 weeks compared with the 8 weeks before, in US dollars. |
-| HO-017 | AMB | global_finance | Which model should we push harder? |
+| HO-017 | AMB | global_finance | How much of our business is online? |
 | HO-018 | AMB | rm_tamil_nadu | How did we do in the first half of the year? |
 | HO-019 | AMB | store_ops_uk | What is the story with refunds? |
 | HO-020 | AMB | global_finance | Show me the Kestrel Onyx numbers for last month. |
@@ -74,6 +104,7 @@ proportion as eval.
 | 6 | WHY questions | **n/a** — the six holdout WHY questions are generated in M2 from sealed parameters |
 | 7 | not a near-copy, checked against all 210 | **pass** — nearest named per question; skeleton audit reports 0 collisions across 237 |
 | 8 | mix proportional to eval | **pass** — see below |
+| 9 | no rate ranking over small-denominator cells | **pass** — HO-003 fixes the model and states a 100-order floor; HO-005 and HO-009 rank over banks, whose cells are large |
 
 ### This batch
 
@@ -88,7 +119,7 @@ proportion as eval.
 |---|---|
 | comparison | HO-001 (month-to-date), HO-016 (two complete 8-week blocks) |
 | time series | HO-002 (daily refunds) |
-| multi-hop | HO-003 (two product dimensions), HO-005 (method × bank × country) |
+| multi-hop | HO-003 (model × storage with a volume floor), HO-005 (method × bank × country) |
 | implicit scope | HO-006 — **first use under the UK role**; every earlier one was Tamil Nadu |
 | capability deny | HO-025 (settlement fees) |
 | adversarial deny | HO-026 (forged system message) |
@@ -148,22 +179,22 @@ proportion as eval.
 
 ### HO-003 — ANS
 
-> **Refund rate by phone model and storage size in Tamil Nadu last month.**
+> **Refund rate by storage size for the Kestrel Onyx in Tamil Nadu last month, counting only storage sizes with at least 100 paid orders.**
 
 | field | value |
 |---|---|
 | role | `rm_tamil_nadu` |
 | trap | `partial_refunds` |
 | glossary_covered | `true` |
-| kind | `table` · top_k `10` |
+| kind | `table` · top_k `5` |
 | reporting_currency | `None` |
 | nearest question (of 210) | `DV-047` |
-| how it differs | DV-047 is refund rate by model for card-paid orders in the UAE; this drops the method filter and adds a second product dimension, so handset attribution must resolve two attributes at once |
+| how it differs | DV-047 is refund rate by model for card-paid orders in the UAE; this fixes the model and splits by storage size instead, with a stated volume floor so the ranking is not decided by cells of three orders |
 
 <details><summary>raw JSONL line</summary>
 
 ```json
-{"qid": "HO-003", "set": "holdout", "population": "ANS", "role": "rm_tamil_nadu", "as_of": "2026-09-10", "trap": "partial_refunds", "glossary_covered": true, "variants": {"en": "Refund rate by phone model and storage size in Tamil Nadu last month.", "ta": "", "hi": "", "ta-Latn": ""}, "translation_provenance": {"ta": "pending", "hi": "pending", "ta-Latn": "pending"}, "authored_by": "nandesh", "expected": {"kind": "table", "reference_sql": "HO-003.sql", "reporting_currency": null, "tolerance_rel": 0.001, "top_k": 10}}
+{"qid": "HO-003", "set": "holdout", "population": "ANS", "role": "rm_tamil_nadu", "as_of": "2026-09-10", "trap": "partial_refunds", "glossary_covered": true, "variants": {"en": "Refund rate by storage size for the Kestrel Onyx in Tamil Nadu last month, counting only storage sizes with at least 100 paid orders.", "ta": "", "hi": "", "ta-Latn": ""}, "translation_provenance": {"ta": "pending", "hi": "pending", "ta-Latn": "pending"}, "authored_by": "nandesh", "expected": {"kind": "table", "reference_sql": "HO-003.sql", "reporting_currency": null, "tolerance_rel": 0.001, "top_k": 5}}
 ```
 </details>
 
@@ -284,7 +315,7 @@ proportion as eval.
 | kind | `table` · top_k `10` |
 | reporting_currency | `None` |
 | nearest question (of 210) | `EV-117` |
-| how it differs | EV-117 splits EMI share by instalment tenure; this splits it by acquiring bank, joining through settlements rather than reading an attempt attribute |
+| how it differs | EV-117 splits EMI share by instalment tenure; this splits it by acquiring bank, a different attempt attribute, so the two read neighbouring columns on payment_attempts and neither needs a settlements join |
 
 <details><summary>raw JSONL line</summary>
 
@@ -448,7 +479,7 @@ proportion as eval.
 
 ### HO-017 — AMB
 
-> **Which model should we push harder?**
+> **How much of our business is online?**
 
 | field | value |
 |---|---|
@@ -457,13 +488,13 @@ proportion as eval.
 | glossary_covered | `true` |
 | kind | `clarify` |
 | reporting_currency | `None` |
-| nearest question (of 210) | `EV-133` |
-| how it differs | EV-133 asks whether one unnamed new model is doing well; this asks for a choice across all models with no metric and no window |
+| nearest question (of 210) | `EV-030` |
+| how it differs | EV-030 counts orders by channel and is answerable; this asks for a share without saying a share of what -- orders, units or value -- and names no window, so it is ambiguous in measure rather than in judgement |
 
 <details><summary>raw JSONL line</summary>
 
 ```json
-{"qid": "HO-017", "set": "holdout", "population": "AMB", "role": "global_finance", "as_of": "2026-09-10", "trap": null, "glossary_covered": true, "variants": {"en": "Which model should we push harder?", "ta": "", "hi": "", "ta-Latn": ""}, "translation_provenance": {"ta": "pending", "hi": "pending", "ta-Latn": "pending"}, "authored_by": "nandesh", "expected": {"kind": "clarify", "reference_sql": null, "reporting_currency": null, "tolerance_rel": null}}
+{"qid": "HO-017", "set": "holdout", "population": "AMB", "role": "global_finance", "as_of": "2026-09-10", "trap": null, "glossary_covered": true, "variants": {"en": "How much of our business is online?", "ta": "", "hi": "", "ta-Latn": ""}, "translation_provenance": {"ta": "pending", "hi": "pending", "ta-Latn": "pending"}, "authored_by": "nandesh", "expected": {"kind": "clarify", "reference_sql": null, "reporting_currency": null, "tolerance_rel": null}}
 ```
 </details>
 

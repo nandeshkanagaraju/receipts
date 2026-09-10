@@ -1,95 +1,108 @@
-# M1 — holdout batch 1, blind gate, leakage note
+# M1 — holdout batch 1, revised
+
+Six fixes applied. Batch 2 is not started; you said you would open a fresh
+session for it.
+
+---
 
 ## 1. Files created/changed
 
 | File | What |
 |---|---|
-| `eval/questions/holdout.jsonl` | new — HO-001…HO-027 |
-| `scripts/freeze_questions.py` | blind-question gate; holdout composition in the manifest |
-| `docs/M2_NOTES.md` | end-of-M3 leakage protection recorded |
-| `eval/questions/_review/holdout_batch01.md` | new |
+| `docs/GLOSSARY.md` | §1.7a declares model, storage and colour **governed** |
+| `docs/M2_NOTES.md` | M10/M12 capability-deny note; HO-009 wording corrected |
+| `eval/questions/README.md` | authoring rule 10 — no rate rankings over small cells |
+| `eval/questions/eval.jsonl` | EV-074, EV-075 → `glossary_covered: true` |
+| `eval/questions/holdout.jsonl` | HO-003 and HO-017 rewritten |
+| `tests/injection/test_freeze_questions_gate.py` | 6 blind-gate tests |
 
 ## 2. Tests
 
-**68 passed, 0.96s.** Lint and types green. No new tests: the blind gate is
-covered by the existing injection suite's structure, but see §6 — it has **no
-injection of its own yet**.
-
-## 3. Holdout batch 1
+**6 new, 74 total, 1.00s.** Lint, types, freeze-check green.
 
 ```
-27 questions · ANS 16/32 · AMB 4/7 · UNA 3/6 · DENY 3/6 · LIVE 1/3
-roles: global_finance 13 · store_ops_uk 8 · rm_tamil_nadu 6
-glossary_covered=false: 8/27 = 30%
-traps: attempts_vs_orders 1 · authorised_vs_captured 1 · capture_vs_settlement 2
-       emi 1 · fiscal_calendar 2 · local_time 1 · multi_currency 2
-       partial_refunds 3 · test_transactions 1
-compare HO-001, HO-016 · series HO-002
+30 blind questions -> 0 problem(s)
+29 blind questions -> 1 problem(s)
+  holdout_blind.jsonl: 29 questions, expected 30
+missing blind file, no flag -> 1 problem(s)   (names BLIND_MISSING)
+declared missing -> 0 problem(s)              (manifest note points at LIMITATIONS.md)
+BLIND_MISSING=yes honoured from the environment
+blind meta: gate on -> 1, declared-missing -> 0
 ```
 
-Shapes carried over proportionally: 2 comparisons, 1 series, 2 multi-hop, 1
-implicit scope, 1 capability deny, 1 adversarial deny, 2 product attribution.
+## 3. Fix 1 — storage and colour reconciled
 
-**Rule 7 against all 210.** The skeleton audit — masking place, window and
-currency — reports **0 collisions across all 237 questions**, and no two
-questions share exact text.
+§1.7a already named model, storage and colour as *the* product dimensions and
+gave all three an attribution rule. Under your ruling that the semantic layer
+implements the glossary only, **giving a dimension a rule governs it** — so the
+inconsistency was that EV-074 and EV-075 were marked uncovered while HO-003 and
+HO-004 used the same dimensions as covered.
 
-Two questions worth pointing at:
+Resolved in favour of governed, and §1.7a now says so outright rather than
+leaving it to be inferred from the presence of a rule.
 
-- **HO-006** is the first implicit-scope question under a role other than
-  `rm_tamil_nadu`. Every earlier one was Tamil Nadu, so a scope resolver that
-  happened to hard-code IN-TN would have passed all of them.
-- **HO-004** pairs with EV-075: the same `colour` dimension, read per-line for
-  units and per-handset for money (§1.7a). A system with one attribution rule
-  gets one of the two wrong.
+| qid | Was | Now |
+|---|---|---|
+| EV-074 captured GMV by storage | `false` + interpretation | **`true`**, interpretation dropped |
+| EV-075 units by colour | `false` + interpretation | **`true`**, interpretation dropped |
+| HO-003, HO-004 | `true` | unchanged |
+| EV-134 "Onyx Black", EV-141 colour forecast | unchanged | unchanged — one is AMB, the other UNA because it forecasts |
 
-## 4. The blind-question gate
+**Eval uncovered share: 32/150 = 21.3%.** Above the 20% floor, so no questions
+needed adding or converting.
+
+## 4. Fix 2 — HO-003 and the new rule
+
+The old HO-003 ranked refund rate across every model × every storage size. That
+ranking is decided by whichever cell holds three orders and one refund, which is
+not what anyone means by "the highest refund rate".
+
+> **HO-003** · Refund rate by storage size for the Kestrel Onyx in Tamil Nadu last
+> month, counting only storage sizes with at least 100 paid orders.
+
+One axis fixed, and the volume floor stated in the question itself so it is part
+of what the reference SQL must implement rather than an unwritten assumption.
+
+Recorded as **authoring rule 10** and **self-check item 9** for batch 2. It is
+deliberately separate from the tie rule: ties are a *scoring* problem, small
+denominators make the *question* meaningless.
+
+## 5. Fixes 3, 4, 6
+
+**HO-025 stays**, with the M10/M12 note recorded. The argument in one line: the
+three statuses are different claims and only one is true.
+
+| Status | What it tells the asker |
+|---|---|
+| `ERROR` | Something broke |
+| `ABSTAIN` | No data here can answer this |
+| `DENIED` | The data answers this; **you** may not see it |
+
+`ABSTAIN` would tell a UK store manager that settlement fees are unknowable when
+they are known and simply not theirs. HO-025 is the required fault injection.
+
+**HO-017 replaced.** "Which model should we push harder" is normative, so abstain
+is as defensible as clarify and the question cannot be scored either way. Now
+*"How much of our business is online?"* — ambiguous in **measure** (orders, units
+or value), not in judgement.
+
+**HO-009's note corrected.** `acquiring_bank` is on `payment_attempts`; there is
+no settlements join. It and EV-117 read neighbouring columns on one table.
+
+## 6. Verification
 
 ```
-REFUSING to create the questions-frozen tag. 2 problem(s):
-  holdout.jsonl is missing            <- batch 2 still to write
-  holdout_blind.jsonl is missing. The 30 blind questions are the only part of
-  the evaluation not written by the author. Set BLIND_MISSING=yes to freeze
-  without them; the absence is then recorded in LIMITATIONS.md and the manifest,
-  and the holdout result must be reported on those terms.
+237 questions, 0 colliding groups under the rule-7 skeleton audit
+no two questions share exact text
+make test    74 passed
+make lint    clean · make types  clean · make freeze-check  pass
 ```
 
-With `BLIND_MISSING=yes` the second disappears and the manifest records
-`holdout_blind: {present: false, declared_missing: true, note: ...}`.
+## 7. Still open
 
-The design point: freezing without the blind questions is **allowed** — blocking
-the project on someone else's availability would be worse — but it cannot be
-silent. The tool offers "declare the absence" or "supply the file", and not
-"proceed quietly".
-
-## 5. Leakage protection, recorded not applied
-
-Written into `docs/M2_NOTES.md` under "Notes for later modules", to be applied at
-the **end of M3** once the reference SQL exists. Three parts: harness-level `Read`
-denials in `.claude/settings.json` for `holdout.jsonl`, `holdout_blind*`,
-`reference_sql/HO-*` and `sealed/**`; a charter test that nothing outside
-`evalkit` names those paths, with an injection and a meta-test; and a
-`LIMITATIONS.md` entry stating both the mitigation and its limit.
-
-The reason it is a settings rule rather than a note to myself: **a rule the
-assistant is asked to respect is a request; a rule the harness enforces is a
-control.** Neither proves the author never looked — they make looking a
-deliberate act that leaves a trace, which is the most a repository can honestly
-claim.
-
-## 6. Unsure about
-
-- **The blind gate has no fault injection yet.** Every other guard in this repo is
-  paired with one. It should get a test that a `holdout_blind.jsonl` with 29 rows
-  is refused, that a missing file is refused without the flag and accepted with
-  it, and a meta-test showing the gate off would accept either. I did not add it
-  this turn because the gate is one commit old and batch 2 may change its shape.
-  Flagging so it is not forgotten.
-- **`docs/LIMITATIONS.md` does not yet have the blind-absence entry** — the gate
-  writes the fact to the manifest, but the prose entry only makes sense once you
-  decide whether the blind questions are coming. Tell me either way and I will
-  write it.
-- **HO-013 asks for calendar Q2 2026** (April–June 2026), which is also FY2027
-  Q1. EV-127 asks for the fiscal reading of that same window. That is deliberate
-  — the same three months under both namings — but if the generator's data
-  volumes make one of them trivially small, both questions weaken together.
+- **`LIMITATIONS.md` blind entry** — held, as instructed, until you confirm
+  whether the blind questions are coming. The gate and manifest already record
+  the fact; only the prose is waiting.
+- **Batch 2** — HO-028…HO-054: ANS 16, AMB 3, UNA 3, DENY 3, LIVE 2. It must
+  carry self-check item 9, and `test_transactions` is at 1 in holdout so far.
+- **Translations** — all 300 questions, after batch 2.
