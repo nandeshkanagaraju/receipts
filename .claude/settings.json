@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "permissions": {
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Read(./eval/sealed/**)",
+      "Read(./eval/questions/holdout*)",
+      "Bash(cat ./.env*)",
+      "Bash(cat .env*)",
+      "Bash(cat eval/sealed/*)",
+      "Bash(cat ./eval/sealed/*)",
+      "Bash(cat eval/questions/holdout*)",
+      "Bash(cat ./eval/questions/holdout*)",
+      "Bash(head eval/sealed/*)",
+      "Bash(head eval/questions/holdout*)",
+      "Bash(tail eval/sealed/*)",
+      "Bash(tail eval/questions/holdout*)",
+      "Bash(less eval/sealed/*)",
+      "Bash(less eval/questions/holdout*)"
+    ]
+  }
+}

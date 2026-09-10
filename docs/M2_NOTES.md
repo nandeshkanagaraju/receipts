@@ -274,10 +274,33 @@ measures it either way. The term table at the top of
 `eval/questions/_review/tamil_*.md` lists which terms are written in English and
 which in Tamil; that table is the checklist for the synonym lists.
 
+**Time words carry the same requirement, in one script.** The drafts use
+`கடந்த வாரம்` / `கடந்த மாதம்` / `கடந்த ஆண்டு` throughout, but `சென்ற` is the
+equally ordinary Tamil for "last" and a manager will type it. Both forms must
+resolve:
+
+| Window | Written in the drafts | Must also resolve |
+|---|---|---|
+| last week | `கடந்த வாரம்` | `சென்ற வாரம்` |
+| last month | `கடந்த மாதம்` | `சென்ற மாதம்` |
+| last year | `கடந்த ஆண்டு` | `சென்ற ஆண்டு` |
+
+This is not a translation quibble. Under §1.6 "last week" and "the last 7 days"
+are *different windows*, so a parser that fails to recognise `சென்ற வாரம்` does
+not fall back to a near-synonym — it fails to find any window at all, and the
+question either abstains or silently takes a default. Both are wrong, and only
+one of them is visible.
+
 Practical consequences:
 
 - **Retrieval is lexical (ADR-004)**, so a missing surface form is a missing
   match — there is no embedding to bail it out.
+- **Inflection erases the citation form.** Tamil is agglutinative: `சிங்கப்பூர்`
+  never appears inside `சிங்கப்பூரில்`, and `ஆகஸ்ட்` never inside
+  `ஆகஸ்டுக்கும்` — the final pulli is lost when a case ending attaches. Match
+  stems, not dictionary forms. This is not hypothetical: the checker written to
+  verify the drafts reported 16 false mismatches until it was fixed, and the
+  semantic layer will hit the identical trap.
 - **Both scripts, per term**, not one canonical choice. The same manager writes
   it both ways on different days.
 - **The English forms are not synonyms of each other.** `issuing bank` and
