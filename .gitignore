@@ -27,6 +27,10 @@ web/dist/
 # ---- OS noise ----
 .DS_Store
 
+# ---- authoring scaffolding, never part of the artifact ----
+_reports/                 # end-of-module reports, written for the human reader
+eval/questions/_review/   # question drafts under review; deleted at questions-frozen
+
 # ---- deliberately NOT ignored, listed here so nobody adds them later ----
 # eval/recordings/  model responses are committed: replay must work offline (D16, ADR-005)
 # eval/sealed/      sealed holdout truth is committed, read only by evalkit.scoring (SDD §6)
