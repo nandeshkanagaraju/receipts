@@ -116,26 +116,67 @@ Data covers business dates from 1 March 2025 to 9 September 2026 inclusive. The
 reporting date is 10 September 2026. A window that runs past the last loaded
 business date is trimmed to it, and the answer says so.
 
-### 1.9 Attributing an order to a payment method or bank
+### 1.9 Attributing an order to a payment method, bank, or network
 
 An order can carry payment attempts on different methods and different banks: a
 customer whose card is declined may retry with UPI, or switch to a second card.
 Any **order-level** metric broken down by method, card network, or issuing bank
-therefore needs a rule for which one the order belongs to.
+therefore needs a rule for which one the order belongs to. There are two rules,
+for two different kinds of metric, and using the wrong one is a serious error.
 
-**Kestrel's rule:** an order is attributed to the method, card network, and
-issuing bank of its **final payment attempt** — the attempt that decided the
-outcome. For a paid order that is the capture. For an unpaid order it is the last
-attempt the customer made before giving up.
+#### Success rates use "tried" attribution
 
-This applies consistently to every order-level breakdown, including order-level
-success rate by bank or by method (§2.8). Without it, an order with a failed
-card attempt and a successful UPI attempt would be counted as both a card failure
-and a UPI success, and per-bank rates would not reconcile to the overall rate.
+For **order-level success rates broken down by method, issuing bank, or card
+network** (§2.8):
 
-**Attempt-level metrics need no attribution rule** (§2.9, §2.10): every attempt
-already carries its own method, network, and bank. This is a second reason the
-attempt-level and order-level breakdowns differ, on top of retries.
+- **Denominator:** orders with at least one non-test attempt **on that method,
+  bank, or network**.
+- **Numerator:** those same orders that had a **captured** attempt on **that same
+  method, bank, or network**.
+
+An order that tried UPI, failed, and then paid by card appears in **both** UPI's
+denominator and card's denominator. It counts as a failure for UPI and a success
+for card. That is the correct reading: UPI did fail that customer, and card did
+succeed.
+
+**Why not attribute the order to its final attempt.** It inverts the metric.
+Under final-attempt attribution the order above leaves UPI's denominator
+entirely, because the customer ended on card. Every UPI failure that the customer
+recovers from on another method disappears from UPI's figures — so **UPI's
+success rate rises precisely when UPI is failing**, and the worse the outage, the
+better the number looks, as long as customers switch. A metric that improves
+during the incident it is supposed to detect is worse than no metric.
+
+#### Per-method rates do not sum to the overall rate
+
+This follows directly, and is expected rather than a defect:
+
+- The denominators **overlap**. One order can sit in several of them.
+- Their union is **larger** than the number of orders, because retry-switchers are
+  counted once per method they tried.
+- So the per-method denominators do not partition the orders, and the per-method
+  rates cannot be combined — by averaging, by weighting, or by any other means —
+  to reproduce the overall order-level rate in §2.8.
+
+Any answer showing a per-method or per-bank breakdown alongside an overall figure
+must say so. The two are different populations, and a reader who assumes the
+parts add up to the whole will conclude something false.
+
+#### Value and count metrics follow the money
+
+For metrics that count **value or volume** rather than success — captured GMV,
+net revenue, EMI share, average order value, refunded amount — a per-method or
+per-bank breakdown attributes each amount to the attempt that actually carried
+it: the **capture** for captured money, the refund's own attempt for refunds.
+No order-level attribution rule is needed, because the money itself is already
+attached to one attempt. These breakdowns **do** partition the total and **do**
+sum to it.
+
+#### Attempt-level metrics need no attribution rule at all
+
+Every attempt already carries its own method, network, and bank (§2.9, §2.10).
+This is a second reason attempt-level and order-level breakdowns differ, on top
+of retries.
 
 ---
 
@@ -143,8 +184,20 @@ attempt-level and order-level breakdowns differ, on top of retries.
 
 ### 2.1 Orders count
 
-**What is counted:** the number of orders created in the window, of any status —
-paid, abandoned, or cancelled.
+**What is counted:** the number of orders created in the window. **All three
+order statuses count**, with no exception:
+
+| Status | Meaning | Counted? |
+|---|---|---|
+| `paid` | At least one payment attempt was captured | Yes |
+| `abandoned` | The customer left without completing payment | Yes |
+| `cancelled` | The order was cancelled after being placed | Yes |
+
+So "how many orders did we take" counts all three. "How many orders did we get
+paid for" is a **different** question and a different number — that is the count
+of `paid` orders, which appears as the denominator of average order value (§2.6)
+and inside the numerator of order-level success rate (§2.8). Neither of those is
+`orders_count`.
 
 **Denominator:** not a ratio.
 
@@ -166,7 +219,12 @@ the denominator of average order value (§2.6).
 **What is counted:** the total quantity of items across the lines of **paid**
 orders in the window. Two of the same phone on one order counts as two units.
 
-**Accessories are included.** A "unit" at Kestrel is any item on an order line —
+**"Phone", "phone model", "handset" and "device" always mean handsets only** and
+exclude accessories. "Units" is the opposite: it counts everything. So "top phone
+models by units sold" means handset SKUs ranked by their unit count, while "units
+sold" on its own includes the cases and chargers too.
+
+**Accessories are included in units.** A "unit" at Kestrel is any item on an order line —
 a phone, a case, or a charger each count as one unit. This means units sold is
 always larger than phones sold, and a showroom with a strong accessory business
 ranks higher on units than on handsets. When someone means handsets only, the
@@ -330,9 +388,12 @@ business outcome is one paid order. Counting that customer as one success out of
 two attempts describes the payment plumbing, not the shopping trip. When someone
 asks "did our customers manage to pay us", the order-level number answers it.
 
-**Broken down by bank or method,** the order is attributed to its final attempt
-(§1.9). Per-bank order-level rates computed any other way will not reconcile to
-the overall rate.
+**Broken down by bank, method, or network,** this metric uses **"tried"
+attribution** (§1.9): the denominator is orders that attempted on that
+method/bank/network, and the numerator is those that succeeded on it. Per-method
+rates therefore do **not** sum or reconcile to this overall figure, because their
+denominators overlap. §1.9 explains why final-attempt attribution would make a
+method's rate improve when the method fails.
 
 See §4.1 for the attempt-level metric and when to use it.
 
@@ -368,9 +429,19 @@ the window that failed with that reason.
 
 **Numerator:** attempts that failed with the given reason.
 
-**Denominator:** all payment attempts in the window, of any outcome — not just
-failed ones. This means the rates across reasons sum to the overall attempt
-failure rate, not to 100%.
+**Denominator: all payment attempts in the window, of any outcome** — captured,
+authorised, and failed alike. It is **not** the number of failed attempts.
+
+The consequence is worth stating plainly, because it is the thing people get
+wrong: the rates across reasons **sum to the overall attempt failure rate, not to
+100%**. If 8% of attempts failed, the per-reason rates sum to 8%. A set of
+per-reason figures that sums to 100% has been computed against the wrong
+denominator — it is the *share of failures* by reason, which is a different and
+undefined quantity at Kestrel.
+
+A plain **count** of failures by reason is also not this metric. Counts are
+legitimate but undefined here; a question asking for them is answerable from the
+tables without being covered by the glossary.
 
 **Date key:** attempt business date.
 
@@ -451,18 +522,30 @@ acquiring bank has not yet settled to Kestrel as at the reporting date.
 
 **Denominator:** not a ratio.
 
-**Date key:** capture business date, for selecting which captures fall in the
-window. Whether a capture is settled is assessed as at the reporting date.
+**Date key: this is a snapshot, not a flow.** It is evaluated **as at the end of
+the window**, call that date D:
 
-**Currency:** money, converted at the daily rate for each amount's own capture
-business date.
+- **Included:** payments captured **on or before D** that had **not settled by
+  D**.
+- There is no lower bound. A payment captured four months before D and still
+  unsettled is included; unsettled cash does not age out of the figure.
+- Asking for "unsettled amount in August" means **as at 31 August**, not
+  "captures during August that are still unsettled".
+
+Two different questions therefore produce two different numbers, and only the
+snapshot reading is this metric.
+
+**Currency:** money. Each amount is converted at the daily rate for **its own
+capture business date** — the rate on the day the money was taken, not the rate
+on D. This is the same convention as captured GMV (§2.3), so the two reconcile:
+unsettled amount is a subset of past captured GMV, valued identically.
 
 **Excluded:** test transactions.
 
-**Note:** this is cash Kestrel has earned but not received. It grows naturally at
-the end of a window — the most recent captures have not had time to settle — so
-the number is only meaningful compared against the same point in an earlier
-period, or against the normal settlement lag.
+**Note:** this is cash Kestrel has earned but not received. It is always non-zero
+and always includes the last few days of captures, which simply have not had time
+to settle. The number is meaningful only against the same point in an earlier
+period, or read together with settlement lag (§2.13).
 
 ---
 
@@ -615,35 +698,70 @@ that usually follows is counted normally, on its own refund date.
 
 ---
 
-## 5. Vocabulary: everyday words and what they mean here
+## 5. Vocabulary: what people actually say
 
-People do not ask for `gmv_captured`. They ask what they took, what they made,
-how they did. This table is the mapping. **If an everyday word in a question does
-not appear here and does not obviously name a metric in §2, the question is
-ambiguous and must be clarified** — it is not an invitation to guess which metric
-was meant.
+People do not ask for `gmv_captured`. They ask what they took, how many they
+took, how they did.
 
-| What people say | What it means at Kestrel | Section |
+**This table maps phrases, not words**, because the same verb means different
+things depending on its object. "How much did we take" is money; "how many orders
+did we take" is a count; "how long did settlement take" is neither. A word-level
+map would collapse all three.
+
+**If a phrase in a question does not match a row here and does not obviously name
+a metric in §2, the question is ambiguous and must be clarified** — it is not an
+invitation to guess.
+
+### 5.1 Money
+
+| What people say | What it means | Section |
 |---|---|---|
-| sales, sold, turnover *(as money)* | Captured GMV | §2.3 |
-| sales, sold *(as things)*, units, volume | Units sold — **includes accessories** | §2.2 |
-| collected, we collected, took, we took, brought in, made | Captured GMV — money captured from the customer, **not** money settled to the bank | §2.3 |
-| received, landed, hit our account, cash in the bank | Settled money; see settlement lag and unsettled amount | §2.13, §2.14 |
-| success rate, payment success, did payments work | Payment success rate, **order-level** | §2.8 |
-| failures, declines, rejections, drops | Failed payment attempts, by reason | §2.10 |
-| refunds, returns *(as money)* | Refunded amount, on the refund date | §2.4 |
-| basket size, ticket size, average spend | Average order value | §2.6 |
-| attach rate, accessories with phones | Accessory attach rate | §2.12 |
-| EMI, instalments, easy payments, no-cost EMI | EMI share, on **full order value** | §2.11 |
-| double charge, charged twice, duplicate | Duplicate capture count | §2.15 |
-| yesterday | The showroom's local business date, one day back | §1.7 |
-| last week | The most recent complete **Monday–Sunday** week | §1.6 |
-| last 7 days | The seven days ending yesterday — **not** the same as last week | §1.6 |
-| this month, last month | Calendar months, on business dates | §1.5 |
+| how much did we **take** / **collect** / **make** / **bring in** / **do** | Captured GMV — money captured from the customer | §2.3 |
+| what were our **sales** / **turnover** *(as an amount)* | Captured GMV | §2.3 |
+| how much did we **receive** / has **landed** / **hit our account** / is **in the bank** | Settled money — a different date and a different number | §2.13, §2.14 |
+| how much are we **owed** / **waiting on** / **yet to receive** | Unsettled amount, as at the end of the window | §2.14 |
+| how much did we **refund** / **give back** / **pay back** | Refunded amount, on the refund date | §2.4 |
+| what is our **average order** / **basket size** / **ticket size** / **average spend** | Average order value | §2.6 |
+| what did we **make after refunds** / **net of returns** | Net revenue | §2.5 |
 
-Words that deliberately do **not** appear in this table, because they have no
-single meaning at Kestrel: *revenue*, *best*, *top*, *worst*, *performance*,
-*growth*, *quarter* on its own. See §6.
+### 5.2 Counts and volumes
+
+| What people say | What it means | Section |
+|---|---|---|
+| how many **orders** did we **take** / **get** / **do** / **have** | Orders count — **all statuses**, paid and abandoned and cancelled | §2.1 |
+| how many **orders did we get paid for** / **went through** | Count of `paid` orders — **not** orders count | §2.1, §2.6 |
+| how many did we **sell** / how many **units** / what **volume** | Units sold — **includes accessories** | §2.2 |
+| how many **phones** / **handsets** / **devices** did we sell | Units sold, **handsets only**, accessories excluded | §2.2 |
+| how many **double charges** / **charged twice** / **duplicates** | Duplicate capture count | §2.15 |
+| how many **different banks** / **how many networks** we saw | Not a Kestrel metric — countable from the tables, undefined here | — |
+
+### 5.3 Payments
+
+| What people say | What it means | Section |
+|---|---|---|
+| what is our **success rate** / did **payments work** / are payments **going through** | Payment success rate, **order-level** | §2.8 |
+| success rate **for UPI** / **for card** / **for a bank** | Order-level success with **"tried" attribution**; does not sum to the overall rate | §1.9, §2.8 |
+| **per-try** / **per-attempt** success | Payment success rate, attempt-level | §2.9 |
+| what is **failing** / why are payments **declining** / **failure reasons** | Failure rate by reason — denominator is **all attempts** | §2.10 |
+| how much on **EMI** / **instalments** / **easy payments** | EMI share, on **full order value** | §2.11 |
+| how long does **settlement take** / what is our **settlement lag** | Settlement lag, keyed on settlement date | §2.13 |
+| are people **buying accessories with** phones / **attach rate** | Accessory attach rate | §2.12 |
+
+### 5.4 Time
+
+| What people say | What it means | Section |
+|---|---|---|
+| **yesterday** | The showroom's local business date, one day back | §1.7 |
+| **last week** | The most recent complete **Monday–Sunday** week | §1.6 |
+| **last 7 days** | The seven days ending yesterday — **not** the same as last week | §1.6 |
+| **this month**, **last month** | Calendar months, on business dates | §1.5 |
+| **so far this year** | From 1 January, unless the asker says fiscal | §1.5 |
+
+### 5.5 Phrases that deliberately have no entry
+
+*revenue* · *best* · *top* · *worst* · *performance* · *how are we doing* ·
+*growth* · *quarter* on its own. Each has more than one defensible reading at
+Kestrel. See §6.
 
 ---
 

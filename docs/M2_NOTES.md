@@ -14,14 +14,51 @@ Each dev/eval WHY question names a window relative to `as_of`. The planted
 anomaly must fall inside it, or the question is unanswerable and the WHY
 population scores zero through no fault of the agent.
 
-| Anomaly | What it is (PDD §7) | Must be planted within | Named by |
-|---|---|---|---|
-| A1 | UPI success dip, one issuing bank, Tamil Nadu, one date | `2026-08-31` … `2026-09-06` (last complete Mon–Sun week) | DV-019 |
-| A5 | Card decline spike in the UK after an authentication change | `2026-08-01` … `2026-08-31` (last calendar month) | DV-040 |
+| Anomaly | What it is (PDD §7) | Must be planted within | Named by | Role |
+|---|---|---|---|---|
+| A1 | UPI success dip, one issuing bank, Tamil Nadu | `2026-08-31` … `2026-09-06` (last complete Mon–Sun week) | DV-019 | rm_tamil_nadu |
+| A2 | Refund spike on one model at two Dubai showrooms | `2026-08-01` … `2026-08-31` (last calendar month) | DV-058 | global_finance |
+| A3 | Settlement delay, one acquiring bank's EMI transactions | `2026-08-31` … `2026-09-06` (last complete week) | DV-059 | global_finance |
+| A5 | Card decline spike in the UK after an auth change | `2026-08-01` … `2026-08-31` (last calendar month) | DV-040 | store_ops_uk |
+| A6 | Duplicate captures at one showroom, later refunded | `2026-08-01` … `2026-08-31`, at a **Tamil Nadu** showroom | DV-022 | rm_tamil_nadu |
 
-A2, A3, A4 and A6 are not yet pinned by a frozen question. Their windows are
-fixed as the remaining eval WHY questions are written; this table is updated in
-the same commit, and it must be complete before the generator is frozen at G1.
+A6's region matters: DV-022 asks for duplicate captures in Tamil Nadu under the
+`rm_tamil_nadu` role, which is scoped to `IN-TN`. Planted anywhere else, the
+scoped answer is zero and the question is trivial.
+
+A4 (launch-week surge, Singapore) is not yet pinned by a frozen dev question. It
+must be pinned by an eval WHY question, and this table updated in the same
+commit, before the generator freezes at G1.
+
+### 1.1 Magnitude: anomalies must clear the why-agent's confirm gate
+
+Naming the right window is not enough. `why()` (SDD §15 step 1) refuses to
+proceed unless the change it is asked about is both:
+
+- **≥ `why.min_rel_change`** — 2% relative change, and
+- **|z| ≥ `why.min_z`** — 2.0 against the trailing `why.trailing_periods` (28)
+  equivalent periods.
+
+Both thresholds are evaluated **at the granularity the question asks about**, not
+at the granularity the anomaly was planted at. An anomaly planted on a single day
+can easily clear both at day level and fail both once diluted across the week or
+month the question names — in which case the agent correctly returns "no
+significant change" and the question scores as a miss.
+
+So for each anomaly, the generator must **either** spread it across enough of the
+named window **or** size it so the aggregate still clears both gates:
+
+| Anomaly | Question granularity | Requirement |
+|---|---|---|
+| A1 | **Week** (DV-019 asks "last week") | Spread across several days of `2026-08-31`…`09-06`, or size the single-day dip so the whole-week UPI order-level success rate for Tamil Nadu moves ≥2% relative with \|z\| ≥ 2 against the prior 28 weeks |
+| A5 | **Month** (DV-040 asks "last month") | Same test at month level for UK card failures across `2026-08-01`…`08-31`, against the prior 28 months — note the data only starts 2025-03, so fewer trailing periods are available and the z calculation must handle a short history explicitly rather than silently |
+| A2 | **Month** (DV-058) | UAE refund rate for `2026-08` must clear both gates at country level |
+| A3 | **Week** (DV-059) | Unsettled amount at the end of `2026-09-06` must clear both gates |
+| A6 | **Month** (DV-022) | DV-022 is an ANS count question, not a WHY, so no z-gate applies — it only needs to be non-zero and non-trivial under `IN-TN` scope |
+
+`test_anomaly_magnitudes_clear_thresholds` (M2) asserts this against the built
+artifact rather than trusting the generator's parameters, and prints the realised
+relative change and z for each anomaly at the granularity its question uses.
 
 ## 2. Sealed anomalies S1–S4
 
