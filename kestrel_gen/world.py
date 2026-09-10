@@ -73,17 +73,43 @@ REGIONS: tuple[tuple[str, str, str, tuple[str, ...]], ...] = (
 # Chennai's 14 showrooms, named for localities the way a retailer names branches.
 # "Anna Nagar" also appears in Madurai — that collision is DV-052's whole point.
 CHENNAI_LOCALITIES: tuple[str, ...] = (
-    "Anna Nagar", "Velachery", "T Nagar", "Adyar", "Mylapore", "Guindy",
-    "Porur", "Tambaram", "Perambur", "Nungambakkam", "Kodambakkam",
-    "Ambattur", "Sholinganallur", "Thiruvanmiyur",
+    "Anna Nagar",
+    "Velachery",
+    "T Nagar",
+    "Adyar",
+    "Mylapore",
+    "Guindy",
+    "Porur",
+    "Tambaram",
+    "Perambur",
+    "Nungambakkam",
+    "Kodambakkam",
+    "Ambattur",
+    "Sholinganallur",
+    "Thiruvanmiyur",
 )
 CHENNAI_SHOWROOMS = len(CHENNAI_LOCALITIES)  # 14, asserted by the tests
 MADURAI_LOCALITIES: tuple[str, ...] = ("Anna Nagar", "Mattuthavani", "Thirunagar")
 
 GENERIC_LOCALITIES: tuple[str, ...] = (
-    "Central", "North", "South", "East", "West", "City Centre", "Riverside",
-    "Market Street", "Park Road", "Station Road", "High Street", "Old Town",
-    "Uptown", "Midtown", "Lakeside", "Garden Road", "Mill Road", "Bridge Street",
+    "Central",
+    "North",
+    "South",
+    "East",
+    "West",
+    "City Centre",
+    "Riverside",
+    "Market Street",
+    "Park Road",
+    "Station Road",
+    "High Street",
+    "Old Town",
+    "Uptown",
+    "Midtown",
+    "Lakeside",
+    "Garden Road",
+    "Mill Road",
+    "Bridge Street",
 )
 
 # Catalogue. Onyx is a model name AND (as "Onyx Black") a finish on other models:
@@ -115,12 +141,23 @@ ACCESSORIES: tuple[tuple[str, int], ...] = (
 
 # Price multiplier per country, applied to the base major-unit price.
 PRICE_FACTOR: dict[str, float] = {
-    "IN": 84.0, "AE": 3.7, "SG": 1.35, "MY": 4.5, "GB": 0.80, "US": 1.0,
+    "IN": 84.0,
+    "AE": 3.7,
+    "SG": 1.35,
+    "MY": 4.5,
+    "GB": 0.80,
+    "US": 1.0,
 }
 
 BANKS_ISSUING: dict[str, tuple[str, ...]] = {
-    "IN": ("Bank of Coromandel", "Deccan National", "Peninsula Bank", "Vindhya Credit",
-           "Konkan Savings", "Sarasvati Union"),
+    "IN": (
+        "Bank of Coromandel",
+        "Deccan National",
+        "Peninsula Bank",
+        "Vindhya Credit",
+        "Konkan Savings",
+        "Sarasvati Union",
+    ),
     "AE": ("Gulf Union Bank", "Falcon National"),
     "SG": ("Straits Commercial", "Merlion Bank"),
     "MY": ("Selangor National", "Straits Commercial"),
@@ -128,17 +165,29 @@ BANKS_ISSUING: dict[str, tuple[str, ...]] = {
     "US": ("Cascade Federal", "Liberty Plains", "Sunbelt Trust"),
 }
 BANKS_ACQUIRING: tuple[str, ...] = (
-    "Meridian Acquiring", "Northgate Payments", "Solstice Merchant Services",
-    "Anchor Acquiring", "Cobalt Processing",
+    "Meridian Acquiring",
+    "Northgate Payments",
+    "Solstice Merchant Services",
+    "Anchor Acquiring",
+    "Cobalt Processing",
 )
 CARD_NETWORKS: tuple[str, ...] = ("Vantiv", "Meridia", "Northstar", "Orbit")
 FAILURE_REASONS: tuple[str, ...] = (
-    "insufficient_funds", "issuer_declined", "authentication_failed",
-    "expired_card", "risk_blocked", "network_timeout", "invalid_details",
+    "insufficient_funds",
+    "issuer_declined",
+    "authentication_failed",
+    "expired_card",
+    "risk_blocked",
+    "network_timeout",
+    "invalid_details",
 )
 REFUND_REASONS: tuple[str, ...] = (
-    "customer_changed_mind", "faulty_device", "wrong_item", "damaged_in_transit",
-    "price_match", "duplicate_charge",
+    "customer_changed_mind",
+    "faulty_device",
+    "wrong_item",
+    "damaged_in_transit",
+    "price_match",
+    "duplicate_charge",
 )
 CHANNELS: tuple[str, ...] = ("in_store", "online_pickup")
 
@@ -222,9 +271,7 @@ def build_world(seed: int, scale: float = 1.0) -> World:
     # Showroom allocation. Per country: the named cities first (Chennai's 14 and
     # Madurai's 3 are fixed), then the remainder dealt round-robin over that
     # country's cities so every named city has at least one showroom.
-    target = {
-        code: max(1, int(round(cnt * scale))) for code, _n, _cur, _tz, cnt in COUNTRIES
-    }
+    target = {code: max(1, int(round(cnt * scale))) for code, _n, _cur, _tz, cnt in COUNTRIES}
     target["IN"] = max(target["IN"], CHENNAI_SHOWROOMS + len(MADURAI_LOCALITIES) + 6)
 
     s_id: list[str] = []
@@ -349,9 +396,10 @@ def build_world(seed: int, scale: float = 1.0) -> World:
         for code in country_codes:
             p_sku.append(s)
             p_cc.append(code)
-            p_minor.append(int(round(bm * PRICE_FACTOR[code])) * MINOR_PER_MAJOR[
-                dict((c[0], c[2]) for c in COUNTRIES)[code]
-            ])
+            p_minor.append(
+                int(round(bm * PRICE_FACTOR[code]))
+                * MINOR_PER_MAJOR[dict((c[0], c[2]) for c in COUNTRIES)[code]]
+            )
     prices = {
         "sku": np.array(p_sku, dtype=object),
         "country_code": np.array(p_cc, dtype=object),
@@ -361,6 +409,10 @@ def build_world(seed: int, scale: float = 1.0) -> World:
     }
 
     return World(
-        countries=countries, regions=regions, cities=cities,
-        showrooms=showrooms, products=products, prices=prices,
+        countries=countries,
+        regions=regions,
+        cities=cities,
+        showrooms=showrooms,
+        products=products,
+        prices=prices,
     )
