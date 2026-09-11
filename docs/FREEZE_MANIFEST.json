@@ -7,6 +7,7 @@
   },
   "note": "Byte-for-byte hashes of frozen artifacts. Regenerate deliberately.",
   "sealed_files": {
-    "eval/sealed/holdout_anomalies.json": "cd25eb23b2a82b00bfb31f80b5ee2157b151a2d3c69131e3027e03acbe33ae6f"
+    "eval/sealed/holdout_anomalies.json": "a4db0fb6368f4499f946a0ea4607f1abcf1fefbd8ba16b7583eeff0a421cfe1e",
+    "eval/sealed/holdout_why.jsonl": "f0b201b5e7e53385fe01d0ba92efc8e10aab3728b38bd3b0e598f4aeb50c81ba"
   }
 }

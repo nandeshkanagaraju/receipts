@@ -10,6 +10,23 @@
       "magnitude": {
         "success_multiplier": 0.5447
       },
+      "planted": {
+        "affected_rows": 99,
+        "dimensions": {
+          "card_network": "Northstar",
+          "country_code": "SG"
+        },
+        "entry_level": "country:SG",
+        "gate": {
+          "n": 28,
+          "passes": true,
+          "rel": -0.071079,
+          "z": -17.0861
+        },
+        "magnitude": {
+          "capture_multiplier": 0.45
+        }
+      },
       "window": {
         "end": "2026-07-03",
         "start": "2026-06-30"
@@ -25,6 +42,23 @@
       "magnitude": {
         "refund_multiplier": 3.4371
       },
+      "planted": {
+        "affected_rows": 253,
+        "dimensions": {
+          "city": "Bengaluru",
+          "model_name": "Kestrel Pika 2"
+        },
+        "entry_level": "city:Bengaluru",
+        "gate": {
+          "n": 16,
+          "passes": true,
+          "rel": 0.526823,
+          "z": 2.5817
+        },
+        "magnitude": {
+          "refund_multiplier": 6.0
+        }
+      },
       "window": {
         "end": "2026-08-05",
         "start": "2026-07-16"
@@ -39,6 +73,23 @@
       "magnitude": {
         "volume_multiplier": 0.4217
       },
+      "planted": {
+        "affected_rows": 63,
+        "dimensions": {
+          "city": "Noida",
+          "showroom_id": "S00029"
+        },
+        "entry_level": "city:Noida",
+        "gate": {
+          "n": 28,
+          "passes": true,
+          "rel": -0.106898,
+          "z": -2.0668
+        },
+        "magnitude": {
+          "volume_multiplier": 0.25
+        }
+      },
       "window": {
         "end": "2026-06-28",
         "start": "2026-06-22"
@@ -52,6 +103,22 @@
       "kind": "emi_share_rise",
       "magnitude": {
         "emi_share_multiplier": 1.8066
+      },
+      "planted": {
+        "affected_rows": 2952,
+        "dimensions": {
+          "region_id": "IN-MH"
+        },
+        "entry_level": "region:IN-MH",
+        "gate": {
+          "n": 14,
+          "passes": true,
+          "rel": 1.151625,
+          "z": 59.7094
+        },
+        "magnitude": {
+          "emi_share_multiplier": 2.2
+        }
       },
       "window": {
         "end": "2026-06-18",

@@ -233,18 +233,39 @@ it.
 S4 moves upward deliberately. A why-agent that assumes "explain the drop" will
 miss it, and that is a real failure mode worth measuring.
 
+## 2a. Realistic magnitude ranges for S1–S4, written before generation
+
+The generator may only choose a magnitude inside these ranges. They are recorded
+here **before** the sealed anomalies are drawn, so the bounds cannot be widened
+later to make a stubborn candidate fit.
+
+| Id | Effect | Realistic range | Why this range |
+|---|---|---|---|
+| S1 | Capture-rate multiplier for one card network | **0.45 – 0.80** | An authentication or routing fault degrades a network; below 0.45 the network is effectively down and would be noticed by other means |
+| S2 | Refund-rate multiplier for one model in one city | **2.0 – 6.0** | A defective batch. Above 6× every unit sold is coming back, which is a recall rather than a batch |
+| S3 | Order-volume multiplier at one showroom for a week | **0.25 – 0.70** | Refit, flood, local closure. Below 0.25 the showroom is shut, which the calendar would record |
+| S4 | EMI-share multiplier in one region | **1.3 – 2.2** | A promotion moving customers onto instalments. Above 2.2 implies nearly everyone switched |
+
+If no candidate clears the gate at its entry level within these ranges, the
+generator **fails loudly** rather than widening them.
+
 ## 3. Holdout WHY questions are generated, not written
 
 The generator writes **six** questions to `eval/sealed/holdout_why.jsonl`:
 
-| From | Count | Phrasing |
-|---|---|---|
-| S1 | 2 | Once scoped to the affected country, once global |
-| S2 | 2 | Once scoped to the affected country, once global |
-| S3 | 1 | Country-level |
-| S4 | 1 | Region's country level |
+**Entry level is exactly one level above the cause (ADR-013).** No global
+variants: three passes established that a local anomaly cannot move a global
+metric at any realistic magnitude, and a question that cannot be answered is not
+a test of anything.
 
-Each question names **only the metric, the country, and the week**. It must never
+| Id | Cause (to be found) | Entry level (named) | Count | The two metrics |
+|---|---|---|---|---|
+| S1 | card network | **country** | 2 | order-level success rate · attempt failure rate |
+| S2 | phone model | **city** | 2 | refund rate · refunded amount, the amount only if it clears |
+| S3 | showroom | **its city** | 1 | order count |
+| S4 | acquiring bank or channel | **region** | 1 | EMI share |
+
+Each question names **only the metric, the entry level, and the window**. It must never
 name the card network, phone model, city, showroom, issuing bank, or size — those
 are the answer the why-agent is being scored on finding.
 

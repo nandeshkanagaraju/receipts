@@ -48,7 +48,8 @@ A3_EXTRA_LAG_DAYS = 7  # delayed settlements land in the SECOND week, visibly la
 A4_WINDOW = (date(2026, 8, 1), date(2026, 8, 31))  # EV-046, EV-145
 A4_COUNTRY = "SG"
 A4_SURGE = 2.6
-A4_GMV_LIFT = 0.22  # share of Singapore's baseline monthly GMV the launch adds
+A4_GMV_LIFT = 0.25  # lift ABOVE THE TRAILING MEAN, which is what the gate compares to
+A4_MIN_Z = 4.0  # comfortable margin over the gate's |z| >= 2
 A4_MIN_ORDERS = 250  # floor, so a thin month still gets a findable surge
 
 A5_WINDOW = (date(2026, 8, 1), date(2026, 8, 31))  # DV-040, EV-099, EV-148
@@ -463,9 +464,37 @@ def apply_known(facts, world, seed: int, enforce: bool = True) -> Planted:
             pool = eligible or counts
             a4_model = max(sorted(pool), key=lambda k: price_of.get(k, 0))
             src = counts[a4_model]
-            baseline_gmv = sum(int(o["total_minor"][j]) for j in sg_orders)
+            # Size against the TRAILING MEAN, not against August's own level.
+            # The gate compares the target month with the mean of the months
+            # before it, and August sits below that mean, so a lift measured
+            # against August itself arrives smaller than it looks: a 26%
+            # self-relative lift netted to +8.7% against the comparison that
+            # actually decides the question.
+            import statistics as _st
+
+            monthly: dict[tuple[int, int], int] = {}
+            for j, oid_ in enumerate(a["order_id"]):
+                if a["status"][j] != "captured" or a["is_test"][j]:
+                    continue
+                s_ = sr_of_order.get(oid_)
+                if s_ is None or sh_country_pre.get(s_) != A4_COUNTRY:
+                    continue
+                d_ = a["business_date"][j]
+                monthly[(d_.year, d_.month)] = monthly.get((d_.year, d_.month), 0) + int(
+                    a["amount_minor"][j]
+                )
+            target_key = (A4_WINDOW[0].year, A4_WINDOW[0].month)
+            trailing = [v for k, v in sorted(monthly.items()) if k < target_key]
+            current = monthly.get(target_key, 0)
+            if len(trailing) >= 2:
+                mean_ = _st.fmean(trailing)
+                sd_ = _st.stdev(trailing)
+                need = max(mean_ * (1.0 + A4_GMV_LIFT), mean_ + A4_MIN_Z * sd_)
+                added_value = max(0.0, need - current)
+            else:
+                added_value = sum(int(o["total_minor"][j]) for j in sg_orders) * A4_GMV_LIFT
             unit_value = price_of.get(a4_model, 1) or 1
-            want4 = max(A4_MIN_ORDERS, int(baseline_gmv * A4_GMV_LIFT / unit_value))
+            want4 = max(A4_MIN_ORDERS, int(added_value / unit_value))
             take = rng.choice(np.array(src), size=want4, replace=True)
             n4 = len(take)
             new_ids = np.array([f"ORD-A4-{i:07d}" for i in range(1, n4 + 1)], dtype=object)

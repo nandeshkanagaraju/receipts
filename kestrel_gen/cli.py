@@ -14,6 +14,7 @@ import os
 from pathlib import Path
 
 from kestrel_gen import anomalies, distributions, truth, world, write
+from kestrel_gen import sealed as sealed_mod
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -51,7 +52,12 @@ def main(argv: list[str] | None = None) -> int:
     print(f"canaries   {len(canaries)} planted")
 
     sealed = anomalies.draw_sealed(dict(os.environ), w)
-    print(f"sealed     {len(sealed)} drawn (parameters not shown)")
+    plants, sealed_questions = sealed_mod.apply_sealed(facts, w, sealed, seed=args.seed)
+    n_pass = sum(1 for q in sealed_questions if q["gate"].get("passes"))
+    print(
+        f"sealed     {len(plants)} planted, {len(sealed_questions)} questions, "
+        f"{n_pass} of {len(sealed_questions)} clear the gate (details not shown)"
+    )
 
     # --- truth, from the objects above; nothing is read back ---
     tdir = ROOT / "truth"
@@ -65,7 +71,37 @@ def main(argv: list[str] | None = None) -> int:
     )
     sdir = ROOT / "eval" / "sealed"
     sdir.mkdir(parents=True, exist_ok=True)
-    (sdir / "holdout_anomalies.json").write_text(truth.sealed_json(sealed), encoding="utf-8")
+    import json as _json
+
+    (sdir / "holdout_anomalies.json").write_text(
+        truth.sealed_json(
+            [
+                {
+                    **s,
+                    "planted": next(
+                        (
+                            {
+                                "dimensions": p.dimensions,
+                                "magnitude": p.magnitude,
+                                "entry_level": p.entry_level,
+                                "gate": p.gate,
+                                "affected_rows": p.affected_rows,
+                            }
+                            for p in plants
+                            if p.anomaly_id == s["anomaly_id"]
+                        ),
+                        None,
+                    ),
+                }
+                for s in sealed
+            ]
+        ),
+        encoding="utf-8",
+    )
+    (sdir / "holdout_why.jsonl").write_text(
+        "".join(_json.dumps(q, ensure_ascii=False) + "\n" for q in sealed_questions),
+        encoding="utf-8",
+    )
     print("truth      truth/anomalies.json, truth/constructed.json, eval/sealed/ (sealed)")
 
     # --- write ---
