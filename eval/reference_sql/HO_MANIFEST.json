@@ -1,0 +1,356 @@
+{
+  "counts": {
+    "agree": 34,
+    "blind_authored_by": "human-blind",
+    "blind_classified_amb": 15,
+    "blind_classified_ans": 13,
+    "blind_classified_una": 4,
+    "blind_questions_read": 32,
+    "blind_sql_files": 13,
+    "double_computed": 35,
+    "flagged_implausible": 2,
+    "questions_ans_live": 35,
+    "returned_at_least_one_row": 34,
+    "run_ok": 34,
+    "sql_files": 35
+  },
+  "files": {
+    "HO-001.sql": {
+      "agrees": true,
+      "double_computed": true,
+      "returns_rows": true,
+      "runs": true,
+      "sha256": "a0081c0b0266df5ce0ffea5e7d60dd622935ae4be0bc66213e1c8021bd92babf"
+    },
+    "HO-002.sql": {
+      "agrees": true,
+      "double_computed": true,
+      "returns_rows": true,
+      "runs": true,
+      "sha256": "06385f7bbaf0acf14df36a69fba6f43d825be5fc3caa54fcfa45ca5012d25a9e"
+    },
+    "HO-003.sql": {
+      "agrees": false,
+      "double_computed": true,
+      "returns_rows": false,
+      "runs": false,
+      "sha256": "59a09cddd67e9d8a43fd0cb958524be356b2e681a46df350527a8b480038d6c6"
+    },
+    "HO-004.sql": {
+      "agrees": true,
+      "double_computed": true,
+      "returns_rows": true,
+      "runs": true,
+      "sha256": "df0bb21f706c74c63686890c2df7479734dea67ade8e9a630d3ddb0fedd2dcb4"
+    },
+    "HO-005.sql": {
+      "agrees": true,
+      "double_computed": true,
+      "returns_rows": true,
+      "runs": true,
+      "sha256": "91a539d54cfa9e456a3e9c6e10a72d0b3bcbb67078d14c0a79cb096876db84ad"
+    },
+    "HO-006.sql": {
+      "agrees": true,
+      "double_computed": true,
+      "returns_rows": true,
+      "runs": true,
+      "sha256": "129dbfc30646b84db63ba2392a97d614ec44c2011199178523aecfe4cba0ffd4"
+    },
+    "HO-007.sql": {
+      "agrees": true,
+      "double_computed": true,
+      "returns_rows": true,
+      "runs": true,
+      "sha256": "03c81172be6bb1c9113c1b456321c1ca9577b1c8ac91bf7c8494f1ae32399476"
+    },
+    "HO-008.sql": {
+      "agrees": true,
+      "double_computed": true,
+      "returns_rows": true,
+      "runs": true,
+      "sha256": "239a1bd46a40866ad16e55d703d072d1df18be7a2f86b8f713180895038fffa7"
+    },
+    "HO-009.sql": {
+      "agrees": true,
+      "double_computed": true,
+      "returns_rows": true,
+      "runs": true,
+      "sha256": "16a9aaf9acd2765248d77c79a69efe1a9545e377f1123ffb19fa3f11f308e26c"
+    },
+    "HO-010.sql": {
+      "agrees": true,
+      "double_computed": true,
+      "returns_rows": true,
+      "runs": true,
+      "sha256": "571ad7be7809d74427cad46cceaa3d9d0cd6e121f21c6a40f1ef479fb2719766"
+    },
+    "HO-011.sql": {
+      "agrees": true,
+      "double_computed": true,
+      "returns_rows": true,
+      "runs": true,
+      "sha256": "5472923dc488c6ed0336ca6741fd58a4cf3af2b8d0b905005d47bec322a576b3"
+    },
+    "HO-012.sql": {
+      "agrees": true,
+      "double_computed": true,
+      "returns_rows": true,
+      "runs": true,
+      "sha256": "abcc4e7f199823f94b0fbb62db046bd24f34a5e0298a7b2ea6136d0307590213"
+    },
+    "HO-013.sql": {
+      "agrees": true,
+      "double_computed": true,
+      "returns_rows": true,
+      "runs": true,
+      "sha256": "36bb24f9c3aa8717a5aea0c69dd8bbc6f241e4f7c8ed3fc1a85bcae1294c64bf"
+    },
+    "HO-014.sql": {
+      "agrees": true,
+      "double_computed": true,
+      "returns_rows": true,
+      "runs": true,
+      "sha256": "e73a2329a0b934e53737aaf2ed5fee83c5bbc1ac0db5b8fa3ca3dca04d564640"
+    },
+    "HO-015.sql": {
+      "agrees": true,
+      "double_computed": true,
+      "returns_rows": true,
+      "runs": true,
+      "sha256": "8faa04a6941d90a65cf0b8775aa53119ce7520852cdbd76a856a4670741ac85b"
+    },
+    "HO-016.sql": {
+      "agrees": true,
+      "double_computed": true,
+      "returns_rows": true,
+      "runs": true,
+      "sha256": "b0dcf6941a531711c6c2855ca72f1dc7f591bfe06d2190b858cf9955dda43baa"
+    },
+    "HO-027.sql": {
+      "agrees": true,
+      "double_computed": true,
+      "returns_rows": true,
+      "runs": true,
+      "sha256": "89c876caec7d781132120f1da533ff9e801cd5dc888d7dfba75b94edfb9ede39"
+    },
+    "HO-028.sql": {
+      "agrees": true,
+      "double_computed": true,
+      "returns_rows": true,
+      "runs": true,
+      "sha256": "872200b682e81ac4f153ee33a9a2ea219bfb41ebc1a413068d44a858590cf9c6"
+    },
+    "HO-029.sql": {
+      "agrees": true,
+      "double_computed": true,
+      "returns_rows": true,
+      "runs": true,
+      "sha256": "d4ed8375e0655bddd81281f42a4c8516cfe8612c46a7b7e38f90e5b8d246c3d7"
+    },
+    "HO-030.sql": {
+      "agrees": true,
+      "double_computed": true,
+      "returns_rows": true,
+      "runs": true,
+      "sha256": "f3dfb24b93f2935afd3f01fa6bd7a497b13129c84847cd572fb53da96b066152"
+    },
+    "HO-031.sql": {
+      "agrees": true,
+      "double_computed": true,
+      "returns_rows": true,
+      "runs": true,
+      "sha256": "9e104689df3d14bb366c93dce249a77f3a53dc5907636a3e5d0c95d7abaef415"
+    },
+    "HO-032.sql": {
+      "agrees": true,
+      "double_computed": true,
+      "returns_rows": true,
+      "runs": true,
+      "sha256": "981d00850434d77994440ed5cf40158d6af79d5472c2a367dc94496a5267955f"
+    },
+    "HO-033.sql": {
+      "agrees": true,
+      "double_computed": true,
+      "returns_rows": true,
+      "runs": true,
+      "sha256": "13aff53a2cd44fd7553a5c83203b0d9018b5bcbeed07bfd1a50e9b4049168ecb"
+    },
+    "HO-034.sql": {
+      "agrees": true,
+      "double_computed": true,
+      "returns_rows": true,
+      "runs": true,
+      "sha256": "dafe9db654864bcd2d6f1241207bf721108f5b493c475eacec08a45c140b8985"
+    },
+    "HO-035.sql": {
+      "agrees": true,
+      "double_computed": true,
+      "returns_rows": true,
+      "runs": true,
+      "sha256": "a18bbdbecc25ad42114ae8749fb2a2e035b8eab6e253903a44cb832956e6f896"
+    },
+    "HO-036.sql": {
+      "agrees": true,
+      "double_computed": true,
+      "returns_rows": true,
+      "runs": true,
+      "sha256": "2e9ee6013f4e8d819de512b5f023c1053980fbbb020f779defabac9b818a70c3"
+    },
+    "HO-037.sql": {
+      "agrees": true,
+      "double_computed": true,
+      "returns_rows": true,
+      "runs": true,
+      "sha256": "bba7d7cf473497f60bfea6c74652c362646cd8ea8047425c5d87e6270f8cd619"
+    },
+    "HO-038.sql": {
+      "agrees": true,
+      "double_computed": true,
+      "returns_rows": true,
+      "runs": true,
+      "sha256": "e91b5a25d6c7d3ee15dec75d59d02f5957499aa9903861bd99b2db6ceda4a012"
+    },
+    "HO-039.sql": {
+      "agrees": true,
+      "double_computed": true,
+      "returns_rows": true,
+      "runs": true,
+      "sha256": "ddbd4ca0cecb84888598212bd533f8e5ef509280733f8892cea4c94d8f0f7555"
+    },
+    "HO-040.sql": {
+      "agrees": true,
+      "double_computed": true,
+      "returns_rows": true,
+      "runs": true,
+      "sha256": "1cb04a25ee7ad7b8eec13aafef9fd33b4c2c6d5c63961dc04d0737d335cb9ac3"
+    },
+    "HO-041.sql": {
+      "agrees": true,
+      "double_computed": true,
+      "returns_rows": true,
+      "runs": true,
+      "sha256": "a05be8be02e31f59f67dc30016c76cbbac5cdd3818d5e5961ad789f0dd88bbeb"
+    },
+    "HO-042.sql": {
+      "agrees": true,
+      "double_computed": true,
+      "returns_rows": true,
+      "runs": true,
+      "sha256": "44645eb08be412be63152242d07859dc1693aa044d2bafd7ae818098974ef970"
+    },
+    "HO-043.sql": {
+      "agrees": true,
+      "double_computed": true,
+      "returns_rows": true,
+      "runs": true,
+      "sha256": "784635e0e273fa41d4e0c92198842d40d412bce55d638c9ae7e477883809c1bd"
+    },
+    "HO-053.sql": {
+      "agrees": true,
+      "double_computed": true,
+      "returns_rows": true,
+      "runs": true,
+      "sha256": "39edbacf2bf1cfb2ed472f926baf2a5970f9f12218a8dd0b80483c6c74e40013"
+    },
+    "HO-054.sql": {
+      "agrees": true,
+      "double_computed": true,
+      "returns_rows": true,
+      "runs": true,
+      "sha256": "4333b5fb7ac132a6e5d59d1323f4f5ef93e5127e1daad35936620a854ec43c49"
+    },
+    "HO-B01.sql": {
+      "agrees": true,
+      "double_computed": true,
+      "returns_rows": true,
+      "runs": true,
+      "sha256": "e6713d4655623894ad864e43f448c794113b49775777bbda22ee9dd49d5c21cb"
+    },
+    "HO-B02.sql": {
+      "agrees": true,
+      "double_computed": true,
+      "returns_rows": true,
+      "runs": true,
+      "sha256": "3c62771c6301615e07fdfc5d8e79f8b15958024b229c173e13a80023c81690f3"
+    },
+    "HO-B03.sql": {
+      "agrees": true,
+      "double_computed": true,
+      "returns_rows": true,
+      "runs": true,
+      "sha256": "08990592a185c659c6a4d9abc62c05701ad754c6979164300eec73532165b388"
+    },
+    "HO-B04.sql": {
+      "agrees": true,
+      "double_computed": true,
+      "returns_rows": true,
+      "runs": true,
+      "sha256": "09ce4b3f56ca1f07d0c832f6ceb5079bc7625407c0557e2f6a584f21bfdff38b"
+    },
+    "HO-B06.sql": {
+      "agrees": true,
+      "double_computed": true,
+      "returns_rows": true,
+      "runs": true,
+      "sha256": "01e3980db02c393902c7f3b0e4a6a1d3b431577bd0d29f2ce92ef35a4b006070"
+    },
+    "HO-B08.sql": {
+      "agrees": true,
+      "double_computed": true,
+      "returns_rows": true,
+      "runs": true,
+      "sha256": "9d48baa14297cfa102a4295af005e93cca84269894a5119b5cd6193271af6633"
+    },
+    "HO-B12.sql": {
+      "agrees": true,
+      "double_computed": true,
+      "returns_rows": true,
+      "runs": true,
+      "sha256": "967405a73ceb5a07caddba65681b1b91892ca1b1976c8b992316a62975cf13da"
+    },
+    "HO-B16.sql": {
+      "agrees": true,
+      "double_computed": true,
+      "returns_rows": true,
+      "runs": true,
+      "sha256": "4242a7475aa2d68744a2c6667733091d32fec2e5a35f94c9c01a316fe33afa33"
+    },
+    "HO-B18.sql": {
+      "agrees": true,
+      "double_computed": true,
+      "returns_rows": true,
+      "runs": true,
+      "sha256": "77e93978585ae13a4a519f11946ad4d6776780630b08e87a6927e44c11de68d6"
+    },
+    "HO-B19.sql": {
+      "agrees": true,
+      "double_computed": true,
+      "returns_rows": true,
+      "runs": true,
+      "sha256": "c886c17a853acb99f2939851b3f74d9d48f23710c1643fc70969a5b3fa54d408"
+    },
+    "HO-B22.sql": {
+      "agrees": true,
+      "double_computed": true,
+      "returns_rows": true,
+      "runs": true,
+      "sha256": "3033c198fdfb0c1f45f6f2f41287801e681a8659e14eef68dc487eba1051b26f"
+    },
+    "HO-B23.sql": {
+      "agrees": true,
+      "double_computed": true,
+      "returns_rows": true,
+      "runs": true,
+      "sha256": "9b3745c46fadde09bae387b3146bf99e86f646f3020c9a237de2525811c35f82"
+    },
+    "HO-B24.sql": {
+      "agrees": true,
+      "double_computed": true,
+      "returns_rows": true,
+      "runs": true,
+      "sha256": "39454762cd994f89718470c49fee25f12a39148be9325b48bd9c27376fd7a1e2"
+    }
+  },
+  "generated_by": "isolated-reference-run"
+}

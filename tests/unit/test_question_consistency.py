@@ -37,7 +37,15 @@ REPO = Path(__file__).resolve().parents[2]
 QUESTIONS = REPO / "eval" / "questions"
 
 OPEN_SETS = ("dev", "eval")  # quotable in full
-SEALED_SETS = ("holdout",)  # counted, never quoted
+# Counted, never quoted. `holdout_blind.jsonl` is here because a scan that stops
+# at the file it is easy to look at is not a scan: the blind rows are the only
+# part of the corpus the author did not write, so they are the part most worth
+# checking and the part nobody may read to check by hand. Written by the isolated
+# run (docs/ISOLATED_REFERENCE_RUN.md §7), which is the one context that can see
+# them. The ROW FLOOR below is deliberately NOT raised to take them in: the
+# realised blind count is reconciled on main from the isolated run's hand-back,
+# so that the count is not chosen by the session that also chose the questions.
+SEALED_SETS = ("holdout", "holdout_blind")
 
 # The holdout WHY questions live outside eval/questions/ and are generated, not
 # written. They are scanned where they exist and skipped where they cannot: they
