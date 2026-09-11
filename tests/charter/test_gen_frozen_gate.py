@@ -75,16 +75,30 @@ def test_freeze_gen_refuses_when_a_gate_fails(tmp_path: Path) -> None:
     assert "REFUSING" in out.stderr, "the refusal was silent"
 
 
-def test_meta_without_the_injection_the_same_check_passes() -> None:
-    """Guard off: `--check` on the real repo succeeds, so the refusal above is
-    the injected gate and not some unrelated breakage in the script."""
-    out = subprocess.run(
-        [sys.executable, "scripts/freeze_gen.py", "--check"],
-        cwd=REPO,
-        capture_output=True,
-        text=True,
+def test_meta_without_the_injection_the_same_check_passes(tmp_path: Path) -> None:
+    """Guard off: with the sealed gate stubbed *passing*, the same driver exits 0.
+
+    The first version of this meta ran `freeze_gen.py --check` on the real repo
+    and asserted success. That holds on a machine where `eval/sealed/` exists and
+    nowhere else -- and the sealed files are deliberately untracked, so CI has
+    none and the meta failed there while the thing it guards was fine. The
+    environment is now stubbed out of the question: same driver, same script,
+    only the gate's verdict differs, so a difference in exit code can only come
+    from the gate.
+    """
+    shim = tmp_path / "allow.py"
+    shim.write_text(
+        "import sys\n"
+        f"sys.path.insert(0, {str(REPO / 'scripts')!r})\n"
+        "import freeze_gen\n"
+        "freeze_gen.gate_sealed = lambda: []\n"
+        "freeze_gen.gate_dev_eval = lambda: []\n"
+        "freeze_gen.artifact_present = lambda: []\n"
+        "sys.exit(freeze_gen.main(['--check']))\n",
+        encoding="utf-8",
     )
-    print(f"meta (no injection) -> exit={out.returncode}: {out.stdout.strip()[:70]}")
+    out = subprocess.run([sys.executable, str(shim)], cwd=REPO, capture_output=True, text=True)
+    print(f"meta (gates stubbed passing) -> exit={out.returncode}")
     assert out.returncode == 0, (
         "the un-injected check also refuses, so the injection proves nothing:\n" + out.stderr
     )
