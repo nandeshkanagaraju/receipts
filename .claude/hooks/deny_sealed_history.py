@@ -22,6 +22,20 @@ Deliberately still allowed, because they reveal nothing and the work needs them:
     ADR-012.
 
 This guard is about what reaches a transcript, not about what a process may open.
+
+M3 adds a third protected path: `eval/reference_sql/HO-*`. The reference SQL for
+a holdout question restates the question -- metric, window, scope, exclusions --
+in a form that is *more* precise than the English, so reading the answer key is
+reading the question. Those files are written by an isolated session (see
+`docs/ISOLATED_REFERENCE_RUN.md`) and are tracked in git, exactly as
+`eval/questions/holdout.jsonl` already is: the control here is not secrecy from
+the world, which a public repository cannot offer, but that the *build* context
+never held them.
+
+The pattern deliberately protects the whole `eval/reference_sql/` directory
+*except* `DV-` and `EV-` files, rather than just the `HO-` prefix. `cat
+eval/reference_sql/*.sql` names no holdout file and would display all of them;
+a guard that only knows the literal prefix would wave it through.
 """
 
 from __future__ import annotations
@@ -33,6 +47,9 @@ import sys
 PROTECTED = (
     re.compile(r"eval/sealed", re.I),
     re.compile(r"eval/questions/holdout", re.I),
+    # Everything under eval/reference_sql/ that is not demonstrably a dev or
+    # eval file. A bare directory reference and any glob match; DV-*/EV-* do not.
+    re.compile(r"eval/reference_sql/(?!(?:DV|EV)-)", re.I),
     re.compile(r"(?:^|[\s'\"/=])\.env\b", re.I),
 )
 
@@ -85,18 +102,28 @@ def segments(command: str) -> list[str]:
     return [s for s in SEPARATORS.split(HEREDOC.sub(" ", command)) if s.strip()]
 
 
-def verdict(command: str) -> str | None:
+def verdict(
+    command: str,
+    protected: tuple[re.Pattern[str], ...] = PROTECTED,
+) -> str | None:
+    """Refusal message, or None to allow.
+
+    `protected` is a parameter so a meta-test can withdraw one pattern and show
+    the same command is then allowed -- proving the refusal comes from the rule
+    rather than from something else in the command.
+    """
     for segment in segments(command):
         if NON_DISPLAYING.match(segment):
             continue
-        if not any(p.search(segment) for p in PROTECTED):
+        if not any(p.search(segment) for p in protected):
             continue
         if any(verb.search(segment) for verb in REVEALING):
             return (
                 "Refused: this command would display sealed or holdout content.\n"
-                "eval/sealed/ holds the answers to the blind set and .env holds the "
-                "seed; the holdout is worth something only while nobody has read "
-                "them (PDD §5).\n"
+                "eval/sealed/ holds the answers to the blind set, .env holds the "
+                "seed, and eval/reference_sql/HO-* is the holdout answer key; the "
+                "holdout is worth something only while nobody has read them "
+                "(PDD §5).\n"
                 "Names and hashes are fine: git ls-files, git check-ignore, "
                 "sha256 of the file. Contents are not."
             )
