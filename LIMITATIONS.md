@@ -205,11 +205,24 @@ the data, and the holdout is not.
 
 ## Hindi variants are not human-verified
 
-Every eval and holdout question exists in English, Tamil and Hindi. Tamil is
-human-written. Hindi is `machine_verified` at best, and `pending` until a
-verifier is found (SDD §29). T6 — language parity — is therefore reported
-separately for human-verified variants, and the Hindi figure should be read as a
-measure of the pipeline *and* the translation together.
+Every eval and holdout question exists in English, Tamil and Hindi.
+
+**`machine_verified` means machine-drafted and human-reviewed — a spot-check plus
+every flagged row — not human-written.** Tamil for `eval.jsonl` (150) and
+`holdout.jsonl` (54) carries that label: the drafts are a model's, a model
+reviewed them against the English and flagged what read as stiff or wrong, and a
+human then read every flagged row plus a 20-row random sample. That is a real
+check and it is not the same as a native speaker writing each question. An error
+in an unflagged, unsampled row would survive it.
+
+This section previously said "Tamil is human-written". It was not, at any point.
+
+Hindi is `machine_unverified` on every row and stays there until a verifier is
+found (SDD §29); `dev.jsonl` Tamil is `machine_unverified` too, because dev is
+the set you run while building rather than one anything is reported from. T6 —
+language parity — is therefore reported separately for reviewed variants, and the
+Hindi figure should be read as a measure of the pipeline *and* the translation
+together.
 
 The why-agent's causal-language ban is checked by word list in English only.
 Tamil and Hindi outputs are grounding-checked but not causal-checked.
