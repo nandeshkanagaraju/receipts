@@ -166,3 +166,195 @@ def test_multiple_captures_occur_only_on_a6_duplicate_orders(con, constructed) -
         f"{len(unexplained)} orders have multiple captures that A6 does not account for; "
         "duplicate captures must be planted, not accidental"
     )
+
+
+# --------------------------------------------------------------------------- #
+# ADR-014 — the authorised status, and the invariants it has to keep
+#
+# SDD §5.2 declares `status ∈ (authorized, captured, failed)`. The first
+# generated world had none of the first, so `status = 'captured'` and
+# `status <> 'failed'` returned the same figure and the §4.2 trap could not
+# discriminate. These are the acceptance criteria for the fix.
+# --------------------------------------------------------------------------- #
+SDD_ATTEMPT_STATUSES = frozenset({"authorized", "captured", "failed"})
+AUTHORISED_CARD_BAND = (0.01, 0.03)  # ADR-014
+
+
+def test_attempt_status_vocabulary_matches_the_spec(con) -> None:
+    """Exactly the three SDD §5.2 declares — no more, and no fewer.
+
+    "No fewer" is the half that was broken: a vocabulary can be wrong by being
+    short, and nothing noticed for a whole module.
+    """
+    found = {r[0] for r in con.execute("SELECT DISTINCT status FROM payment_attempts").fetchall()}
+    print(f"\nattempt statuses present: {sorted(found)}")
+    print(f"SDD §5.2 declares:        {sorted(SDD_ATTEMPT_STATUSES)}")
+    assert found == SDD_ATTEMPT_STATUSES, (
+        f"the artifact's status vocabulary is {sorted(found)}, the spec's is "
+        f"{sorted(SDD_ATTEMPT_STATUSES)}"
+    )
+
+
+def test_authorised_attempts_are_never_captures(con) -> None:
+    """The invariant the whole change rests on (ADR-014).
+
+    An authorisation reserves the customer's funds; a capture takes them. If an
+    authorised attempt ever counted as a capture it would be revenue, which is
+    exactly what §4.2 forbids — and every revenue figure in the world would be
+    overstated by the amount of the expired holds.
+    """
+    captured_and_authorised = con.execute(
+        "SELECT count(*) FROM payment_attempts WHERE status = 'authorized' AND status = 'captured'"
+    ).fetchone()[0]
+    gmv_captured = con.execute(
+        "SELECT sum(amount_minor) FROM payment_attempts WHERE status = 'captured' AND NOT is_test"
+    ).fetchone()[0]
+    gmv_not_failed = con.execute(
+        "SELECT sum(amount_minor) FROM payment_attempts WHERE status <> 'failed' AND NOT is_test"
+    ).fetchone()[0]
+    authorised_value = gmv_not_failed - gmv_captured
+    print(f"\ncaptured, non-test:      {gmv_captured:,}")
+    print(f"not-failed, non-test:    {gmv_not_failed:,}")
+    print(f"difference (authorised): {authorised_value:,}")
+    assert captured_and_authorised == 0
+    assert authorised_value > 0, (
+        "captured and not-failed still agree, so authorised money is invisible and "
+        "the §4.2 trap cannot discriminate"
+    )
+
+
+def test_authorised_attempts_carry_no_failure_reason(con) -> None:
+    """A hold that expired is not a decline, so it has no decline reason (§2.10)."""
+    n = con.execute(
+        "SELECT count(*) FROM payment_attempts "
+        "WHERE status = 'authorized' AND failure_reason IS NOT NULL"
+    ).fetchone()[0]
+    print(f"\nauthorised attempts carrying a failure_reason: {n}")
+    assert n == 0, f"{n} authorised attempts look like declines"
+
+
+def test_authorised_is_a_card_rail_behaviour_within_its_band(con) -> None:
+    """Card only, and 1–3% of card attempts (ADR-014).
+
+    UPI, netbanking and wallet settle or decline in one step; a two-phase
+    authorise-then-capture is a card behaviour.
+    """
+    by_method = con.execute(
+        "SELECT method, count(*) FROM payment_attempts WHERE status = 'authorized' "
+        "GROUP BY method ORDER BY method"
+    ).fetchall()
+    n_card = con.execute("SELECT count(*) FROM payment_attempts WHERE method = 'card'").fetchone()[
+        0
+    ]
+    n_auth = con.execute(
+        "SELECT count(*) FROM payment_attempts WHERE status = 'authorized'"
+    ).fetchone()[0]
+    share = n_auth / n_card
+    lo, hi = AUTHORISED_CARD_BAND
+    print(f"\nauthorised by method: {by_method}")
+    print(
+        f"authorised share of card attempts: {n_auth:,}/{n_card:,} = "
+        f"{share:.4%} (band {lo:.0%}-{hi:.0%})"
+    )
+    assert [m for m, _ in by_method] == ["card"], "a non-card method produced an authorisation"
+    assert lo <= share <= hi, f"authorised share {share:.4%} is outside the declared band"
+
+
+def test_an_authorised_attempt_may_sit_on_a_paid_or_an_abandoned_order(con) -> None:
+    """Both outcomes must occur, or the status is not modelling anything.
+
+    ADR-014: the order may still be paid by another attempt, or end abandoned.
+    If every authorised attempt sat on an abandoned order the status would just
+    be a relabelled dead end, and DV-032 — authorised but never captured — would
+    be the same question as "abandoned".
+    """
+    rows = con.execute(
+        """
+        SELECT o.status, count(*) FROM payment_attempts a
+        JOIN orders o ON o.order_id = a.order_id
+        WHERE a.status = 'authorized' GROUP BY o.status ORDER BY o.status
+        """
+    ).fetchall()
+    outcomes = dict(rows)
+    print(f"\norder status behind an authorised attempt: {rows}")
+    assert outcomes.get("paid", 0) > 0, "no authorised attempt was recovered by a later capture"
+    assert outcomes.get("abandoned", 0) > 0, "no authorised attempt was left uncaptured"
+
+
+def test_realism_authorised_share_per_country(con) -> None:
+    """The realism table, extended per ADR-014. Printed, not asserted narrowly.
+
+    Card mix varies enormously — GB is 86% card, India 18% — so the authorised
+    share of ALL attempts should vary with it while the share of CARD attempts
+    stays inside the band everywhere.
+    """
+    rows = con.execute(
+        """
+        SELECT s.country_code,
+               count(*) FILTER (WHERE a.status = 'authorized')                      AS authorised,
+               count(*) FILTER (WHERE a.method = 'card')                            AS card,
+               count(*)                                                             AS attempts
+        FROM payment_attempts a
+        JOIN orders o ON o.order_id = a.order_id
+        JOIN showrooms s ON s.showroom_id = o.showroom_id
+        GROUP BY s.country_code ORDER BY s.country_code
+        """
+    ).fetchall()
+    print("\nauthorised share by country:")
+    print(
+        f"  {'cc':4} {'authorised':>10} {'card':>10} {'attempts':>10}"
+        f"  {'of card':>8}  {'of all':>8}"
+    )
+    for cc, auth, card, att in rows:
+        print(
+            f"  {cc:4} {auth:>10,} {card:>10,} {att:>10,}  {auth / card:>8.3%}  {auth / att:>8.3%}"
+        )
+    lo, hi = AUTHORISED_CARD_BAND
+    outside = [cc for cc, auth, card, _ in rows if card and not (lo <= auth / card <= hi)]
+    assert not outside, f"authorised share of card attempts outside the band in: {outside}"
+
+
+def test_the_authorised_versus_captured_trap_now_discriminates(con) -> None:
+    """Every question tagged `authorised_vs_captured` must tell the two apart.
+
+    The acceptance criterion from the ruling: for each of the six, computing on
+    `status = 'captured'` and on `status <> 'failed'` must give DIFFERENT
+    answers. Where they agree, a system that models §4.2 and one that ignores it
+    score the same, and the trap is not measured.
+
+    The comparison is made on each question's own scope and window rather than
+    globally, because a trap that discriminates in aggregate and not on the
+    question that carries it is still not measured.
+    """
+    questions = []
+    for name in ("dev", "eval"):
+        path = REPO / "eval" / "questions" / f"{name}.jsonl"
+        for line in path.read_text(encoding="utf-8").splitlines():
+            if line.strip():
+                row = json.loads(line)
+                if row.get("trap") == "authorised_vs_captured" and row["population"] in (
+                    "ANS",
+                    "LIVE",
+                ):
+                    questions.append(row)
+    assert questions, "precondition: no authorised_vs_captured questions found"
+
+    sql_dir = REPO / "eval" / "reference_sql"
+    agreeing = []
+    print(f"\n{len(questions)} authorised_vs_captured question(s):")
+    for row in sorted(questions, key=lambda r: r["qid"]):
+        qid = row["qid"]
+        sql = (sql_dir / f"{qid}.sql").read_text(encoding="utf-8")
+        if "a.status = 'captured'" not in sql:
+            print(f"  {qid}: no capture predicate to perturb — skipped in this check")
+            continue
+        strict = con.execute(sql).fetchall()
+        loose = con.execute(sql.replace("a.status = 'captured'", "a.status <> 'failed'")).fetchall()
+        same = strict == loose
+        print(f"  {qid}: captured vs not-failed {'AGREE (trap blind)' if same else 'differ'}")
+        if same:
+            agreeing.append(qid)
+    assert not agreeing, (
+        f"{len(agreeing)} authorised_vs_captured question(s) still cannot tell a capture from a "
+        f"non-failure: {agreeing}. The trap is not measured there."
+    )

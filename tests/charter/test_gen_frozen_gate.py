@@ -82,18 +82,78 @@ def test_gate_holds_once_the_generator_is_frozen() -> None:
 
 
 def test_the_tag_and_the_recorded_generator_hash_agree() -> None:
+    """The recorded hash describes the sources as of the LATEST generator freeze.
+
+    The freeze is a family of tags, not one (ADR-014): `gen-frozen` is the first
+    and a conformance reopen adds `gen-frozen-2` without moving it. The guarantee
+    is keyed to the newest member, because that is the one the current sources
+    and the recorded hash both describe. Keying it to the literal first tag would
+    make this test fail for ever after a legitimate re-freeze, which is how a
+    guard gets deleted rather than fixed.
+    """
     if not freeze_gen.tag_exists():
-        print(f"{freeze_gen.TAG} not tagged; nothing to compare")
+        print(f"no {freeze_gen.TAG_PREFIX} tag; nothing to compare")
         return
     import json
 
+    latest = freeze_gen.latest_gen_tag()
     recorded = json.loads(freeze_gen.MANIFEST.read_text(encoding="utf-8")).get("generator_sha256")
     actual = freeze_gen.generator_sha256()
+    print(f"\nlatest generator freeze: {latest}  (all: {freeze_gen.gen_tags()})")
     print(f"generator_sha256 recorded {str(recorded)[:16]}… actual {actual[:16]}…")
     assert recorded == actual, (
-        "kestrel_gen/ changed after gen-frozen. The tag means it is never edited "
-        "again; a defect found now goes to LIMITATIONS.md, not to the generator."
+        f"kestrel_gen/ changed after {latest}. The tag means it is never edited again; "
+        "a defect found now goes to LIMITATIONS.md, not to the generator. The one "
+        "exception is a conformance defect against the frozen spec, which needs an ADR "
+        "and a new tag from `make freeze-gen REOPEN=yes` (ADR-014)."
     )
+
+
+def test_the_freeze_family_is_ordered_and_never_rewritten() -> None:
+    """Tags accumulate; none is moved or replaced.
+
+    `gen-frozen` staying put after the ADR-014 reopen is the point: the history
+    shows what the artifact was at each moment rather than pretending the first
+    state never existed.
+    """
+    tags = freeze_gen.gen_tags()
+    if not tags:
+        print(f"no {freeze_gen.TAG_PREFIX} tag yet")
+        return
+    ordinals = [freeze_gen._tag_ordinal(t) for t in tags]
+    print(f"\ngenerator freeze family: {tags} -> ordinals {ordinals}")
+    assert tags[0] == freeze_gen.TAG_PREFIX, f"the first freeze is not {freeze_gen.TAG_PREFIX}"
+    assert ordinals == sorted(ordinals) and len(set(ordinals)) == len(ordinals), (
+        "the freeze family is not a clean ascending sequence"
+    )
+    assert freeze_gen.next_gen_tag() not in tags, "the next tag already exists"
+
+
+def test_a_second_freeze_is_refused_without_reopen(tmp_path: Path) -> None:
+    """INJECTION: freezing again with every gate passing must still refuse.
+
+    The reopen is meant to be a deliberate act with an ADR behind it. If the
+    default path would create `gen-frozen-3` whenever the gates happen to pass,
+    the freeze would mean nothing.
+    """
+    shim = tmp_path / "refreeze.py"
+    shim.write_text(
+        "import sys\n"
+        f"sys.path.insert(0, {str(REPO / 'scripts')!r})\n"
+        "import freeze_gen\n"
+        "freeze_gen.artifact_present = lambda: []\n"
+        "freeze_gen.gate_dev_eval = lambda: []\n"
+        "freeze_gen.gate_sealed = lambda: []\n"
+        "sys.exit(freeze_gen.main([]))\n",
+        encoding="utf-8",
+    )
+    out = subprocess.run([sys.executable, str(shim)], cwd=REPO, capture_output=True, text=True)
+    print(f"\nsecond freeze without --reopen -> exit={out.returncode}")
+    if not freeze_gen.tag_exists():
+        print("  (no tag exists yet, so there is nothing to refuse)")
+        return
+    assert out.returncode != 0, "a second freeze was allowed without --reopen"
+    assert "refusing to freeze again" in out.stderr.lower(), f"the refusal was silent: {out.stderr}"
 
 
 def test_freeze_gen_refuses_when_a_gate_fails(tmp_path: Path) -> None:
@@ -238,3 +298,35 @@ def test_locally_missing_sealed_files_fail_rather_than_skip(monkeypatch) -> None
     print(f"\nlocal, sealed absent -> {scope}")
     assert problems, "a local run with no sealed files was accepted"
     assert any("make data" in p for p in problems), "the failure does not say how to fix it"
+
+
+def test_the_ci_marker_is_ignored_and_never_tracked() -> None:
+    """The sealed marker is per-run build output, not a repository artifact.
+
+    It was not ignored for three modules. `.gitignore` carried the line
+
+        _ci/ holds end-of-module reports written for the reader, not the build.
+
+    which is a comment that lost its `#`, so as a pattern it matched nothing.
+    The directory stayed untracked only because nobody had run `git add -A`.
+
+    Committing it would be worse than untidy. The standing check in CI reads the
+    marker to learn whether the sealed gate passed; a marker committed from
+    someone's laptop would be read on every later run as though that run had
+    produced it, which is exactly the "green tick on an empty check" the marker
+    exists to prevent.
+    """
+    marker = freeze_gen.SEALED_MARKER
+    ignored = subprocess.run(
+        ["git", "check-ignore", "-v", marker], cwd=REPO, capture_output=True, text=True
+    )
+    tracked = subprocess.run(
+        ["git", "ls-files", marker], cwd=REPO, capture_output=True, text=True
+    ).stdout.split()
+    print(f"\ncheck-ignore {marker} -> {ignored.stdout.strip() or '(NOT IGNORED)'}")
+    print(f"git ls-files {marker} -> {tracked or '(not tracked)'}")
+    assert ignored.returncode == 0, (
+        f"{marker} is not ignored, so `git add -A` would commit a run's marker into the "
+        "repository and every later CI run would read a stale verdict as its own"
+    )
+    assert not tracked, f"{marker} is tracked: {tracked}"

@@ -34,6 +34,33 @@ repository can claim, and `LIMITATIONS.md` says so in those words.
 
 ---
 
+## 1a. The world this brief describes
+
+The generator was reopened once after this brief was written, for one
+conformance defect (**ADR-014**): `payment_attempts.status` had no `authorized`
+rows though SDD §5.2 declares the status. Roughly 2% of card attempts now end
+`authorized` — funds reserved, hold expired or voided, never captured.
+
+    generator     gen-frozen-2          (gen-frozen is NOT moved)
+    data_version  1c253c54cd598c861e800f5bf34b8c5f5c2a4ea294b3a4444671db7848344f4b
+
+**Check `data/MANIFEST.json` reads that `data_version` before writing a single
+query.** If it does not, the worktree is on an older world, and every reference
+written against it will be wrong in a way that looks like a disagreement later.
+Regenerate with `make data`.
+
+What this means for the holdout references:
+
+- **`status = 'captured'` is now materially different from `status <> 'failed'`.**
+  Write the first. The second silently counts expired authorisation holds as
+  money, which is the §4.2 trap, and six dev/eval questions now detect it.
+- An `authorized` attempt carries **no `failure_reason`**, so it belongs in no
+  failure-reason breakdown (§2.10).
+- Captured GMV, refunds, settlements and every planted anomaly are byte
+  identical to the world before the fix, and `eval/sealed/` hashes to exactly
+  what it hashed to at `gen-frozen`. Only the status and failure reason of the
+  converted rows changed.
+
 ## 2. Where to run
 
 A **separate git worktree** and a **separate session**. Not a second tab on the
@@ -113,7 +140,17 @@ build*, not trusted *with everything*.
      holdout question depends on this.
    - Shape follows the flags: `top_k` → a ranking, ordered; `series: true` → one
      row per time key, no `top_k`; neither → a set. `compare: true` → return the
-     current **and** the comparison value.
+     current **and** the comparison value, keyed `current`/`comparison`.
+   - `expected.kind` and the shape flags must agree: `scalar` never carries
+     `top_k`, `series` or `compare`, and `series` never carries `top_k`. Eleven
+     dev/eval rows broke that and were corrected;
+     `tests/unit/test_question_consistency.py` now enforces it over the holdout
+     too, reporting a count and never a qid.
+   - **Do not put the question text in the `.sql` header.** The dev and eval
+     files carry it for the reviewer; an `HO-*.sql` file is tracked in git, and a
+     header restating the question turns an accidental read into a full leak
+     rather than a partial one. Name the metric and the glossary sections, not
+     the sentence.
 
 3. **LIVE questions** take their reference from `truth/constructed.json`
    (`refunds_pending_at_gateway`) joined in pandas, not SQL — SDD §6 and M3

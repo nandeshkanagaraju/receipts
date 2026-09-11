@@ -240,76 +240,145 @@ build. The blind 30 are the only genuinely independent signal, and they are 30 o
 
 ---
 
-## No payment attempt ever reached `authorised`, so one trap does not discriminate
+## The generator was reopened once, for a conformance defect (ADR-014)
+
+**This section described a standing limitation. It now describes a fixed one,
+and is kept rather than deleted: that the artifact was once wrong about its own
+frozen spec, and that nothing noticed for a whole module, is the part worth
+remembering.**
+
+### What was wrong
 
 SDD §5.2 declares `payment_attempts.status` as one of `authorized`, `captured`
-or `failed`. The generated artifact holds **only `captured` and `failed`**:
+or `failed`. The generated artifact held **only `captured` and `failed`** — zero
+authorised rows. `status = 'captured'` and `status <> 'failed'` returned the
+identical figure, verified at 3,416,905,003,997 minor units across all non-test
+attempts.
 
-    captured   2,100,976
-    failed       547,643
-    authorized           0
-
-`kestrel_gen/` is frozen at `gen-frozen`, so this is recorded rather than fixed.
-
-The cost is specific and worth stating rather than filing under "cosmetic".
 `authorised_vs_captured` is one of the ten PDD §6.2 traps and is carried by six
-ANS questions. The trap asks whether a system understands that an authorisation
-reserves funds while a capture takes them (§4.2), and the way it would catch a
-naive system is by that system counting authorised-but-never-captured money as
-revenue. **On this world there is none to count**, so `status = 'captured'` and
-`status <> 'failed'` return the identical figure — verified: both sum to
-3,416,905,003,997 minor units across all non-test attempts. A system that models
-the distinction and a system that ignores it score the same on all six.
+ANS questions. The trap asks whether a system knows that an authorisation
+reserves funds while a capture takes them (§4.2), and it would catch a naive
+system by that system counting authorised-but-never-captured money as revenue.
+There was none to count, so all six questions scored a system that models the
+distinction and one that ignores it identically. DV-032 — "how much did we
+authorise but never capture in August?" — had a reference answer of **0**: true,
+but true by construction.
 
-The trap still has *some* teeth: a system that counted failed attempts, or that
-counted attempts instead of captures (§4.1), still gets a different number. What
-it cannot do is separate the two readings the trap is named for.
+### What was done about it
 
-**DV-032 is the sharp end of this.** It asks "how much did we authorise but never
-capture in August?", and its reference answer is **0** — which is the true answer
-for this world, but true by construction rather than because Kestrel captures
-everything it authorises. A system that abstains is wrong and a system that
-answers zero is right, and neither outcome tells you anything about whether it
-understands §4.2. The reference SQL is written against the SDD's declared
-vocabulary so that it stays correct if the world is ever regenerated, and its
-header says all of this.
+The generator was reopened **once**, for this defect only, under ADR-014.
+Roughly 2% of card attempts now end `authorized`: the bank reserved the funds
+and the hold expired or was voided. Such an attempt is never a capture, carries
+no `failure_reason` because it is not a decline, and sits on an order that may
+still be paid by a later attempt or end abandoned.
 
-**What we are not claiming:** that the six `authorised_vs_captured` questions
-measure the trap they are labelled with. At G5 that trap's result should be read
-as "not measured" rather than as "passed".
+**No system had run.** There was no agent, no semantic layer, no compiler and no
+eval run — M3 had built reference answers and nothing had been scored against
+them. There is no result the change could have been chosen to improve, which is
+the only reason reopening a frozen generator was admissible at all.
+
+### Both tags exist, and neither is moved
+
+| Tag | Generator | Meaning |
+|---|---|---|
+| `gen-frozen` | `c38667e5…` | the first freeze. **Not moved.** |
+| `gen-frozen-2` | recorded at the re-freeze | after the ADR-014 conformance fix |
+
+`gen-frozen` staying put is the point: the history shows what the artifact was at
+each moment rather than pretending the first state never existed. Freeze tooling
+and `docs/FREEZE_MANIFEST.json` follow the **latest** member of the family, and
+`scripts/freeze_gen.py` refuses a second freeze unless `--reopen` is passed.
+
+From `gen-frozen-2` the original rule resumes: `kestrel_gen/` is never edited
+again, and a defect found later goes here rather than to the generator.
+
+### What is now claimed, and what is not
+
+All six `authorised_vs_captured` questions were re-checked individually on their
+own scope and window: `status = 'captured'` and `status <> 'failed'` now give
+**different** answers for each. DV-032's reference is no longer zero.
+
+**What is not claimed:** that 2% is the right number. It is a declared
+parameter, chosen inside a band stated in advance, not one calibrated against
+anything. The realised share sits between 1.40% and 2.43% of card attempts
+across the six countries, and the per-country figures are in the M3 report.
+
+**What is also not claimed:** that the first world's other numbers were wrong.
+The conversion is applied only to attempts that had already failed and draws
+from its own stream, so every capture, every paid order, every refund, every
+settlement and all eight planted anomalies are byte identical to the world
+before the fix. Captured GMV for every reference question is unchanged —
+DV-003, DV-004, EV-052 and EV-108 all return exactly what they returned before.
+What moved is the failure-reason mix, which lost the mass that had been wrongly
+attached to an outcome that was not a decline.
 
 ---
 
-## Two question rows disagree with themselves, and M3 did not edit them
+## Eleven question rows contradicted themselves; all were corrected before the freeze
 
-Both were found while writing the reference SQL. `eval/questions/` is frozen to
-the session that finds a defect in it, so both are recorded here and reported,
-and the reference follows the reading that two of the three signals support.
+Found while writing reference SQL, corrected by ruling, and recorded because
+"the corpus is consistent" is a weaker claim than "here is what was wrong with
+it and how it was caught".
 
-**EV-057 — the role cannot ask the question.** The row is `population: ANS` with
-`role: store_ops_uk`, and the question is *"Weekly duplicate captures in India
-for the last 8 weeks."* Under D7 scope comes from the auth context, and
-`eval/questions/README.md` authoring rule 5 is explicit that a manager asking
-outside their scope must be **denied** — "a Chennai manager asking about Dubai
-must be denied". A UK store-operations role asking about India is that case, so
-the row should be `DENY`. A scan of all 133 ANS/LIVE questions in dev and eval
-found this one and no others.
+`eval/questions/` is normally never edited. `questions-frozen` does not exist
+yet, and each change below was an explicit ruling, so all eleven were made
+before any freeze and none was made after seeing a score.
 
-The reference computes India, following the question text. **At G5 this question
-should be excluded from the ANS denominator, or the correct outcome for it read
-as `DENIED` rather than a value match** — otherwise a correctly-scoped system is
-marked wrong for refusing, which is the opposite of what the eval is for.
+### EV-057 asked outside its role's scope
 
-**EV-115 — a scalar with a top-k.** The row declares `kind: scalar` and also
-`top_k: 10`, and the question is *"Net revenue by acquiring bank in India in
-July, in rupees."* A scalar "by acquiring bank" is not a quantity. The question
-text and `top_k` agree that this is a ranking and only `kind` dissents, so the
-reference is a ranking of ten banks. A scorer that dispatches on `kind` will try
-to compare a scalar against ten rows.
+The row was `population: ANS`, `role: store_ops_uk`, asking *"Weekly duplicate
+captures in India for the last 8 weeks."* Under D7 scope comes from the auth
+context, and `eval/questions/README.md` authoring rule 5 is explicit that a
+manager asking outside their scope must be **denied** — "a Chennai manager
+asking about Dubai must be denied".
+
+So the row was a DENY question wearing an ANS label. Scored as ANS it would have
+marked a correctly-scoped system **wrong for refusing**, which is the opposite of
+what the eval is for.
+
+**Fixed** by changing the role to `global_finance`; the question text is
+untouched, so every translation and translation hash stands.
+`tests/unit/test_question_consistency.py` now scans every ANS and LIVE question
+in all three sets against its role's scope — including currency words, because
+"in rupees" from a UK role names India as surely as "India" does. Across dev and
+eval it finds no other offender; the holdout is scanned too and reported as a
+**count only**, which was 0.
+
+### Ten rows declared a `kind` that understated their answer
+
+EV-115 declared `kind: scalar` alongside `top_k: 10` for *"Net revenue by
+acquiring bank in India in July"*. A scalar "by acquiring bank" is not a
+quantity, and a scorer dispatching on `kind` would have compared one number
+against ten rows.
+
+Applying the same rule to the whole corpus found **nine more of the same class**:
+DV-041, DV-043, EV-013, EV-014, EV-063, EV-064, EV-118, EV-128 and EV-129, each
+`kind: scalar` with `compare: true`. A comparison question's answer is two
+labelled values (ADR-009), so `scalar` understated every one of them exactly as
+it understated EV-115.
+
+**Fixed:** all ten are now `kind: table`. The alternative — loosening the new
+test to let `scalar` + `compare` through — was rejected: the rule exists to catch
+this class, and exempting the nine instances it found would have left the rule
+guarding nothing.
+
+A consistency test now enforces both halves: `kind: scalar` never carries
+`top_k`, `series` or `compare`; `series` never carries `top_k`, because matching
+a series by rank would pass a result whose days were right but misordered, which
+for a series is the whole answer.
+
+### DV-011 still names no window
+
+Not corrected, because there is nothing self-contradictory to correct: *"How
+many payment attempts does an average order take in India?"* simply establishes
+no window, while its `interpretation` says "in the window". The reference uses
+the whole loaded range, 2025-03-01 to 2026-09-09, and its header says so. **A
+system that assumes last month instead is not obviously wrong**, and at G5 this
+question should be read with that in mind.
 
 ---
 
-## The FX factor passes through one floating-point division
+## The FX factor passes through one floating-point division (ADR-015)
 
 D1 says money is int minor units and that rates and FX are `Decimal`, never
 float. The money in every reference answer satisfies that: `amount_minor` is an
@@ -334,6 +403,15 @@ what makes the bound observable rather than asserted.
 
 **What we are not claiming:** that no float appears anywhere in the reference
 path. One does, in exactly one place, and this is it.
+
+The bound is now **measured rather than asserted**: `test_fx_factor_precision.py`
+computes the factor in DuckDB and again in Python `Decimal` at 50 digits across
+every currency pair on five sample dates, and requires the relative error to be
+**≤ 1e-10** — two orders tighter than the 1e-12 the twelve-place truncation
+predicts, and seven tighter than the 1e-3 scoring tolerance. A fault injection
+pins the factor to four decimal places and shows the same comparison then fails.
+ADR-015 records the decision and the five DuckDB spellings that were measured
+before concluding no exact decimal division exists.
 
 ---
 

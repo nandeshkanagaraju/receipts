@@ -31,7 +31,14 @@ import freeze  # noqa: E402
 
 REPO = Path(__file__).resolve().parents[1]
 MANIFEST = REPO / "docs" / "FREEZE_MANIFEST.json"
-TAG = "gen-frozen"
+
+# The generator freeze is a FAMILY of tags, not one (ADR-014). `gen-frozen` is
+# the first; a conformance reopen adds `gen-frozen-2` and leaves the first where
+# it is, so the history shows what the artifact was at each point. Everything
+# tag-conditioned holds against the LATEST member, because that is the one the
+# recorded hash and the current sources describe.
+TAG_PREFIX = "gen-frozen"
+TAG = TAG_PREFIX  # the first tag of the family; kept for message text
 SEALED_WHY_COUNT = 5
 GATE_TEST = "tests/freeze/test_confirm_gate.py"
 SEALED_GATE_TEST = "tests/freeze/test_sealed_gate.py"
@@ -148,15 +155,59 @@ def all_gates() -> list[str]:
     return artifact_present() + gate_dev_eval() + gate_sealed()
 
 
-def tag_exists(tag: str = TAG) -> bool:
+def _simulated_tags() -> list[str]:
     # A rehearsal sets RECEIPTS_SIMULATED_TAGS so tag-conditioned guards switch on
     # *before* the tag is real. Without this a guard that activates on a tag is
     # first exercised in CI, after the tag is pushed and hard to withdraw.
-    simulated = os.environ.get("RECEIPTS_SIMULATED_TAGS", "")
-    if tag in [s.strip() for s in simulated.split(",") if s.strip()]:
-        return True
-    out = subprocess.run(["git", "tag", "-l", tag], cwd=REPO, capture_output=True, text=True)
-    return bool(out.stdout.strip())
+    raw = os.environ.get("RECEIPTS_SIMULATED_TAGS", "")
+    return [s.strip() for s in raw.split(",") if s.strip()]
+
+
+def _tag_ordinal(tag: str) -> int:
+    """`gen-frozen` is 1, `gen-frozen-2` is 2. Anything else sorts first."""
+    if tag == TAG_PREFIX:
+        return 1
+    suffix = tag[len(TAG_PREFIX) + 1 :]
+    return int(suffix) if tag.startswith(TAG_PREFIX + "-") and suffix.isdigit() else 0
+
+
+def gen_tags() -> list[str]:
+    """Every generator-freeze tag that exists, oldest first."""
+    out = subprocess.run(
+        ["git", "tag", "-l", TAG_PREFIX, f"{TAG_PREFIX}-*"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+    )
+    found = {t.strip() for t in out.stdout.split() if t.strip()}
+    found |= {t for t in _simulated_tags() if _tag_ordinal(t)}
+    return sorted(found, key=_tag_ordinal)
+
+
+def latest_gen_tag() -> str | None:
+    """The newest generator freeze, or None if the generator was never frozen."""
+    tags = gen_tags()
+    return tags[-1] if tags else None
+
+
+def next_gen_tag() -> str:
+    """The tag a freeze would create now."""
+    latest = latest_gen_tag()
+    return TAG_PREFIX if latest is None else f"{TAG_PREFIX}-{_tag_ordinal(latest) + 1}"
+
+
+def tag_exists(tag: str | None = None) -> bool:
+    """Is the generator frozen at all?
+
+    Deliberately a question about the FAMILY rather than about one name: the
+    tag-conditioned guarantees -- the confirm gate keeps passing, the recorded
+    hash matches the sources -- began at `gen-frozen` and continue across every
+    re-freeze. A guard keyed to the literal first tag would silently disarm the
+    moment a second one existed, which is the opposite of what a freeze means.
+    """
+    if tag is not None:
+        return tag in gen_tags()
+    return bool(gen_tags())
 
 
 def record_generator_hash() -> str:
@@ -183,40 +234,57 @@ def record_generator_hash() -> str:
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--check", action="store_true", help="run the gates without freezing")
+    ap.add_argument(
+        "--reopen",
+        action="store_true",
+        help="re-freeze after a conformance fix, creating the next gen-frozen-N tag (ADR-014). "
+        "Without it a second freeze is refused, which is the default and the safe answer.",
+    )
     args = ap.parse_args(argv)
 
+    tag = next_gen_tag()
     problems = all_gates()
     if problems:
-        print(f"REFUSING to create the {TAG} tag. {len(problems)} problem(s):", file=sys.stderr)
+        print(f"REFUSING to create the {tag} tag. {len(problems)} problem(s):", file=sys.stderr)
         for p in problems:
             print(f"  {p}", file=sys.stderr)
         return 1
     if args.check:
         print("all gates pass; --check made no changes")
         return 0
-    if tag_exists():
-        print(f"{TAG} already exists; refusing to move it", file=sys.stderr)
+    if tag_exists() and not args.reopen:
+        print(
+            f"{latest_gen_tag()} already exists; refusing to freeze again. The generator is "
+            "frozen and a defect found now goes to LIMITATIONS.md. A conformance defect in "
+            "the frozen SPEC is the one exception: pass --reopen, and write the ADR first "
+            "(ADR-014).",
+            file=sys.stderr,
+        )
+        return 1
+    if tag_exists(tag):
+        print(f"{tag} already exists; refusing to move it", file=sys.stderr)
         return 1
     # Rehearse the world this tag creates before creating it. A tag-conditioned
     # guard is dormant until the tag exists, so without this its first real run
     # is in CI, after the tag is pushed. That has already cost one red main.
     import post_tag_check
 
-    rehearsal = post_tag_check.rehearse(TAG)
+    rehearsal = post_tag_check.rehearse(tag)
     if rehearsal:
-        print(f"REFUSING to create the {TAG} tag: the post-tag rehearsal failed.", file=sys.stderr)
+        print(f"REFUSING to create the {tag} tag: the post-tag rehearsal failed.", file=sys.stderr)
         for problem in rehearsal:
             print(f"  {problem}", file=sys.stderr)
         return 1
 
     sha = record_generator_hash()
     print(f"generator_sha256 {sha}")
-    subprocess.run(
-        ["git", "tag", "-a", TAG, "-m", "Generator frozen: kestrel_gen is never edited again"],
-        cwd=REPO,
-        check=True,
+    message = (
+        "Generator frozen: kestrel_gen is never edited again"
+        if tag == TAG_PREFIX
+        else f"Generator re-frozen after the ADR-014 conformance fix; {TAG_PREFIX} is not moved"
     )
-    print(f"tagged {TAG}")
+    subprocess.run(["git", "tag", "-a", tag, "-m", message], cwd=REPO, check=True)
+    print(f"tagged {tag}")
     return 0
 
 

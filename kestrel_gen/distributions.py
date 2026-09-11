@@ -81,6 +81,21 @@ METHOD_SUCCESS: dict[str, float] = {
 }
 MAX_ATTEMPTS = 4
 RETRY_PROB = 0.82  # a customer who fails retries this often.
+
+# Share of CARD attempts that end `authorized` rather than captured or failed:
+# the bank reserved the funds and the hold expired or was voided before Kestrel
+# took them (GLOSSARY §4.2). Never a capture, so it is never revenue; the order
+# may still be paid by another attempt, or end abandoned.
+#
+# Card only. UPI, netbanking and wallet settle or decline in one step; a
+# two-phase auth-then-capture is a card-rail behaviour.
+AUTHORIZED_CARD_SHARE = 0.02  # ~1-3% (ADR-014)
+
+# Independent draw stream for the authorisation pass, so adding it leaves every
+# earlier draw -- orders, amounts, capture outcomes, retries, refunds -- byte
+# identical. Sharing `rng` would shift the whole stream and rebuild a different
+# world, which would put every planted anomaly back in play for no reason.
+AUTHORIZED_STREAM = 0x41555448  # "AUTH"
 # upi 0.72 + retry 0.82 reproduces the PDD worked example: order-level ~93%,
 # attempt-level ~71%, ~1.3 attempts per order.
 
@@ -543,6 +558,7 @@ def generate_facts(world: World, seed: int, scale: float = 1.0) -> Facts:
         return {k: np.concatenate(v) for k, v in b.items() if v}
 
     orders, items, attempts, refunds = cat(ob), cat(ib), cat(ab), cat(rb)
+    _authorise_expired_holds(attempts, seed)
     fx = _fx_rates(rng, days)
     settlements, settlement_items = _settlements(rng, attempts)
     notes = {
@@ -562,6 +578,61 @@ def generate_facts(world: World, seed: int, scale: float = 1.0) -> Facts:
         customers=customers,
         product_notes=notes,
     )
+
+
+def _authorise_expired_holds(attempts: dict[str, np.ndarray], seed: int) -> None:
+    """Give some card attempts the `authorized` status, in place (ADR-014).
+
+    SDD §5.2 declares `payment_attempts.status` as one of `authorized`,
+    `captured` or `failed`, and PDD §6.2 lists authorised-versus-captured as one
+    of the ten traps. The first generated world held no authorised rows at all,
+    so `status = 'captured'` and `status <> 'failed'` returned the same figure
+    and the trap could not discriminate. This is the conformance fix.
+
+    **An authorised attempt is one that reserved the customer's funds and never
+    took them** -- the hold expired, or was voided. It is not a decline, so it
+    carries no `failure_reason`; and it is emphatically not revenue (§4.2).
+
+    The conversion is applied to attempts that already **failed**, which is what
+    makes it safe to add to a frozen generator:
+
+    - no capture becomes an authorisation, so `captured_any`, paid status,
+      refunds, settlements and every planted anomaly are untouched;
+    - every anomaly and sealed plant selects on `status == "captured"`, never on
+      `!= "failed"`, so none of them can see the new value;
+    - the draw comes from its own stream, so the rest of the world is byte
+      identical to the run before this function existed.
+
+    What does change, correctly: a decline reason is no longer attached to an
+    outcome that was not a decline, so `failure_rate_by_reason` (§2.10) loses
+    that mass -- and `status <> 'failed'` now overstates captured money, which is
+    precisely the mistake the trap exists to catch.
+    """
+    if not attempts or "status" not in attempts:
+        return
+    card = attempts["method"] == "card"
+    n_card = int(card.sum())
+    if not n_card:
+        return
+    eligible = np.nonzero(card & (attempts["status"] == "failed"))[0]
+    if not len(eligible):
+        return
+
+    # Bernoulli per eligible attempt rather than an exact count: a realised share
+    # of exactly 2.000% would be an artefact no real acquirer produces.
+    target = AUTHORIZED_CARD_SHARE * n_card
+    rng = np.random.default_rng(np.random.PCG64(seed ^ AUTHORIZED_STREAM))
+    chosen = eligible[rng.random(len(eligible)) < min(target / len(eligible), 1.0)]
+
+    # `np.where(cap, "captured", "failed")` gives a fixed-width `<U8` array, so
+    # assigning a ten-character status into it silently truncates to "authoriz".
+    # Object dtype is what every other string column in the world already uses,
+    # and it cannot truncate. The first run of this function wrote the truncated
+    # value; nothing caught it but the count, which was right.
+    if attempts["status"].dtype.kind in "US":
+        attempts["status"] = attempts["status"].astype(object)
+    attempts["status"][chosen] = "authorized"
+    attempts["failure_reason"][chosen] = None
 
 
 def _fx_rates(rng: np.random.Generator, days: np.ndarray) -> dict[str, np.ndarray]:

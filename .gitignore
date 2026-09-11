@@ -31,7 +31,7 @@ web/dist/
 # _reports/
 # Counts-only CI marker (scripts/freeze_gen.py). Never holds sealed content,
 # but it is build output and belongs to a run, not to the repository.
-_ci/ holds end-of-module reports written for the reader, not the build.
+_ci/
 # _review/ holds question drafts under review; deleted at questions-frozen.
 _reports/
 eval/questions/_review/

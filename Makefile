@@ -40,8 +40,10 @@ seed-check:
 	elif [ -f .env ] && grep -q '^KESTREL_SEALED_SEED=' .env; then echo "seed present: yes (.env)"; \
 	else echo "seed present: no"; exit 1; fi
 
+# REOPEN=yes re-freezes after a conformance fix, creating the next gen-frozen-N
+# tag (ADR-014). Without it a second freeze is refused, which is the default.
 freeze-gen:
-	$(PY) scripts/freeze_gen.py
+	$(PY) scripts/freeze_gen.py $(if $(REOPEN),--reopen,)
 
 freeze-questions:
 	$(PY) scripts/freeze_questions.py
