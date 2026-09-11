@@ -9,7 +9,7 @@ RUFF    := .venv/bin/ruff
 MYPY    := .venv/bin/mypy
 SET     ?= dev
 
-.PHONY: setup data test eval eval-holdout lint types up bench freeze-check freeze-questions freeze-translations
+.PHONY: setup data test eval eval-holdout lint types up bench freeze-check freeze-questions seed-check freeze-translations
 
 # --- implemented -------------------------------------------------------------
 
@@ -31,6 +31,11 @@ types:
 freeze-check:
 	$(PY) scripts/freeze.py --check
 
+seed-check:
+	@if [ -n "$$KESTREL_SEALED_SEED" ]; then echo "seed present: yes (environment)"; \
+	elif [ -f .env ] && grep -q '^KESTREL_SEALED_SEED=' .env; then echo "seed present: yes (.env)"; \
+	else echo "seed present: no"; exit 1; fi
+
 freeze-questions:
 	$(PY) scripts/freeze_questions.py
 
@@ -45,7 +50,14 @@ define NOT_BUILT
 endef
 
 data:
-	set -a; . ./.env; set +a; /usr/bin/time -l $(PY) -m kestrel_gen --seed 20260910 --scale $${SCALE:-0.55} --out data
+	@if [ -z "$$KESTREL_SEALED_SEED" ] && [ -f .env ]; then \
+		set -a; . ./.env; set +a; \
+	fi; \
+	if [ -z "$$KESTREL_SEALED_SEED" ]; then \
+		echo "KESTREL_SEALED_SEED is not set and .env has no value for it" >&2; exit 1; \
+	fi; \
+	echo "seed present: yes"; \
+	/usr/bin/time -l $(PY) -m kestrel_gen --seed 20260910 --scale $${SCALE:-0.55} --out data
 
 eval:
 	$(call NOT_BUILT,eval SET=$(SET),M4 — scoring/reports/harness)

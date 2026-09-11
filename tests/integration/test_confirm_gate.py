@@ -1,17 +1,17 @@
-"""Every planted anomaly must clear the why-agent's confirm gate.
+"""One row per WHY question, measured at that question's ENTRY level.
 
-SDD §15 and ADR-010: a change is only explained if the relative change is at
-least 2% **and** |z| >= 2 against up to 28 trailing equivalent periods, with at
-least 8 available.
+The entry level is the scope and filters the question itself states, **before**
+the agent drills anywhere. EV-047 says "one of our showrooms" under a Tamil Nadu
+role, so it enters at IN-TN refunds and must find the showroom. DV-040 says "card
+failures in the UK", so it enters at all UK card success. Measuring where the
+anomaly *lives* would be measuring the answer, not the question.
 
-The statistics here are computed **in test code**, from SQL, with no import from
-`receipts` (D10). If the engine and the test shared an implementation, a bug in
-the z calculation would agree with itself and prove nothing.
+Statistics are computed here in test code from SQL, with no `receipts` import
+(D10): if the engine and the test shared an implementation, a bug in the z
+calculation would agree with itself.
 
-Each anomaly is measured **at the level its question actually asks**, which is
-the whole point: an anomaly that clears the gate at showroom level and fails at
-country level makes a country-level question unanswerable, and the agent would be
-right to say "no significant change".
+Gate (SDD §15, ADR-010): |rel| >= 2% AND |z| >= 2, against up to 28 trailing
+equivalent periods, at least 8 required.
 """
 
 from __future__ import annotations
@@ -27,10 +27,13 @@ REPO = Path(__file__).resolve().parents[2]
 DB = REPO / "data" / "kestrel.duckdb"
 TRUTH = REPO / "truth"
 
-MIN_REL_CHANGE = 0.02
-MIN_Z = 2.0
-MAX_TRAILING = 28
-MIN_TRAILING = 8
+MIN_REL, MIN_Z, MAX_TRAILING, MIN_TRAILING = 0.02, 2.0, 28, 8
+
+SHOWROOM_JOIN = """
+JOIN showrooms s ON s.showroom_id = o.showroom_id
+JOIN cities ci ON ci.city_id = s.city_id
+JOIN regions rg ON rg.region_id = ci.region_id
+"""
 
 
 @pytest.fixture(scope="module")
@@ -43,173 +46,195 @@ def con():
 
 
 @pytest.fixture(scope="module")
-def truth() -> dict:
-    recorded = json.loads((TRUTH / "anomalies.json").read_text(encoding="utf-8"))["anomalies"]
-    return {r["anomaly_id"]: r for r in recorded}
-
-
-@pytest.fixture(scope="module")
 def constructed() -> dict:
     return json.loads((TRUTH / "constructed.json").read_text(encoding="utf-8"))
 
 
-def _series(con, sql: str, params: list) -> list[tuple]:
-    return con.execute(sql, params).fetchall()
-
-
 def _gate(target: float, trailing: list[float]) -> tuple[float, float, int, bool, str]:
-    """Relative change and z of `target` against its trailing periods."""
     trailing = [t for t in trailing if t is not None][-MAX_TRAILING:]
     n = len(trailing)
     if n < MIN_TRAILING:
-        return (
-            float("nan"),
-            float("nan"),
-            n,
-            False,
-            f"only {n} trailing periods, need {MIN_TRAILING}",
-        )
+        return float("nan"), float("nan"), n, False, f"only {n} trailing periods"
     mean = statistics.fmean(trailing)
     sd = statistics.stdev(trailing) if n > 1 else 0.0
     rel = (target - mean) / mean if mean else float("nan")
     z = (target - mean) / sd if sd else float("inf")
-    ok = abs(rel) >= MIN_REL_CHANGE and abs(z) >= MIN_Z
-    return rel, z, n, ok, ""
+    return rel, z, n, abs(rel) >= MIN_REL and abs(z) >= MIN_Z, ""
 
 
-WEEKLY_UPI_TN = """
-SELECT date_trunc('week', pa.business_date) AS wk,
-       count(DISTINCT CASE WHEN o.status='paid' THEN o.order_id END)::DOUBLE
-       / NULLIF(count(DISTINCT o.order_id), 0) AS rate
-FROM payment_attempts pa
-JOIN orders o ON o.order_id = pa.order_id
-JOIN showrooms s ON s.showroom_id = o.showroom_id
-JOIN cities ci ON ci.city_id = s.city_id
-WHERE pa.method = 'upi' AND ci.region_id = 'IN-TN' AND NOT pa.is_test AND NOT o.is_test
-GROUP BY 1 ORDER BY 1
-"""
+def _order_success(grain: str, where: str) -> str:
+    return f"""
+    SELECT date_trunc('{grain}', pa.business_date) p,
+           count(DISTINCT CASE WHEN o.status='paid' THEN o.order_id END)::DOUBLE
+           / NULLIF(count(DISTINCT o.order_id),0) v
+    FROM payment_attempts pa JOIN orders o ON o.order_id=pa.order_id {SHOWROOM_JOIN}
+    WHERE NOT pa.is_test AND NOT o.is_test AND {where}
+    GROUP BY 1 ORDER BY 1"""
 
-MONTHLY_REFUND_RATE_CITY = """
-WITH cap AS (
-  SELECT date_trunc('month', pa.business_date) m, sum(pa.amount_minor) v
-  FROM payment_attempts pa JOIN orders o ON o.order_id=pa.order_id
-  JOIN showrooms s ON s.showroom_id=o.showroom_id JOIN cities ci ON ci.city_id=s.city_id
-  WHERE pa.status='captured' AND NOT pa.is_test AND ci.name = ? GROUP BY 1),
-ref AS (
-  SELECT date_trunc('month', r.business_date) m, sum(r.amount_minor) v
-  FROM refunds r JOIN orders o ON o.order_id=r.order_id
-  JOIN showrooms s ON s.showroom_id=o.showroom_id JOIN cities ci ON ci.city_id=s.city_id
-  WHERE r.status='processed' AND NOT o.is_test AND ci.name = ? GROUP BY 1)
-SELECT cap.m, COALESCE(ref.v,0)::DOUBLE/NULLIF(cap.v,0) FROM cap LEFT JOIN ref USING(m) ORDER BY 1
-"""
 
-MONTHLY_GMV_COUNTRY = """
-SELECT date_trunc('month', pa.business_date) m, sum(pa.amount_minor)::DOUBLE
-FROM payment_attempts pa JOIN orders o ON o.order_id=pa.order_id
-JOIN showrooms s ON s.showroom_id=o.showroom_id
-JOIN cities ci ON ci.city_id=s.city_id JOIN regions rg ON rg.region_id=ci.region_id
-WHERE pa.status='captured' AND NOT pa.is_test AND rg.country_code = ?
-GROUP BY 1 ORDER BY 1
-"""
+def _refund_amount(grain: str, where: str) -> str:
+    return f"""
+    SELECT date_trunc('{grain}', r.business_date) p, sum(r.amount_minor)::DOUBLE v
+    FROM refunds r JOIN orders o ON o.order_id=r.order_id {SHOWROOM_JOIN}
+    WHERE r.status='processed' AND NOT o.is_test AND {where}
+    GROUP BY 1 ORDER BY 1"""
 
-MONTHLY_CARD_SUCCESS_NETWORK = """
-SELECT date_trunc('month', pa.business_date) m,
-       count(DISTINCT CASE WHEN o.status='paid' THEN o.order_id END)::DOUBLE
-       / NULLIF(count(DISTINCT o.order_id),0)
-FROM payment_attempts pa JOIN orders o ON o.order_id=pa.order_id
-JOIN showrooms s ON s.showroom_id=o.showroom_id
-JOIN cities ci ON ci.city_id=s.city_id JOIN regions rg ON rg.region_id=ci.region_id
-WHERE pa.method='card' AND rg.country_code='GB' AND pa.card_network = ?
-  AND NOT pa.is_test AND NOT o.is_test
-GROUP BY 1 ORDER BY 1
-"""
 
-WEEKLY_SETTLEMENT_LAG_BANK = """
-SELECT date_trunc('week', st.settled_on) wk,
-       avg(date_diff('day', pa.business_date, st.settled_on))::DOUBLE
+def _refund_rate(grain: str, where: str) -> str:
+    return f"""
+    WITH cap AS (
+      SELECT date_trunc('{grain}', pa.business_date) p, sum(pa.amount_minor) v
+      FROM payment_attempts pa JOIN orders o ON o.order_id=pa.order_id {SHOWROOM_JOIN}
+      WHERE pa.status='captured' AND NOT pa.is_test AND {where} GROUP BY 1),
+    ref AS (
+      SELECT date_trunc('{grain}', r.business_date) p, sum(r.amount_minor) v
+      FROM refunds r JOIN orders o ON o.order_id=r.order_id {SHOWROOM_JOIN}
+      WHERE r.status='processed' AND NOT o.is_test AND {where} GROUP BY 1)
+    SELECT cap.p, COALESCE(ref.v,0)::DOUBLE/NULLIF(cap.v,0)
+    FROM cap LEFT JOIN ref USING(p) ORDER BY 1"""
+
+
+def _gmv(grain: str, where: str) -> str:
+    return f"""
+    SELECT date_trunc('{grain}', pa.business_date) p, sum(pa.amount_minor)::DOUBLE v
+    FROM payment_attempts pa JOIN orders o ON o.order_id=pa.order_id {SHOWROOM_JOIN}
+    WHERE pa.status='captured' AND NOT pa.is_test AND {where} GROUP BY 1 ORDER BY 1"""
+
+
+SETTLEMENT_LAG = """
+SELECT date_trunc('week', st.settled_on) p,
+       avg(date_diff('day', pa.business_date, st.settled_on))::DOUBLE v
 FROM settlements st JOIN settlement_items si ON si.settlement_id=st.settlement_id
 JOIN payment_attempts pa ON pa.attempt_id=si.attempt_id
-WHERE st.acquiring_bank = ? GROUP BY 1 ORDER BY 1
-"""
+GROUP BY 1 ORDER BY 1"""
 
-MONTHLY_REFUND_SHOWROOM = """
-SELECT date_trunc('month', r.business_date) m, sum(r.amount_minor)::DOUBLE
-FROM refunds r JOIN orders o ON o.order_id=r.order_id
-WHERE r.status='processed' AND NOT o.is_test AND o.showroom_id = ?
-GROUP BY 1 ORDER BY 1
-"""
+UNSETTLED_WEEKLY = """
+SELECT date_trunc('week', pa.business_date) p, sum(pa.amount_minor)::DOUBLE v
+FROM payment_attempts pa
+WHERE pa.status='captured' AND NOT pa.is_test
+  AND NOT EXISTS (SELECT 1 FROM settlement_items si WHERE si.attempt_id = pa.attempt_id)
+GROUP BY 1 ORDER BY 1"""
 
 
-def test_confirm_gate_table(con, truth, constructed) -> None:
-    """Print the table, then assert. Every row is computed here, not imported."""
+def test_confirm_gate_one_row_per_why_question(con, constructed) -> None:
+    sr = constructed["a2_showroom_ids"][0]
     rows = []
 
-    def add(aid, level, question, series, target_key):
-        pairs = [(str(p), v) for p, v in series if v is not None]
-        idx = next((i for i, (p, _) in enumerate(pairs) if p.startswith(target_key)), None)
+    def add(qid, aid, entry, sql, params, period):
+        series = [(str(p), v) for p, v in con.execute(sql, params).fetchall() if v is not None]
+        idx = next((i for i, (p, _) in enumerate(series) if p.startswith(period)), None)
         if idx is None:
-            rows.append((aid, level, question, None, None, 0, False, "target period absent"))
+            rows.append((qid, aid, entry, None, None, 0, False, "target period absent"))
             return
-        rel, z, n, ok, note = _gate(pairs[idx][1], [v for _, v in pairs[:idx]])
-        rows.append((aid, level, question, rel, z, n, ok, note))
+        rel, z, n, ok, note = _gate(series[idx][1], [v for _, v in series[:idx]])
+        rows.append((qid, aid, entry, rel, z, n, ok, note))
 
-    add("A1", "week, IN-TN", "DV-019/EV-097", _series(con, WEEKLY_UPI_TN, []), "2026-08-31")
+    W, M = "2026-08-31", "2026-08-01"
     add(
-        "A2",
-        "month, Dubai",
-        "EV-048",
-        _series(con, MONTHLY_REFUND_RATE_CITY, ["Dubai", "Dubai"]),
-        "2026-08-01",
+        "DV-019",
+        "A1",
+        "Chennai, UPI, week",
+        _order_success("week", "pa.method='upi' AND ci.name='Chennai'"),
+        [],
+        W,
     )
     add(
-        "A3",
-        "week, acquiring bank",
-        "DV-059/EV-098",
-        _series(con, WEEKLY_SETTLEMENT_LAG_BANK, [constructed["a3_acquiring_bank"]]),
-        "2026-08-31",
+        "EV-097",
+        "A1",
+        "IN-TN, UPI, week",
+        _order_success("week", "pa.method='upi' AND ci.region_id='IN-TN'"),
+        [],
+        W,
     )
     add(
-        "A4",
-        "month, Singapore",
-        "EV-046/EV-145",
-        _series(con, MONTHLY_GMV_COUNTRY, ["SG"]),
-        "2026-08-01",
-    )
-    add(
+        "DV-040",
         "A5",
-        "month, GB network",
-        "DV-040/EV-099",
-        _series(con, MONTHLY_CARD_SUCCESS_NETWORK, [constructed["a5_card_network"]]),
-        "2026-08-01",
+        "UK, card, month",
+        _order_success("month", "pa.method='card' AND rg.country_code='GB'"),
+        [],
+        M,
     )
     add(
-        "A6",
-        "month, TN showroom",
+        "EV-099",
+        "A5",
+        "UK, card, month",
+        _order_success("month", "pa.method='card' AND rg.country_code='GB'"),
+        [],
+        M,
+    )
+    add(
+        "EV-148",
+        "A5",
+        "UK, all methods, month",
+        _order_success("month", "rg.country_code='GB'"),
+        [],
+        M,
+    )
+    add(
+        "DV-058",
+        "A2",
+        "A2 showroom, refunds, month",
+        _refund_amount("month", f"o.showroom_id='{sr}'"),
+        [],
+        M,
+    )
+    add(
+        "EV-048",
+        "A2",
+        "A2 showroom, refund rate, month",
+        _refund_rate("month", f"o.showroom_id='{sr}'"),
+        [],
+        M,
+    )
+    add(
+        "EV-147",
+        "A2",
+        "UAE, refund rate, month",
+        _refund_rate("month", "rg.country_code='AE'"),
+        [],
+        M,
+    )
+    add("DV-059", "A3", "global unsettled, week", UNSETTLED_WEEKLY, [], W)
+    add("EV-098", "A3", "global settlement lag, week", SETTLEMENT_LAG, [], W)
+    add("EV-046", "A4", "Singapore, GMV, month", _gmv("month", "rg.country_code='SG'"), [], M)
+    add("EV-145", "A4", "Singapore, GMV, month", _gmv("month", "rg.country_code='SG'"), [], M)
+    add(
         "EV-047",
-        _series(con, MONTHLY_REFUND_SHOWROOM, [constructed["a6_showroom_id"]]),
-        "2026-08-01",
+        "A6",
+        "IN-TN, refunds, month",
+        _refund_amount("month", "ci.region_id='IN-TN'"),
+        [],
+        M,
+    )
+    add(
+        "EV-146",
+        "A6",
+        "IN-TN, refund rate, month",
+        _refund_rate("month", "ci.region_id='IN-TN'"),
+        [],
+        M,
     )
 
     print(
-        f"\nconfirm gate: |rel| >= {MIN_REL_CHANGE:.0%} AND |z| >= {MIN_Z} "
-        f"against <= {MAX_TRAILING} trailing periods (>= {MIN_TRAILING} required)\n"
+        f"\nconfirm gate at each question's ENTRY level "
+        f"(|rel| >= {MIN_REL:.0%} and |z| >= {MIN_Z}, >= {MIN_TRAILING} trailing)\n"
     )
-    print(f"  {'id':3} {'level':22} {'question':16} {'rel':>8} {'z':>8} {'n':>4}  verdict")
+    print(f"  {'qid':7} {'A':3} {'entry level':34} {'rel':>10} {'z':>9} {'n':>4}  verdict")
     failures = []
-    for aid, level, q, rel, z, n, ok, note in rows:
-        rs = "  n/a  " if rel is None or rel != rel else f"{rel:+7.2%}"
-        zs = "  n/a  " if z is None or z != z else f"{z:+7.2f}"
+    for qid, aid, entry, rel, z, n, ok, note in rows:
+        rs = "   n/a" if rel is None or rel != rel else f"{rel:+9.2%}"
+        zs = "   n/a" if z is None or z != z else f"{z:+8.2f}"
         print(
-            f"  {aid:3} {level:22} {q:16} {rs:>8} {zs:>8} {n:>4}  {'PASS' if ok else 'FAIL'} {note}"
+            f"  {qid:7} {aid:3} {entry:34} {rs:>10} {zs:>9} {n:>4}  "
+            f"{'PASS' if ok else 'FAIL'} {note}"
         )
         if not ok:
-            failures.append(f"{aid} at {level}: rel={rs.strip()} z={zs.strip()} n={n} {note}")
+            failures.append(f"{qid} ({aid}) at {entry}: rel={rs.strip()} z={zs.strip()} {note}")
 
     assert not failures, (
-        "anomalies that do not clear the confirm gate at the level their question "
-        "asks:\n  "
+        "WHY questions whose anomaly does not clear the gate at their entry level:\n  "
         + "\n  ".join(failures)
-        + "\n\nThe gate is not the thing to loosen. Either raise the planted "
-        "magnitude within realistic bounds, or rephrase the question to the "
+        + "\n\nThe gate is not the thing to loosen: either the planted magnitude "
+        "rises within realistic bounds, or the question is rephrased to the "
         "level where the anomaly is real."
     )

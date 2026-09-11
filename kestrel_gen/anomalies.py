@@ -35,16 +35,21 @@ A1_SUCCESS_DROP = 0.42  # multiply the affected bank's UPI capture rate
 A2_WINDOW = (date(2026, 8, 1), date(2026, 8, 31))  # DV-058, EV-048, EV-147
 A2_CITY = "Dubai"
 A2_SHOWROOMS = 2
+# Pinned by NAME, not by "the two busiest". DV-058 and EV-048 name the showroom
+# in the question text, so which showroom carries A2 has to be a fixed fact about
+# the world rather than an outcome of the draw.
+A2_SHOWROOM_NAMES = ("Kestrel Dubai Garden Road", "Kestrel Dubai Central 2")
 A2_REFUND_MULTIPLIER = 3.4
 A2_CITY_LEVEL_SHARE = 0.35  # of Dubai's monthly refunds, so the city-level gate clears
 
-A3_WINDOW = (date(2026, 8, 31), date(2026, 9, 6))  # DV-059, EV-098
-A3_EXTRA_LAG_DAYS = 9
+A3_WINDOW = (date(2026, 8, 24), date(2026, 9, 6))  # two weeks; questions ask about the 2nd
+A3_EXTRA_LAG_DAYS = 4  # delayed settlements land in the SECOND week, visibly later
 
 A4_WINDOW = (date(2026, 8, 1), date(2026, 8, 31))  # EV-046, EV-145
 A4_COUNTRY = "SG"
 A4_SURGE = 2.6
-A4_MIN_ORDERS = 3000  # a flagship launch week, sized to move Singapore's MONTH
+A4_GMV_LIFT = 0.22  # share of Singapore's baseline monthly GMV the launch adds
+A4_MIN_ORDERS = 250  # floor, so a thin month still gets a findable surge
 
 A5_WINDOW = (date(2026, 8, 1), date(2026, 8, 31))  # DV-040, EV-099, EV-148
 A5_COUNTRY = "GB"
@@ -295,17 +300,14 @@ def apply_known(facts, world, seed: int, enforce: bool = True) -> Planted:
     # The two BUSIEST Dubai showrooms, not the first two by id. A defective batch
     # lands where the volume is, and picking arbitrarily leaves a pool too thin to
     # plant a findable anomaly in -- which the size guarantee then refuses.
-    dubai_volume: dict[str, int] = dict.fromkeys(dubai, 0)
-    for i, oid in enumerate(o["order_id"]):
-        s_ = sr_of_order[oid]
-        if (
-            s_ in dubai_volume
-            and o["status"][i] == "paid"
-            and not o["is_test"][i]
-            and A2_WINDOW[0] <= o["business_date"][i] <= A2_WINDOW[1]
-        ):
-            dubai_volume[s_] += 1
-    a2_showrooms = sorted(sorted(dubai_volume, key=lambda k: -dubai_volume[k])[:A2_SHOWROOMS])
+    name_of = dict(zip(world.showrooms["showroom_id"], world.showrooms["name"], strict=True))
+    a2_showrooms = sorted(s_ for s_ in dubai if name_of[s_] in A2_SHOWROOM_NAMES)
+    if enforce and len(a2_showrooms) != A2_SHOWROOMS:
+        raise AnomalyTooThin(
+            f"A2 needs showrooms named {A2_SHOWROOM_NAMES}; found {len(a2_showrooms)}. "
+            "DV-058 and EV-048 name one of them in the question text."
+        )
+
     sku_model = dict(zip(world.products["sku"], world.products["model_name"], strict=True))
     handset_of = {}
     for oid, sku in zip(facts.order_items["order_id"], facts.order_items["sku"], strict=True):
@@ -330,7 +332,7 @@ def apply_known(facts, world, seed: int, enforce: bool = True) -> Planted:
     dubai_month_refunds = sum(
         1
         for oid_, st_ in zip(r["order_id"], r["status"], strict=True)
-        if st_ == "processed" and sr_of_order.get(oid_) in set(dubai_volume)
+        if st_ == "processed" and sr_of_order.get(oid_) in set(dubai)
     )
     extra = max(
         A2_MIN_REFUNDS,
@@ -425,15 +427,28 @@ def apply_known(facts, world, seed: int, enforce: bool = True) -> Planted:
             and o["status"][i] == "paid"
             and not o["is_test"][i]
         ]
+        src_any = sg_orders
         counts: dict[str, list[int]] = {}
         for i in sg_orders:
             mdl = handset_of.get(str(o["order_id"][i]))
             if mdl:
                 counts.setdefault(mdl, []).append(i)
         if counts:
-            a4_model = max(sorted(counts), key=lambda k: len(counts[k]))
+            # A launch surge is a FLAGSHIP launch. Picking the most common model
+            # picks the cheapest, which moves order count a lot and GMV barely --
+            # 3,000 extra orders was a 46% lift in volume and 10% in value.
+            price_of = {}
+            for j in src_any:
+                mdl = handset_of.get(str(o["order_id"][j]))
+                if mdl:
+                    price_of[mdl] = max(price_of.get(mdl, 0), int(o["total_minor"][j]))
+            eligible = {m: v for m, v in counts.items() if len(v) >= 20}
+            pool = eligible or counts
+            a4_model = max(sorted(pool), key=lambda k: price_of.get(k, 0))
             src = counts[a4_model]
-            want4 = max(A4_MIN_ORDERS, int(len(src) * (A4_SURGE - 1)))
+            baseline_gmv = sum(int(o["total_minor"][j]) for j in sg_orders)
+            unit_value = price_of.get(a4_model, 1) or 1
+            want4 = max(A4_MIN_ORDERS, int(baseline_gmv * A4_GMV_LIFT / unit_value))
             take = rng.choice(np.array(src), size=want4, replace=True)
             n4 = len(take)
             new_ids = np.array([f"ORD-A4-{i:07d}" for i in range(1, n4 + 1)], dtype=object)

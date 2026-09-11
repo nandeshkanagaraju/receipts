@@ -104,6 +104,13 @@ def main(argv: list[str] | None = None) -> int:
         write.write_gateway_sqlite(out, facts.refunds, pending)
         print(f"gateway    {out / 'gateway.sqlite'} ({len(pending):,} pending)")
 
+    pg_dir, pg_counts = write.write_postgres_slice(
+        out, write.postgres_slice(tables, as_of=world.AS_OF)
+    )
+    print(f"postgres   {pg_dir} (last {write.POSTGRES_WINDOW_DAYS} business days)")
+    for name in sorted(pg_counts):
+        print(f"           {name:18} {pg_counts[name]:>12,}")
+
     path, data_version = write.manifest(
         out, args.seed, args.scale, write.generator_sha256(ROOT), tables
     )

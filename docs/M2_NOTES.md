@@ -68,6 +68,30 @@ named window **or** size it so the aggregate still clears both gates:
 | A2 | **Month, city level** (EV-048) | Dubai **refund rate** for `2026-08` must clear both gates. See §1.2a: a global-level threshold is unachievable at any realistic size |
 | A6 | **Month** (DV-022, EV-047) | DV-022 is an ANS count, so no z-gate applies there. EV-047 **is** a WHY and asks at **Tamil Nadu** level: TN **refunded amount** for `2026-08` must clear both gates against trailing months, **and the affected showroom must be the top contributor** when the agent decomposes by showroom. A move that clears the gate but leaves the planted showroom second scores as a miss |
 
+### 1.1a0 A2 and A3: the level the question enters at
+
+**A2 is pinned to two named showrooms**, `Kestrel Dubai Garden Road` and
+`Kestrel Dubai Central 2`, rather than "the two busiest in Dubai". DV-058 and
+EV-048 now name the first in the question text, so which showroom carries A2 must
+be a fixed fact about the world rather than an outcome of the draw.
+
+The rephrasing moves the questions' **entry level** to the showroom, which is the
+only level where A2 can clear the confirm gate. The arithmetic: 76 qualifying
+orders of the affected model against 310 processed refunds in Dubai that month,
+so refunding every single one is +25% of the city — under two standard deviations
+of a noisy monthly series. The agent must still find the **model**; only the
+showroom is given.
+
+**A3 spans two consecutive weeks**, `2026-08-24`…`2026-09-06`, and the affected
+bank's settlements are pushed four days later. Delayed settlements from the first
+week therefore land *inside* the second, where the lag is visibly longer.
+DV-059 and EV-098 ask about "last week", which is the second week
+(`2026-08-31`…`2026-09-06`) — so their windows are unchanged and now measurable.
+
+The previous single-week plant was invisible: pushing `settled_on` forward moved
+those settlements *out* of the week being asked about, so the week lost them
+rather than showing a longer lag, and the measured change was −0.13%.
+
 ### 1.1a Anomalies must be concentrated, not smeared
 
 A planted anomaly has to have **one** answer, or the question that asks about it

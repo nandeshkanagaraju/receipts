@@ -140,13 +140,17 @@ ACCESSORIES: tuple[tuple[str, int], ...] = (
 )
 
 # Price multiplier per country, applied to the base major-unit price.
+# Local price level relative to the USD-ish catalogue base. GB and US were set
+# low enough that average order value landed under the real market (GBP 344,
+# USD 465); raised so the realism table sits mid-range. No question depends on
+# an exact AOV.
 PRICE_FACTOR: dict[str, float] = {
     "IN": 84.0,
     "AE": 3.7,
     "SG": 1.35,
     "MY": 4.5,
-    "GB": 0.80,
-    "US": 1.0,
+    "GB": 1.28,
+    "US": 1.45,
 }
 
 BANKS_ISSUING: dict[str, tuple[str, ...]] = {

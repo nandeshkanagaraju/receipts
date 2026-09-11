@@ -78,6 +78,37 @@ jobs:
         if: always()
         run: echo "test took $(( $(date +%s) - ${{ steps.start.outputs.t }} ))s"
 
+  data:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - id: start
+        run: echo "t=$(date +%s)" >> "$GITHUB_OUTPUT"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.lock
+          pip install -e . --no-deps
+      - name: Seed is visible to the job
+        env:
+          KESTREL_SEALED_SEED: ${{ secrets.KESTREL_SEALED_SEED }}
+        run: |
+          # Never echo the value. Presence only.
+          if [ -n "$KESTREL_SEALED_SEED" ]; then echo "seed present: yes"; \
+          else echo "seed present: no"; exit 1; fi
+      - name: Build the world
+        env:
+          KESTREL_SEALED_SEED: ${{ secrets.KESTREL_SEALED_SEED }}
+        run: make data
+      - name: Artifact tests
+        run: pytest tests/integration -q
+      - name: Duration
+        if: always()
+        run: echo "data took $(( $(date +%s) - ${{ steps.start.outputs.t }} ))s"
+
   freeze:
     runs-on: ubuntu-latest
     steps:
