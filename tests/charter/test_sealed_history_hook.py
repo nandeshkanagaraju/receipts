@@ -223,3 +223,57 @@ def test_the_hook_end_to_end_honours_the_marker(tmp_path: Path) -> None:
     assert out.stdout.strip() == "True False", (
         f"the marker did not change the verdict end to end: {out.stdout!r} {out.stderr}"
     )
+
+
+# ---------------------------------------------------------------------------
+# HO_MANIFEST.json is the one safe channel out of the isolated run.
+#
+# §5.2 of the brief makes it the only output the main session and the freeze
+# gates read: counts, hashes and booleans, no values and no SQL. The first
+# version of the reference_sql pattern refused it along with everything else,
+# which would have closed the channel the arrangement depends on -- discovered,
+# if at all, by the session that needed it, at the wall.
+# ---------------------------------------------------------------------------
+
+MANIFEST_READS = (
+    "cat eval/reference_sql/HO_MANIFEST.json",
+    "jq .counts eval/reference_sql/HO_MANIFEST.json",
+    "head -40 eval/reference_sql/HO_MANIFEST.json",
+    "python -c \"import json;json.load(open('eval/reference_sql/HO_MANIFEST.json'))\"",
+)
+ANSWER_KEY_READS = (
+    "cat eval/reference_sql/HO-012.sql",
+    "cat eval/reference_sql/*.sql",
+    "head eval/reference_sql/HO-001.sql",
+    "git show HEAD:eval/reference_sql/HO-004.sql",
+    # Both on one command line: the manifest does not launder the file beside it.
+    "head eval/reference_sql/HO_MANIFEST.json eval/reference_sql/HO-001.sql",
+)
+
+
+@pytest.mark.parametrize("command", MANIFEST_READS)
+def test_the_counts_manifest_is_readable(command: str) -> None:
+    assert hook.verdict(command) is None, (
+        f"HO_MANIFEST.json is the counts channel and must stay readable: {command}"
+    )
+
+
+@pytest.mark.parametrize("command", ANSWER_KEY_READS)
+def test_the_answer_key_stays_refused(command: str) -> None:
+    assert hook.verdict(command) is not None, f"the holdout answer key was readable: {command}"
+
+
+def test_the_manifest_exemption_is_exact() -> None:
+    """Neither a prefix nor a suffix of the name opens the door.
+
+    `HO_MANIFEST` without `.json`, or a file merely starting with the same
+    letters, must not inherit the exemption -- otherwise `HO_MANIFEST_notes.sql`
+    would be readable by naming.
+    """
+    for command in (
+        "cat eval/reference_sql/HO_MANIFEST.json.bak",
+        "cat eval/reference_sql/HO_MANIFESTO.sql",
+        "cat eval/reference_sql/HO_MANIFEST",
+    ):
+        assert hook.verdict(command) is not None, f"the exemption was too wide: {command}"
+    print("\nthe exemption matches HO_MANIFEST.json and nothing adjacent to it")

@@ -68,6 +68,30 @@ any incentive not to do it.
 
 ---
 
+## The blind arm has no Tanglish, permanently
+
+Every other question in the corpus gets four variants: English, Tamil, Hindi and
+`ta-Latn` — Tanglish, Tamil written in Latin script, which the reviewer writes by
+hand because a machine draft of code-mixed Chennai speech is not worth having.
+
+The 29 blind questions get three. `ta` and `hi` are machine drafts written by the
+isolated session and labelled `machine_unverified` like every other machine
+draft. **`ta-Latn` stays `pending` for the blind arm and is never filled.**
+
+The reason is structural and cannot be worked around by effort. Hand-writing the
+Tanglish means reading the questions, and the reviewer is precisely the person the
+blind set exists to keep out — the value of those 29 questions is that the person
+who built the system has not seen them. Filling the field would cost more than
+the field is worth.
+
+**M14 reports the blind arm in en/ta/hi only.** A language-parity number that
+pooled it with the rest would be measuring a gap that was chosen, not one the
+system has. T6 is already reported separately for reviewed variants (§29); this
+is the same distinction, made for a different reason, and both belong in the
+G5 write-up rather than in a footnote.
+
+---
+
 ## The holdout read guard is a tripwire, not a wall
 
 One session has to read the holdout questions, because it writes their reference
@@ -90,6 +114,11 @@ nobody reads back; the relaxed deny list lives in a tracked
 silently. This is the same claim §1 of the isolated-run brief makes about the
 whole arrangement: it does not make the boundary impossible to cross, it makes a
 crossing visible afterwards.
+
+`docs/adr/017-holdout-boundary-guards.md` is the full record — four layers, two
+deliberate exemptions, and what each one does not cover. The isolated session's
+hand-back and the G5 report both point at it, so a reader asking whether this
+holdout was really blind finds one answer rather than three partial ones.
 
 ---
 

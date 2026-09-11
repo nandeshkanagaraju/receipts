@@ -57,9 +57,18 @@ ALWAYS_PROTECTED = (
 # by nothing else. See docs/ISOLATED_REFERENCE_RUN.md.
 LIFTABLE = (
     re.compile(r"eval/questions/holdout", re.I),
-    # Everything under eval/reference_sql/ that is not demonstrably a dev or
-    # eval file. A bare directory reference and any glob match; DV-*/EV-* do not.
-    re.compile(r"eval/reference_sql/(?!(?:DV|EV)-)", re.I),
+    # Everything under eval/reference_sql/ except the dev and eval files, which
+    # are open, and HO_MANIFEST.json, which is the *counts* the main session and
+    # the freeze gates are supposed to read (§5.2 of the brief: no values, no
+    # SQL). Blocking the manifest blocked the one safe channel out of the
+    # isolated run, which would have been discovered by the session that needs
+    # it, at the wall.
+    #
+    # The negation still covers the glob: `eval/reference_sql/*.sql` names no
+    # exempt file, so it matches and is refused.
+    # The manifest exemption is anchored: HO_MANIFEST.json.bak is not the
+    # manifest, and a file merely starting with the same letters is not either.
+    re.compile(r"eval/reference_sql/(?!(?:DV|EV)-|HO_MANIFEST\.json(?![\w.]))", re.I),
 )
 
 PROTECTED = ALWAYS_PROTECTED + LIFTABLE

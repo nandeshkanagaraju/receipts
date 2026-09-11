@@ -83,6 +83,7 @@ not improvise one.
 
 ```
 cd ../receipts-isolated
+make setup                                            # its own .venv; the worktree has none
 touch .isolated-run                                   # lifts the hook's holdout half
 cp .claude/settings.isolated.json .claude/settings.json
 git update-index --assume-unchanged .claude/settings.json
@@ -264,7 +265,7 @@ UNA 3, that is the finding rather than something to correct.
     "double_computed": 35,
     "agree": 35,
     "flagged_implausible": 0,
-    "blind_questions_read": 30,
+    "blind_questions_read": null,        <-- the realised count, filled from the file
     "blind_classified_ans": 0,
     "blind_classified_amb": 0,
     "blind_classified_una": 0,
@@ -294,9 +295,9 @@ what lets G5 prove the holdout was scored against the files that were frozen.
 
 ### 5.3 The report — for the human, not committed
 
-`_reports/isolated-reference-run.md` (`_reports/` is gitignored; per HANDOFF §4.6
+`_reports/isolated-reference-run.md` (`_reports/` is gitignored; per HANDOFF §4.7
 reports go to a secret gist). It may hold counts, per-qid booleans, timings, and
-the flags from §4.6. It goes to the person who launched the session. **The main
+the flags from §4, item 6. It goes to the person who launched the session. **The main
 session never reads it.**
 
 ### 5.4 The counts-only marker, if this ever runs in CI
@@ -309,7 +310,7 @@ holdout reference: 35 of 35 pass
 
 Written by the job that has the evidence, read by the job that needs the
 verdict. `N of N`, nothing else. A guard that cannot run in an environment must
-fail there, not go quiet (HANDOFF §4.8).
+fail there, not go quiet (HANDOFF §4.9).
 
 ---
 
@@ -352,12 +353,49 @@ fallback label for questions a model wrote when no human file arrived (HANDOFF
 §3.2, deadline 2026-09-13 20:00). The two labels must never be mixed: which
 questions a human actually wrote is the entire value of the set.
 
+**The file holds 29 lines, not 30.** That count stands, and it is not a problem
+to solve. **Write exactly what the file contains: never pad to 30, never reword,
+never split one line into two to reach a count.** A blind set bent into a target
+is no longer blind, and the bend is invisible once made.
+
+Some lines may not be questions at all — a heading, a note to self, a blank. Skip
+them and **report how many were discarded and why** ("two headings", "one line
+was a note about the format"). Never quote a discarded line: it came from the
+same head as the questions, and the reasons are all the main session needs.
+
 **ANS 22 · AMB 5 · UNA 3 is a forecast, not a quota.** Classify what the human
-actually wrote and report the realised mix, whatever it is. **Never reword a
-blind question to reach the target** — a blind question edited to fit a
-distribution is no longer blind, and the edit is invisible afterwards. If the
-realised mix is ANS 26 · AMB 2 · UNA 2, that is the finding and it goes in the
-hand-back.
+actually wrote and report the realised mix, whatever it is. If it comes out
+ANS 26 · AMB 2 · UNA 1, that is the finding and it goes in the hand-back.
+
+`HOLDOUT_BLIND_TARGET` and the three other places carrying 30 are **not** yours
+to change. They are reconciled on `main` after the hand-back, from the realised
+count. Changing them here would mean the count was chosen by the session that
+also chose the questions.
+
+### The blind arm runs the same four gates
+
+All four corpus scans run over the blind arm, inside this session, because this
+session is the only one that can see the rows:
+
+- role scope (`test_holdout_questions_stay_inside_their_role_scope`)
+- kind/shape agreement (`test_holdout_kind_and_shape_flags_agree`)
+- authorisation breakdowns (`test_no_holdout_question_breaks_authorisation_down`)
+- every ANS/LIVE qid has a reference file and every file a qid (§4, item 5)
+
+Fix by `role`, `expected.kind` or the shape flags — **never the question text**,
+for the same reason as §4a and with more force here: the text is the human's.
+Report counts: how many each scan flagged, how many were fixed. Not which.
+
+### Translations for the blind arm
+
+Write `ta` and `hi`, labelled `machine_unverified` like every other machine
+draft. **`ta-Latn` stays `pending` for the blind arm permanently.**
+
+The reason is structural, not a shortage of effort: the reviewer writes the
+Tanglish by hand for the rest of the corpus, and hand-writing it for these 29
+would mean reading them — which unblinds the one person the blind set exists to
+keep out. M14 reports the blind arm in **en/ta/hi only**, and `LIMITATIONS.md`
+records the asymmetry.
 
 The main session sees counts only. It does not classify them, does not review
 them, and does not learn what they ask.
@@ -370,9 +408,13 @@ A single message to the person who launched the session, containing:
 
 - the branch and commit SHA;
 - the `counts` block from §5.2, verbatim;
-- the flagged qids from §4.6, as a bare list;
+- the flagged qids from §4, item 6, as a bare list;
 - wall-clock time;
-- confirmation that §6 was not violated.
+- confirmation that §6 was not violated;
+- a pointer to `docs/adr/017-holdout-boundary-guards.md`, which is the record of
+  what the boundary does and does not guarantee. The G5 report points at the same
+  ADR. A reader asking whether this holdout was really blind should find one
+  answer, written once, including the parts that are advisory.
 
 Then the worktree is merged (or the branch pushed) and removed. The main session
 picks up `HO_MANIFEST.json` from `main` and nothing else.
@@ -400,6 +442,19 @@ This run is done when all of the following hold, and `HO_MANIFEST.json` shows it
   `--assume-unchanged` stops an accidental `git add`; it does not stop a
   deliberate one, and this is the failure that unblinds every future session
   with nothing in a later diff to show it.
+
+  A clean `git diff` is not enough on its own: with `--assume-unchanged` set, git
+  is *told* not to look, so the diff is empty whether the file matches main or
+  not. Check the flag is actually set, and check the file against main with the
+  flag out of the way:
+
+  ```
+  git ls-files -v .claude/settings.json     # must start with a lowercase h
+  git diff main -- .claude/settings.json    # must print nothing
+  ```
+
+  Lowercase `h` means assume-unchanged is in force. If it prints `H`, the flag
+  was never set and everything above was a coincidence.
 
 `questions-frozen` waits for this run *and* for the blind set (§7). Freezing
 with an incomplete reference set would record a manifest that does not describe

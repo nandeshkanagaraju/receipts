@@ -1,0 +1,22 @@
+# Holdout content is never rendered as a diff.
+#
+# The read guard (.claude/settings.json, .claude/hooks/deny_sealed_history.py)
+# stops a session *asking* for holdout content. It cannot stop git from
+# volunteering it: `git show <merge>`, a PR page, `git log -p` over a range that
+# happens to include these files, or a reviewer scrolling past. The isolated
+# session's merge is precisely such a moment -- 35 answer-key files and 54
+# questions arriving in one commit -- and at that point the build session is
+# reading a diff for ordinary reasons.
+#
+# `-diff` marks these paths binary for diff purposes, so git prints
+# "Binary files ... differ" instead of their contents. Nothing is encrypted and
+# nothing is hidden from anyone determined: `git show <sha>:<path>` still works,
+# which is what the hook is for. This closes the accidental path, not the
+# deliberate one, and the accidental path is the one nobody is watching for.
+eval/reference_sql/HO-*      -diff
+eval/questions/holdout*      -diff
+
+# The counts manifest is the one safe channel out of the isolated run (§5.2 of
+# docs/ISOLATED_REFERENCE_RUN.md): counts, hashes and booleans, no values and no
+# SQL. It is meant to be reviewed in a diff, so it keeps one.
+eval/reference_sql/HO_MANIFEST.json  diff
