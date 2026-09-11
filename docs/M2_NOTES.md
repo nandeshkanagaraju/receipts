@@ -269,6 +269,33 @@ The totals match SDD §25.2 exactly. Only the authorship is split.
 
 ---
 
+## 4a. Standing rule: a round is not done until CI is green
+
+**Local green is not green.** A round ends when CI on the *pushed commit* passes,
+not when the suite passes on a laptop.
+
+This rule exists because it was broken. CI on `main` was red from run #30
+(`810cd75`) through `34561645195` — five consecutive runs — while three reports
+said "tests green". They were green locally. Nobody looked at CI, and the two
+causes were both things a laptop cannot see:
+
+- `make data` used `/usr/bin/time -l`, a BSD flag. GNU `time` on the runner
+  rejects it. macOS never would.
+- The `test` job had no artifact, because it did not depend on `data`. The
+  artifact tests correctly fail rather than skip, so they failed — on a machine
+  where `data/` happened to exist locally, nothing was visibly wrong.
+
+**Every report ends with:**
+
+```
+commit  <sha>
+CI run  <id>
+jobs    lint <status> · types <status> · data <status> · test <status> · freeze <status>
+```
+
+If the run is not green, the report says so in that block rather than anywhere
+softer, and the round is not finished.
+
 ## 5. Notes for later modules
 
 Things discovered while writing the questions that belong to a module not yet

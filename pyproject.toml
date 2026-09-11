@@ -41,7 +41,15 @@ where = ["src"]
 # pytest
 # ----------------------------------------------------------------------------
 [tool.pytest.ini_options]
-testpaths = ["tests"]
+# tests/freeze is deliberately absent: it holds the freeze GATES, which check
+# work-in-progress invariants that cannot pass until a module is finished. They
+# run from `make freeze-gen` and `make freeze-questions`, the same relationship
+# the question-freeze gates already have. This is not a "fast subset" -- the
+# always-on suite still runs every test in it.
+testpaths = [
+  "tests/unit", "tests/charter", "tests/injection",
+  "tests/integration", "tests/property", "tests/e2e",
+]
 pythonpath = ["src", "."]
 addopts = "-q --strict-markers --strict-config"
 # SDD §27: no "fast" marker and no subset target. The suite runs whole.

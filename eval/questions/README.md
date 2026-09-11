@@ -255,6 +255,12 @@ python scripts/skeleton_audit.py    # the rule-7 audit on its own; exit 1 on any
 
 ---
 
+## A round is not done until CI on the pushed commit is green
+
+Local green is not green. Every report ends with the commit SHA, the CI run id,
+and each job's status. See `docs/M2_NOTES.md` §4a for why this rule exists and
+what it cost.
+
 ## How reports and drafts are delivered
 
 **Reports go in a secret gist, not a branch.**

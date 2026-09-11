@@ -1,0 +1,63 @@
+{
+  "anomalies": [
+    {
+      "anomaly_id": "S1",
+      "dimensions": {
+        "card_network": "Orbit",
+        "country_code": "SG"
+      },
+      "kind": "card_success_dip",
+      "magnitude": {
+        "success_multiplier": 0.5447
+      },
+      "window": {
+        "end": "2026-07-03",
+        "start": "2026-06-30"
+      }
+    },
+    {
+      "anomaly_id": "S2",
+      "dimensions": {
+        "city": "Gurugram",
+        "model_name": "Kestrel Pika 2"
+      },
+      "kind": "refund_rate_spike",
+      "magnitude": {
+        "refund_multiplier": 3.4371
+      },
+      "window": {
+        "end": "2026-08-05",
+        "start": "2026-07-16"
+      }
+    },
+    {
+      "anomaly_id": "S3",
+      "dimensions": {
+        "showroom_id": "S00214"
+      },
+      "kind": "order_volume_drop",
+      "magnitude": {
+        "volume_multiplier": 0.4217
+      },
+      "window": {
+        "end": "2026-06-28",
+        "start": "2026-06-22"
+      }
+    },
+    {
+      "anomaly_id": "S4",
+      "dimensions": {
+        "region_id": "IN-DL"
+      },
+      "kind": "emi_share_rise",
+      "magnitude": {
+        "emi_share_multiplier": 1.8066
+      },
+      "window": {
+        "end": "2026-06-18",
+        "start": "2026-05-21"
+      }
+    }
+  ],
+  "note": "Sealed. Read only by evalkit.scoring, and not before G5. Parameters drawn from KESTREL_SEALED_SEED."
+}

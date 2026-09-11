@@ -55,6 +55,9 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
+    # The artifact tests fail rather than skip when data/ is missing -- which is
+    # correct, and is why this dependency has to exist.
+    needs: data
     steps:
       # Tags, not just the tip: freeze_questions.tag_exists() reads them, and a
       # guard that stops guarding because the clone is shallow is not a guard.
@@ -72,6 +75,12 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.lock
           pip install -e . --no-deps
+      - name: Download the world
+        uses: actions/download-artifact@v4
+        with:
+          name: world
+      - name: Artifact present
+        run: du -sh data truth && ls -la data
       - name: pytest (socket guard active, zero network calls)
         run: pytest
       - name: Duration
@@ -99,12 +108,33 @@ jobs:
           # Never echo the value. Presence only.
           if [ -n "$KESTREL_SEALED_SEED" ]; then echo "seed present: yes"; \
           else echo "seed present: no"; exit 1; fi
+      - name: Cache the generated world
+        id: worldcache
+        uses: actions/cache@v4
+        with:
+          path: |
+            data
+            truth
+          # The generator source decides the data, so its hash is the key. The
+          # seed is deliberately not in the key: it must never appear anywhere
+          # a cache entry name can be read.
+          key: world-${{ hashFiles('kestrel_gen/**/*.py') }}-scale055
       - name: Build the world
+        if: steps.worldcache.outputs.cache-hit != 'true'
         env:
           KESTREL_SEALED_SEED: ${{ secrets.KESTREL_SEALED_SEED }}
         run: make data
-      - name: Artifact tests
-        run: pytest tests/integration -q
+      - name: Artifact size
+        run: du -sh data truth
+      - name: Upload the world for the test job
+        uses: actions/upload-artifact@v4
+        with:
+          name: world
+          path: |
+            data
+            truth
+          retention-days: 1
+          compression-level: 1
       - name: Duration
         if: always()
         run: echo "data took $(( $(date +%s) - ${{ steps.start.outputs.t }} ))s"
