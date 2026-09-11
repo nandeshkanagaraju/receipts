@@ -349,6 +349,28 @@ somebody — possibly me, earlier — already thought about this problem.
 Things discovered while writing the questions that belong to a module not yet
 built. Recorded here rather than lost.
 
+### Standing rule — one writing session per working tree at a time
+
+**Only one session writes to a working tree at a time.** A second one may read.
+
+Two sessions wrote to this tree within the same ten minutes. The visible damage
+was small and the mechanism is worth keeping: a session found uncommitted changes
+it had not written, read them as stranded work from an earlier round, and
+committed them in `36471ff`. They were not stranded — they were in flight. The
+commit captured a mid-edit state that failed lint on run `34569623121`, and the
+session that actually owned the work superseded it eight minutes later in
+`0662165`.
+
+Nothing in git prevents this: `git status` shows a dirty file, not who is holding
+the pen. The failure mode is not a merge conflict, which is loud, but a
+plausible-looking commit of someone else's half-finished thought, which is
+silent. The same logic that makes `--rebase` safe between machines does not help
+inside one checkout.
+
+So: before writing, a session owns the tree or it does not write. If a tree has
+unexplained modifications, the question is *who is editing this right now*, and
+the answer is not *therefore I should commit it*.
+
 ### M7 — Tamil synonyms must carry the code-mixed form as well as the formal one
 
 The semantic layer's `synonyms` for each metric and dimension must list **both**

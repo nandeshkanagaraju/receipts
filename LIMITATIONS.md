@@ -68,6 +68,51 @@ any incentive not to do it.
 
 ---
 
+## An earlier sealed set was committed to a public repository and discarded
+
+The section above says `eval/sealed/` is deliberately not committed. For three
+commits that was a statement of intent rather than of fact.
+
+`.gitignore` carried a line from the SDD §3 skeleton reading
+`eval/sealed/ — sealed holdout truth is committed, read only by
+evalkit.scoring`. The ruling that reversed the policy changed the policy and not
+the file, so the sealed files stayed tracked, and they were pushed to
+`github.com/nandeshkanagaraju/receipts`, which is **public**, in:
+
+    6e2bc38   feat(M2): A4 clears, S1-S4 planted, sealed questions generated
+    e41df75   fix(CI): green the pipeline, and move the confirm gate to a freeze gate
+
+Both are on `main`. What was published was `holdout_why.jsonl` — the six holdout
+WHY questions — and `holdout_anomalies.json` — the S1–S4 parameters: which
+network, which country, which city, which week, how large. The seed itself never
+leaked: `.env` has never been tracked and appears in no commit.
+
+**That sealed set is discarded.** The holdout WHY questions now in use are drawn
+from a new `KESTREL_SEALED_SEED`, generated after the leak was found and never
+committed. The published values describe a world that no longer exists.
+
+Rewriting history was considered and rejected as insufficient rather than as
+unnecessary: GitHub serves unreferenced blobs by SHA, and a public repository may
+already have been cloned, forked, or indexed. A new seed makes the old values
+false, which no amount of deletion can. The two commits are named here rather
+than removed, because a reader checking whether this project's holdout was really
+blind deserves to find that answer in the open.
+
+What is *not* recoverable: any judgement made between those commits and the
+re-seed was made by an author who could have read the answers. The author did not
+— `.claude/settings.json` denied reading `eval/sealed/`, and the sealed gates
+report `k of 6` rather than which — but "could not" is the claim worth making and
+only "did not" is available, so it is recorded as the weaker claim it is.
+
+Three guards now exist that did not: a test that no file under `eval/sealed/` is
+tracked, a test that `.gitignore` actually ignores one, and a `PreToolUse` hook
+refusing any command that would display sealed content — including reading the
+history above, which the read-deny rules could not express. All three are
+fault-injected. None would have been written without the leak, which is the
+honest reason they exist.
+
+---
+
 ## The generated world is smaller than specified
 
 The generator was built to produce about 7M orders and 10M+ payment attempts

@@ -17,7 +17,64 @@
       "Bash(tail eval/sealed/*)",
       "Bash(tail eval/questions/holdout*)",
       "Bash(less eval/sealed/*)",
-      "Bash(less eval/questions/holdout*)"
+      "Bash(less eval/questions/holdout*)",
+      "Bash(sed eval/sealed/*)",
+      "Bash(sed ./eval/sealed/*)",
+      "Bash(sed eval/questions/holdout*)",
+      "Bash(sed ./eval/questions/holdout*)",
+      "Bash(awk eval/sealed/*)",
+      "Bash(awk ./eval/sealed/*)",
+      "Bash(awk eval/questions/holdout*)",
+      "Bash(awk ./eval/questions/holdout*)",
+      "Bash(grep eval/sealed/*)",
+      "Bash(grep ./eval/sealed/*)",
+      "Bash(grep eval/questions/holdout*)",
+      "Bash(grep ./eval/questions/holdout*)",
+      "Bash(rg eval/sealed/*)",
+      "Bash(rg ./eval/sealed/*)",
+      "Bash(rg eval/questions/holdout*)",
+      "Bash(rg ./eval/questions/holdout*)",
+      "Bash(nl eval/sealed/*)",
+      "Bash(nl ./eval/sealed/*)",
+      "Bash(nl eval/questions/holdout*)",
+      "Bash(nl ./eval/questions/holdout*)",
+      "Bash(strings eval/sealed/*)",
+      "Bash(strings ./eval/sealed/*)",
+      "Bash(strings eval/questions/holdout*)",
+      "Bash(strings ./eval/questions/holdout*)",
+      "Bash(xxd eval/sealed/*)",
+      "Bash(xxd ./eval/sealed/*)",
+      "Bash(xxd eval/questions/holdout*)",
+      "Bash(xxd ./eval/questions/holdout*)",
+      "Bash(od eval/sealed/*)",
+      "Bash(od ./eval/sealed/*)",
+      "Bash(od eval/questions/holdout*)",
+      "Bash(od ./eval/questions/holdout*)",
+      "Bash(more eval/sealed/*)",
+      "Bash(more ./eval/sealed/*)",
+      "Bash(more eval/questions/holdout*)",
+      "Bash(more ./eval/questions/holdout*)",
+      "Bash(bat eval/sealed/*)",
+      "Bash(bat ./eval/sealed/*)",
+      "Bash(bat eval/questions/holdout*)",
+      "Bash(bat ./eval/questions/holdout*)",
+      "Bash(cp eval/sealed/*)",
+      "Bash(cp ./eval/sealed/*)",
+      "Bash(cp eval/questions/holdout*)",
+      "Bash(cp ./eval/questions/holdout*)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/deny_sealed_history.py"
+          }
+        ]
+      }
     ]
   }
 }
