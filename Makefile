@@ -2,11 +2,15 @@
 # Targets whose implementing module does not exist yet print "not built yet"
 # and exit 1. None of them ever exits 0 without doing the work.
 
-PY      := .venv/bin/python
-PIP     := .venv/bin/pip
-PYTEST  := .venv/bin/pytest
-RUFF    := .venv/bin/ruff
-MYPY    := .venv/bin/mypy
+# Use the local virtualenv when there is one, otherwise whatever is on PATH.
+# CI installs into the system interpreter and has no .venv, which is how
+# `make data` died with exit 127 for want of .venv/bin/python.
+VENV    := $(shell [ -x .venv/bin/python ] && echo .venv/bin || echo "")
+PY      := $(if $(VENV),$(VENV)/python,python)
+PIP     := $(if $(VENV),$(VENV)/pip,pip)
+PYTEST  := $(if $(VENV),$(VENV)/pytest,pytest)
+RUFF    := $(if $(VENV),$(VENV)/ruff,ruff)
+MYPY    := $(if $(VENV),$(VENV)/mypy,mypy)
 SET     ?= dev
 
 .PHONY: setup data test eval eval-holdout lint types up bench freeze-check freeze-questions freeze-gen seed-check freeze-translations
