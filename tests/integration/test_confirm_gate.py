@@ -109,11 +109,21 @@ JOIN payment_attempts pa ON pa.attempt_id=si.attempt_id
 GROUP BY 1 ORDER BY 1"""
 
 UNSETTLED_WEEKLY = """
-SELECT date_trunc('week', pa.business_date) p, sum(pa.amount_minor)::DOUBLE v
-FROM payment_attempts pa
-WHERE pa.status='captured' AND NOT pa.is_test
-  AND NOT EXISTS (SELECT 1 FROM settlement_items si WHERE si.attempt_id = pa.attempt_id)
-GROUP BY 1 ORDER BY 1"""
+-- GLOSSARY §2.14: a SNAPSHOT at the end of each week -- captured on or before
+-- that date and not settled by it. The earlier version bucketed captures by
+-- their own week and counted only the never-settled, which is a different
+-- quantity and only non-zero near the end of the window. That produced 6
+-- usable periods where the data supports 81.
+WITH wk AS (SELECT DISTINCT date_trunc('week', business_date) w FROM payment_attempts)
+SELECT wk.w p,
+       (SELECT sum(pa.amount_minor)::DOUBLE
+        FROM payment_attempts pa
+        LEFT JOIN settlement_items si ON si.attempt_id = pa.attempt_id
+        LEFT JOIN settlements st ON st.settlement_id = si.settlement_id
+        WHERE pa.status = 'captured' AND NOT pa.is_test
+          AND pa.business_date <= wk.w + INTERVAL 6 DAY
+          AND (st.settled_on IS NULL OR st.settled_on > wk.w + INTERVAL 6 DAY)) v
+FROM wk ORDER BY 1"""
 
 
 def test_confirm_gate_one_row_per_why_question(con, constructed) -> None:
@@ -173,8 +183,8 @@ def test_confirm_gate_one_row_per_why_question(con, constructed) -> None:
     add(
         "DV-058",
         "A2",
-        "A2 showroom, refunds, month",
-        _refund_amount("month", f"o.showroom_id='{sr}'"),
+        "A2 showroom, refund rate, month",
+        _refund_rate("month", f"o.showroom_id='{sr}'"),
         [],
         M,
     )
@@ -189,8 +199,8 @@ def test_confirm_gate_one_row_per_why_question(con, constructed) -> None:
     add(
         "EV-147",
         "A2",
-        "UAE, refund rate, month",
-        _refund_rate("month", "rg.country_code='AE'"),
+        "A2 showroom, refund rate, month",
+        _refund_rate("month", f"o.showroom_id='{sr}'"),
         [],
         M,
     )
@@ -201,8 +211,8 @@ def test_confirm_gate_one_row_per_why_question(con, constructed) -> None:
     add(
         "EV-047",
         "A6",
-        "IN-TN, refunds, month",
-        _refund_amount("month", "ci.region_id='IN-TN'"),
+        "IN-TN, refund rate, month",
+        _refund_rate("month", "ci.region_id='IN-TN'"),
         [],
         M,
     )

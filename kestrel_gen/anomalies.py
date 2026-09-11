@@ -43,7 +43,7 @@ A2_REFUND_MULTIPLIER = 3.4
 A2_CITY_LEVEL_SHARE = 0.35  # of Dubai's monthly refunds, so the city-level gate clears
 
 A3_WINDOW = (date(2026, 8, 24), date(2026, 9, 6))  # two weeks; questions ask about the 2nd
-A3_EXTRA_LAG_DAYS = 4  # delayed settlements land in the SECOND week, visibly later
+A3_EXTRA_LAG_DAYS = 7  # delayed settlements land in the SECOND week, visibly later
 
 A4_WINDOW = (date(2026, 8, 1), date(2026, 8, 31))  # EV-046, EV-145
 A4_COUNTRY = "SG"
@@ -427,7 +427,6 @@ def apply_known(facts, world, seed: int, enforce: bool = True) -> Planted:
             and o["status"][i] == "paid"
             and not o["is_test"][i]
         ]
-        src_any = sg_orders
         counts: dict[str, list[int]] = {}
         for i in sg_orders:
             mdl = handset_of.get(str(o["order_id"][i]))
@@ -437,11 +436,29 @@ def apply_known(facts, world, seed: int, enforce: bool = True) -> Planted:
             # A launch surge is a FLAGSHIP launch. Picking the most common model
             # picks the cheapest, which moves order count a lot and GMV barely --
             # 3,000 extra orders was a 46% lift in volume and 10% in value.
-            price_of = {}
-            for j in src_any:
-                mdl = handset_of.get(str(o["order_id"][j]))
-                if mdl:
-                    price_of[mdl] = max(price_of.get(mdl, 0), int(o["total_minor"][j]))
+            # Size from the HANDSET's unit price. Using max(total_minor) took the
+            # model's priciest order including up to three accessories, roughly
+            # three times the typical handset value, so the order count came out
+            # about a third of what was intended and the lift was 7% not 22%.
+            sg_price = {
+                s_: int(v_)
+                for s_, c_, v_ in zip(
+                    world.prices["sku"],
+                    world.prices["country_code"],
+                    world.prices["price_minor"],
+                    strict=True,
+                )
+                if c_ == A4_COUNTRY
+            }
+            price_of: dict[str, int] = {}
+            for sku_, mdl_, acc_ in zip(
+                world.products["sku"],
+                world.products["model_name"],
+                world.products["is_accessory"],
+                strict=True,
+            ):
+                if mdl_ and not acc_ and sku_ in sg_price:
+                    price_of[mdl_] = max(price_of.get(mdl_, 0), sg_price[sku_])
             eligible = {m: v for m, v in counts.items() if len(v) >= 20}
             pool = eligible or counts
             a4_model = max(sorted(pool), key=lambda k: price_of.get(k, 0))

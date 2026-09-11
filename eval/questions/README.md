@@ -126,8 +126,8 @@ accuracy number.
 8. **English variants are written first.** Tamil and Hindi are left empty with
    provenance `pending` until a human writes or verifies them. Machine
    translation is never labelled `human`.
-9. **No two questions share variant text**, within or across sets.
-10. **A ranking by a rate must not run over cells with small denominators.**
+10. **No two questions share variant text**, within or across sets.
+11. **A ranking by a rate must not run over cells with small denominators.**
     A top-k over a ratio is decided by whichever cell has three orders and one
     refund, not by anything a person would call the highest refund rate. Either
     fix one axis so the cells are large (one model split by storage, rather than
@@ -254,6 +254,21 @@ python scripts/skeleton_audit.py    # the rule-7 audit on its own; exit 1 on any
 ```
 
 ---
+
+## How reports and drafts are delivered
+
+**Reports go in a secret gist, not a branch.**
+
+```
+gh gist create --desc "receipts <module> report" _reports/<module>.md
+```
+
+Review branches are gone. Twice a `review/*` branch was merged into `main` by a
+pull request GitHub offered on push — PR #1 and PR #4 — each time putting
+gitignored scaffolding under version control on the default branch and needing a
+follow-up commit to untrack it. A secret gist cannot be merged into anything.
+
+`_reports/` and `eval/questions/_review/` stay gitignored and local.
 
 ## `_review/`
 

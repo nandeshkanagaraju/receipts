@@ -87,6 +87,37 @@ a 2.6M-attempt warehouse, not the one the PDD describes.
 
 ---
 
+## Four dev/eval WHY questions were reworded after measuring the data
+
+The questions were frozen before the generator existed, which is the right order.
+But a WHY question is only answerable if the anomaly it asks about clears the
+why-agent's confirm gate **at the level the question enters at**, and that cannot
+be known until the world is built. Measuring it changed four questions:
+
+| qid | Was | Now | Why |
+|---|---|---|---|
+| DV-058 | "Why are refunds up in the UAE last month?" | names the showroom, asks for the **rate** | At UAE level the anomaly is swamped: 76 qualifying orders against 310 city refunds. The *amount* also failed on the right scope (z=1.09) where the *rate* passes (z=2.12) |
+| EV-048 | "…in Dubai in August" | names the showroom | Same reason, one level finer |
+| EV-147 | "Why did the UAE refund rate change in August?" | names the showroom | Same |
+| EV-047 | "Why did refunds rise…" | asks for the **rate** | Monthly refund amounts carry volume variance; rates divide it out. z=1.75 → 2.38 on identical scope |
+
+**This is a real weakening and it should be read as one.** The questions were
+adjusted to fit what the data could support. Three of the four changes narrow the
+scope, which makes the agent's job easier: it is told the showroom and must find
+only the model, rather than finding both.
+
+What we did *not* do is loosen the gate, or pick the level after seeing which one
+the system scored best on — no system had been run. The changes were made against
+the data alone, before any agent existed.
+
+**The holdout's sealed WHY questions are not reworded.** They cannot be: nobody
+has seen them. They are sized by construction instead, so the anomaly is large
+enough to clear the gate at whatever level the generated question asks. That
+asymmetry is deliberate — the dev and eval sets are allowed to be tuned against
+the data, and the holdout is not.
+
+---
+
 ## Hindi variants are not human-verified
 
 Every eval and holdout question exists in English, Tamil and Hindi. Tamil is
