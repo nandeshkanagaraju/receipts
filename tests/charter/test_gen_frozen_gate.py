@@ -18,6 +18,26 @@ sys.path.insert(0, str(REPO / "scripts"))
 import freeze_gen  # noqa: E402
 
 
+def standing_problems() -> tuple[list[str], str]:
+    """The gates this environment can actually evaluate, and what was covered.
+
+    `all_gates()` includes the sealed half, and `eval/sealed/` is untracked by
+    design, so on CI it does not exist and the sealed gate correctly reports
+    0 of N. Asserting the full set turned a green run red the first time the tag
+    was present, on a machine where nothing was wrong — the same
+    environment-dependence removed from three other guards this week, arriving
+    by a new route.
+
+    `freeze_gen.py --check` still requires every gate before tagging. What is
+    skipped here is the *standing* assertion, and only where the input is absent.
+    The dev/eval half runs either way, so the check never becomes vacuous.
+    """
+    problems = freeze_gen.artifact_present() + freeze_gen.gate_dev_eval()
+    if (REPO / freeze_gen.SEALED_QUESTIONS).exists():
+        return problems + freeze_gen.gate_sealed(), "artifact + dev/eval + sealed"
+    return problems, "artifact + dev/eval (sealed files absent; not checkable here)"
+
+
 def test_gate_holds_once_the_generator_is_frozen() -> None:
     if not freeze_gen.tag_exists():
         print(
@@ -25,8 +45,8 @@ def test_gate_holds_once_the_generator_is_frozen() -> None:
             "precondition (`make freeze-gen`), not yet a standing guarantee."
         )
         return
-    problems = freeze_gen.all_gates()
-    print(f"\n{freeze_gen.TAG} exists; gate problems: {len(problems)}")
+    problems, scope = standing_problems()
+    print(f"\n{freeze_gen.TAG} exists; checked {scope}; problems: {len(problems)}")
     assert not problems, (
         f"{freeze_gen.TAG} is tagged but the confirm gate no longer passes:\n  "
         + "\n  ".join(problems)
@@ -102,3 +122,33 @@ def test_meta_without_the_injection_the_same_check_passes(tmp_path: Path) -> Non
     assert out.returncode == 0, (
         "the un-injected check also refuses, so the injection proves nothing:\n" + out.stderr
     )
+
+
+def test_the_sealed_skip_does_not_make_the_check_vacuous(monkeypatch) -> None:
+    """Sealed absent (CI's condition): the dev/eval half must still be evaluated.
+
+    A skip that quietly dropped everything would turn this guarantee into a
+    green tick on an empty check, which is worse than the failure it replaces.
+    """
+    monkeypatch.setattr(freeze_gen, "SEALED_QUESTIONS", "eval/sealed/absent.jsonl")
+    monkeypatch.setattr(freeze_gen, "artifact_present", lambda: [])
+    monkeypatch.setattr(freeze_gen, "gate_dev_eval", lambda: ["dev/eval was evaluated"])
+    monkeypatch.setattr(freeze_gen, "gate_sealed", lambda: ["sealed ran with no sealed files"])
+    problems, scope = standing_problems()
+    print(f"\nsealed absent -> scope: {scope}")
+    assert "dev/eval was evaluated" in problems, "the dev/eval half was skipped too"
+    assert "sealed ran with no sealed files" not in problems, (
+        "the sealed gate ran although the sealed questions are absent"
+    )
+    assert "not checkable here" in scope, "the skip is not reported to the reader"
+
+
+def test_the_sealed_half_runs_when_the_files_are_there(monkeypatch) -> None:
+    """Meta: the skip is driven by the file's absence, not permanently off."""
+    monkeypatch.setattr(freeze_gen, "SEALED_QUESTIONS", "LIMITATIONS.md")  # exists
+    monkeypatch.setattr(freeze_gen, "artifact_present", lambda: [])
+    monkeypatch.setattr(freeze_gen, "gate_dev_eval", lambda: [])
+    monkeypatch.setattr(freeze_gen, "gate_sealed", lambda: ["sealed was evaluated"])
+    problems, scope = standing_problems()
+    assert "sealed was evaluated" in problems, "the sealed gate was skipped although present"
+    assert "sealed" in scope

@@ -34,6 +34,9 @@ TAG = "gen-frozen"
 SEALED_WHY_COUNT = 5
 GATE_TEST = "tests/freeze/test_confirm_gate.py"
 SEALED_GATE_TEST = "tests/freeze/test_sealed_gate.py"
+# The sealed questions themselves. Untracked by design, so their presence is
+# what tells a caller whether the sealed half of the gate is checkable here.
+SEALED_QUESTIONS = "eval/sealed/holdout_why.jsonl"
 
 
 def artifact_present() -> list[str]:
