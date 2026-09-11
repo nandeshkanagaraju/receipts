@@ -23,6 +23,7 @@ So: for every test file that touches `eval/sealed/`, walk its AST and reject any
 from __future__ import annotations
 
 import ast
+import subprocess
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
@@ -240,3 +241,54 @@ def test_a_file_that_never_touches_sealed_is_out_of_scope(tmp_path: Path) -> Non
     )
     print(f"\nordinary test -> {len(scan(p))} violation(s) — expected 0")
     assert not scan(p), "the guard fired on a file that never touches sealed truth"
+
+
+# ---------------------------------------------------------------------------
+# Sealed truth is never committed (ruling: eval/sealed/ stays untracked; only
+# SHA-256 hashes are recorded, ADR-012).
+#
+# This guard is retrospective. `.gitignore` carried a line from the SDD §3
+# skeleton asserting that sealed truth *is* committed; the ruling reversing that
+# changed the policy but not the file, so `eval/sealed/holdout_why.jsonl` and
+# `holdout_anomalies.json` were tracked and pushed to a public remote in
+# 6e2bc38 and e41df75. Nothing failed, because nothing was watching. Now
+# something is.
+# ---------------------------------------------------------------------------
+
+
+def _tracked_under(prefix: str) -> list[str]:
+    out = subprocess.run(
+        ["git", "ls-files", prefix],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    return [ln for ln in out.stdout.split() if ln and not ln.endswith(".gitkeep")]
+
+
+def test_no_sealed_file_is_tracked_by_git() -> None:
+    tracked = _tracked_under("eval/sealed/")
+    print(f"\neval/sealed/ tracked files (excluding .gitkeep): {len(tracked)}")
+    assert not tracked, (
+        "sealed truth is tracked by git:\n  "
+        + "\n  ".join(tracked)
+        + "\n\nThe repository is public. Untrack with `git rm --cached`, and "
+        "record only hashes in docs/FREEZE_MANIFEST.json (ADR-012)."
+    )
+
+
+def test_gitignore_actually_ignores_a_sealed_path() -> None:
+    """The rule must be enforced by .gitignore, not by remembering."""
+    out = subprocess.run(
+        ["git", "check-ignore", "-v", "eval/sealed/holdout_why.jsonl"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    print(f"check-ignore -> {out.stdout.strip() or '(not ignored)'}")
+    assert out.returncode == 0, (
+        "eval/sealed/holdout_why.jsonl is not ignored; a future `git add` of the "
+        "directory would re-publish the answers to the blind set."
+    )

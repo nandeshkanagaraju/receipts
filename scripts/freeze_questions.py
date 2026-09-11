@@ -20,8 +20,8 @@ Gates:
      the tag it can no longer be rewritten.
 
 On success it records SHA-256 of every question file's **English projection**
-— the file with `variants.ta`, `variants.hi`, `variants.ta-Latn` and
-`translation_provenance` removed — plus every reference-SQL file,
+— the file with `variants.ta`, `variants.hi`, `variants.ta-Latn`,
+`translation_provenance` and `translation_source_hash` removed — plus every reference-SQL file,
 and the two M1 working documents the questions are written against —
 docs/GLOSSARY.md and docs/M2_NOTES.md — in docs/FREEZE_MANIFEST.json, then
 creates the annotated tag.
@@ -139,6 +139,34 @@ def gate_populations(qdir: Path = QDIR, tolerance: float = 0.10) -> list[str]:
     return sorted(problems)
 
 
+def gate_window_attachment(qdir: Path = QDIR) -> list[str]:
+    """GLOSSARY §6.2 last row: no ANS question may misattach its window.
+
+    Non-ANS hits are expected and fine -- an AMB question that must clarify is
+    doing its job, and a DENY never resolves a metric at all.
+    """
+    sys.path.insert(0, str(REPO / "scripts"))
+    import skeleton_audit
+
+    hits = skeleton_audit.window_attachment_hits(qdir)
+    return sorted(
+        f"{qid} is ANS but attaches its window via a {shape}: {text}"
+        for qid, pop, shape, text in hits
+        if pop == "ANS"
+    )
+
+
+def gate_clarify_terms(qdir: Path = QDIR) -> list[str]:
+    """GLOSSARY §6.2: no ANS question may use a term that must be clarified."""
+    sys.path.insert(0, str(REPO / "scripts"))
+    import skeleton_audit
+
+    return sorted(
+        f"{qid} is ANS but uses the clarify term {term!r}: {text}"
+        for qid, term, text in skeleton_audit.clarify_hits(qdir)
+    )
+
+
 def gate_blind(qdir: Path = QDIR, allow_missing: bool | None = None) -> list[str]:
     """The 30 blind questions must be present, or their absence declared.
 
@@ -235,6 +263,13 @@ def all_gates(
 # frozen separately, by scripts/freeze_translations.py.
 TRANSLATED_LANGS = ("ta", "hi", "ta-Latn")
 
+# Row-level fields that describe the translations rather than the question.
+# `translation_source_hash` records the English each translation was made from,
+# so a later English edit makes the translation detectably stale. It sits on the
+# translations clock like the provenance does: backfilling one must never read
+# as an English edit, which it would if the English projection covered it.
+TRANSLATION_FIELDS = ("translation_provenance", "translation_source_hash")
+
 
 def english_projection(row: dict) -> dict:
     """One question with every translated field removed.
@@ -242,7 +277,7 @@ def english_projection(row: dict) -> dict:
     What remains is what `questions-frozen` pins: the English wording, the
     structure, the role, the trap, and the expected answer.
     """
-    out = {k: v for k, v in row.items() if k != "translation_provenance"}
+    out = {k: v for k, v in row.items() if k not in TRANSLATION_FIELDS}
     out["variants"] = {k: v for k, v in row["variants"].items() if k not in TRANSLATED_LANGS}
     return out
 
@@ -375,9 +410,9 @@ def write_manifest(path: Path = MANIFEST) -> dict[str, dict[str, str]]:
     }
     payload.update(sections)
     payload["questions_projection"] = (
-        "English and structure only: variants.ta, variants.hi, variants.ta-Latn "
-        "and translation_provenance are excluded and are frozen separately by "
-        "scripts/freeze_translations.py (tag: translations-frozen)."
+        "English and structure only: variants.ta, variants.hi, variants.ta-Latn, "
+        "translation_provenance and translation_source_hash are excluded and are "
+        "frozen separately by scripts/freeze_translations.py (tag: translations-frozen)."
     )
     payload["holdout_blind"] = blind_status()
     payload["holdout_composition"] = {

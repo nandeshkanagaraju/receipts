@@ -317,6 +317,33 @@ jobs    lint <status> · types <status> · data <status> · test <status> · fre
 If the run is not green, the report says so in that block rather than anywhere
 softer, and the round is not finished.
 
+## 4b. Standing rule: never replace an existing file wholesale
+
+**Before creating a file, check whether it exists.** If it does, extend it. If it
+genuinely has to be replaced, say so and say why *before* doing it — replacement
+is a decision to be argued for, never a side effect of not having looked.
+
+This rule also exists because it was broken. `scripts/skeleton_audit.py` was
+written once, well, with a collision key over
+`(skeleton, population, kind, compare, series)`. Asked to add the §6.2
+window-attachment scan, I wrote the file from scratch instead of reading it
+first. The new version was worse, and it took five tests down with it. The
+damage was invisible in the diff of the change I *thought* I was making —
+a new function — because the loss was everything I had silently dropped.
+
+Two aggravating details worth keeping, because they are the actual lesson:
+
+- Git had the original. Recovery cost one command. The cost was not the file,
+  it was that nothing in my process noticed the file had been destroyed until
+  the tests did.
+- I then pushed with the suite red, breaking §4a in the same round I wrote it.
+
+So the check is mechanical, not a matter of care: `test -e` (or a `cat` that
+fails) before every `Write`. A file that already exists is evidence that
+somebody — possibly me, earlier — already thought about this problem.
+
+---
+
 ## 5. Notes for later modules
 
 Things discovered while writing the questions that belong to a module not yet

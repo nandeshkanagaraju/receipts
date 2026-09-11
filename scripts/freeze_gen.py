@@ -25,6 +25,9 @@ import subprocess
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import freeze  # noqa: E402
+
 REPO = Path(__file__).resolve().parents[1]
 MANIFEST = REPO / "docs" / "FREEZE_MANIFEST.json"
 TAG = "gen-frozen"
@@ -99,6 +102,14 @@ def record_generator_hash() -> str:
     payload = json.loads(MANIFEST.read_text(encoding="utf-8")) if MANIFEST.exists() else {}
     sha = generator_sha256()
     payload["generator_sha256"] = sha
+    # Re-record the sealed digests at the same moment. Without this the tag
+    # certifies a manifest describing an *earlier* world: freeze_gen used to
+    # write only the generator hash, so regenerating left `sealed_files` stale
+    # and the always-on check failed against the very artifact being frozen.
+    # Hashes only, never contents (ADR-012).
+    sealed = freeze.sealed_digests(REPO)
+    if sealed:
+        payload["sealed_files"] = sealed
     data_manifest = REPO / "data" / "MANIFEST.json"
     if data_manifest.exists():
         payload["data_version"] = json.loads(data_manifest.read_text(encoding="utf-8")).get(

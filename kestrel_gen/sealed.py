@@ -459,73 +459,156 @@ TEMPLATES = {
 }
 
 
-def build_questions(plants: list[SealedPlant]) -> list[dict[str, Any]]:
+def _series_for(facts, world, metric: str, entry: str, grain) -> list[tuple]:
+    """One question's own series: its metric, at its own entry level."""
+    sr, city_of, city_name, city_region, region_country = _lookups(world, facts)
+    kind, name = entry.split(":", 1)
+
+    def keep(oid) -> bool:
+        s = sr.get(oid)
+        if s is None:
+            return False
+        cid = city_of[s]
+        if kind == "country":
+            return region_country.get(city_region[cid]) == name
+        if kind == "city":
+            return city_name[cid] == name
+        return city_region[cid] == name
+
+    if metric in ("payment_success_rate_order", "failure_rate_by_reason"):
+        a = facts.payment_attempts
+        return _order_success_by(grain, facts, keep, lambda j: a["method"][j] == "card")
+    if metric == "refund_rate":
+        return _refund_rate_by_month(facts, keep) if grain is _month else []
+    if metric == "refunded_amount":
+        r = facts.refunds
+        acc: dict[Any, float] = {}
+        for j, oid in enumerate(r["order_id"]):
+            if r["status"][j] == "processed" and keep(oid):
+                k = grain(r["business_date"][j])
+                acc[k] = acc.get(k, 0.0) + float(r["amount_minor"][j])
+        return sorted(acc.items())
+    if metric == "orders_count":
+        o = facts.orders
+        acc2: dict[Any, int] = {}
+        for i, oid in enumerate(o["order_id"]):
+            if keep(oid):
+                k = grain(o["business_date"][i])
+                acc2[k] = acc2.get(k, 0) + 1
+        return sorted(acc2.items())
+    if metric == "emi_share":
+        return _emi_share_by_month(facts, keep) if grain is _month else []
+    return []
+
+
+# Each anomaly's allowed metrics, rates first (they divide out volume variance).
+ALLOWED_METRICS: dict[str, tuple[str, ...]] = {
+    "S1": ("payment_success_rate_order", "failure_rate_by_reason"),
+    "S2": ("refund_rate", "refunded_amount"),
+    "S3": ("orders_count",),
+    "S4": ("emi_share",),
+}
+
+
+def choose_metrics(facts, world, plants: list[SealedPlant]) -> dict[str, list[tuple[str, Any]]]:
+    """Pick each question's metric by evaluating THAT question's own series.
+
+    One verdict per question, not one per anomaly. A metric that cannot clear at
+    its entry level is replaced by another allowed one that does; ranges are
+    never widened to make a metric fit.
+    """
+    out: dict[str, list[tuple[str, Any]]] = {}
+    for p in plants:
+        grain = _week if (p.window[1] - p.window[0]).days <= 7 else _month
+        target = grain(p.window[0])
+        good = []
+        for metric in ALLOWED_METRICS[p.anomaly_id]:
+            g = gate_stats(_series_for(facts, world, metric, p.entry_level, grain), target)
+            if g["passes"]:
+                good.append((metric, g))
+        out[p.anomaly_id] = good
+    return out
+
+
+def build_questions(
+    plants: list[SealedPlant], chosen: dict[str, list[tuple[str, Any]]]
+) -> list[dict[str, Any]]:
     """Six questions. Each names the metric, the entry level and the window only.
 
     Never the network, model, showroom or bank: those are what the agent is
-    scored on finding.
+    scored on finding. Each question carries ITS OWN gate verdict, computed on
+    its own metric -- attaching one anomaly's verdict to both of its questions
+    was the bug the independent recomputation caught.
     """
     by = {p.anomaly_id: p for p in plants}
-    specs: list[tuple[str, str, str, str, str]] = [
-        # (anomaly, metric phrase en, ta, hi, metric key)
-        (
-            "S1",
+    words = {
+        "payment_success_rate_order": (
             "the payment success rate",
             "பணம் செலுத்தும் வெற்றி விகிதம்",
             "भुगतान सफलता दर",
-            "payment_success_rate_order",
         ),
-        (
-            "S1",
+        "failure_rate_by_reason": (
             "the payment failure rate",
             "பணம் செலுத்தும் தோல்வி விகிதம்",
             "भुगतान विफलता दर",
-            "failure_rate_by_reason",
         ),
-        ("S2", "the refund rate", "திரும்பப் பணம் விகிதம்", "रिफंड दर", "refund_rate"),
-        ("S2", "the refunded amount", "திரும்பப் பெற்ற தொகை", "रिफंड की गई राशि", "refunded_amount"),
-        ("S3", "the order count", "ஆர்டர் எண்ணிக்கை", "ऑर्डर संख्या", "orders_count"),
-        ("S4", "the EMI share", "EMI பங்கு", "EMI हिस्सा", "emi_share"),
-    ]
-    out = []
-    for i, (aid, en_metric, ta_metric, hi_metric, metric) in enumerate(specs, start=1):
+        "refund_rate": ("the refund rate", "திரும்பப் பணம் விகிதம்", "रिफंड दर"),
+        "refunded_amount": ("the refunded amount", "திரும்பப் பெற்ற தொகை", "रिफंड की गई राशि"),
+        "orders_count": ("the order count", "ஆர்டர் எண்ணிக்கை", "ऑर्डर संख्या"),
+        "emi_share": ("the EMI share", "EMI பங்கு", "EMI हिस्सा"),
+    }
+    wanted = {"S1": 2, "S2": 2, "S3": 1, "S4": 1}
+    out: list[dict[str, Any]] = []
+    n = 0
+    for aid in ("S1", "S2", "S3", "S4"):
         p = by[aid]
-        qid = f"HO-W{i:02d}"
-        where = _level_words(p.entry_level)
-        when = _window_words(*p.window)
-        out.append(
-            {
-                "qid": qid,
-                "set": "holdout",
-                "population": "WHY",
-                "role": "global_finance",
-                "as_of": "2026-09-10",
-                "trap": None,
-                "glossary_covered": True,
-                "variants": {
-                    "en": f"Why did {en_metric} change {where} {when}?",
-                    "ta": f"{ta_metric} {where} {when} ஏன் மாறியது?",
-                    "hi": f"{where} {when} {hi_metric} क्यों बदली?",
-                    "ta-Latn": "",
-                },
-                "translation_provenance": {
-                    "ta": "machine_unverified",
-                    "hi": "machine_unverified",
-                    "ta-Latn": "pending",
-                },
-                "authored_by": "kestrel_gen",
-                "expected": {
-                    "kind": "why",
-                    "anomaly_id": aid,
-                    "reference_sql": None,
-                    "reporting_currency": None,
-                    "tolerance_rel": None,
-                    "metric": metric,
-                    "entry_level": p.entry_level,
-                },
-                "gate": p.gate,
-            }
-        )
+        for metric, gate in chosen.get(aid, [])[: wanted[aid]]:
+            n += 1
+            en_m, ta_m, hi_m = words[metric]
+            where = _level_words(p.entry_level)
+            when = _window_words(*p.window)
+            out.append(
+                {
+                    "qid": f"HO-W{n:02d}",
+                    "set": "holdout",
+                    "population": "WHY",
+                    "role": "global_finance",
+                    "as_of": "2026-09-10",
+                    "trap": None,
+                    "glossary_covered": True,
+                    "variants": {
+                        "en": f"Why did {en_m} change {where} {when}?",
+                        "ta": f"{ta_m} {where} {when} ஏன் மாறியது?",
+                        "hi": f"{where} {when} {hi_m} क्यों बदली?",
+                        "ta-Latn": "",
+                    },
+                    "translation_provenance": {
+                        "ta": "machine_unverified",
+                        "hi": "machine_unverified",
+                        "ta-Latn": "pending",
+                    },
+                    "authored_by": "kestrel_gen",
+                    "expected": {
+                        "kind": "why",
+                        "anomaly_id": aid,
+                        "reference_sql": None,
+                        "reporting_currency": None,
+                        "tolerance_rel": None,
+                        "metric": metric,
+                        "entry_level": p.entry_level,
+                        "grain": "week" if (p.window[1] - p.window[0]).days <= 7 else "month",
+                        # ISO date, not a stringified tuple. The independent check reads
+                        # this and compares it with SQL date_trunc output; "(2026, 8)"
+                        # matches nothing and silently scored zero.
+                        "window_key": (
+                            _week(p.window[0])
+                            if (p.window[1] - p.window[0]).days <= 7
+                            else p.window[0].replace(day=1)
+                        ).isoformat(),
+                    },
+                    "gate": gate,
+                }
+            )
     return out
 
 
@@ -539,4 +622,5 @@ def apply_sealed(facts, world, sealed_params: list[dict[str, Any]], seed: int):
         plant_s3(facts, world, by_id["S3"], rng),
         plant_s4(facts, world, by_id["S4"], rng),
     ]
-    return plants, build_questions(plants)
+    chosen = choose_metrics(facts, world, plants)
+    return plants, build_questions(plants, chosen)

@@ -49,17 +49,42 @@ def test_the_tag_and_the_recorded_generator_hash_agree() -> None:
     )
 
 
-def test_freeze_gen_refuses_while_the_gate_fails() -> None:
-    """The gate is a precondition, so today it must refuse."""
+def test_freeze_gen_refuses_when_a_gate_fails(tmp_path: Path) -> None:
+    """Injected: a gate that reports a problem must stop the freeze.
+
+    This used to assert `--check` exits non-zero *today*, on the theory that the
+    sealed gate could not yet pass. That made the test a statement about the
+    calendar rather than about the guard, and it duly failed the moment the gate
+    started passing. The refusal is now provoked, so the test means the same
+    thing before and after the freeze.
+    """
+    script = (REPO / "scripts" / "freeze_gen.py").read_text(encoding="utf-8")
+    shim = tmp_path / "refuse.py"
+    shim.write_text(
+        "import sys\n"
+        f"sys.path.insert(0, {str(REPO / 'scripts')!r})\n"
+        "import freeze_gen\n"
+        "freeze_gen.gate_sealed = lambda: ['fewer than 6 sealed questions clear the gate']\n"
+        "sys.exit(freeze_gen.main(['--check']))\n",
+        encoding="utf-8",
+    )
+    assert "def main(" in script, "precondition: freeze_gen has no main() to drive"
+    out = subprocess.run([sys.executable, str(shim)], cwd=REPO, capture_output=True, text=True)
+    print(f"\ninjected failing gate -> exit={out.returncode}")
+    assert out.returncode != 0, "freeze-gen proceeded while a gate was failing"
+    assert "REFUSING" in out.stderr, "the refusal was silent"
+
+
+def test_meta_without_the_injection_the_same_check_passes() -> None:
+    """Guard off: `--check` on the real repo succeeds, so the refusal above is
+    the injected gate and not some unrelated breakage in the script."""
     out = subprocess.run(
         [sys.executable, "scripts/freeze_gen.py", "--check"],
         cwd=REPO,
         capture_output=True,
         text=True,
     )
-    if freeze_gen.tag_exists():
-        print("already frozen; refusal no longer expected")
-        return
-    print(f"\nfreeze_gen --check exit={out.returncode}")
-    assert out.returncode != 0, "freeze-gen should refuse while the gate is failing"
-    assert "REFUSING" in out.stderr
+    print(f"meta (no injection) -> exit={out.returncode}: {out.stdout.strip()[:70]}")
+    assert out.returncode == 0, (
+        "the un-injected check also refuses, so the injection proves nothing:\n" + out.stderr
+    )

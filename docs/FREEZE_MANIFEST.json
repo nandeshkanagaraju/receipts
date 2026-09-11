@@ -1,13 +1,15 @@
 {
   "algorithm": "sha256",
+  "data_version": "b6cf8707acdd01d9ad580949e23204954fba2716b369955205410d9634ac6b54",
   "documents": {
     "docs/BUILD_PROMPTS.md": "5465ba0f022f2e771df3b8d088115c3daab7b9c18109967cb65a40a8c499d902",
     "docs/PDD.md": "5b12d19e36c824ce89520364cae4cea6ba89784c9960bf74008612de635b3cad",
     "docs/SDD.md": "df9ff81ea382519f42af050fafb9018480581df1bf30156c4ab6df101737a9df"
   },
+  "generator_sha256": "6f833dca54538bb4d828077540e488bff1dc2443589469dd6d0805d4884ad735",
   "note": "Byte-for-byte hashes of frozen artifacts. Regenerate deliberately.",
   "sealed_files": {
     "eval/sealed/holdout_anomalies.json": "a4db0fb6368f4499f946a0ea4607f1abcf1fefbd8ba16b7583eeff0a421cfe1e",
-    "eval/sealed/holdout_why.jsonl": "f0b201b5e7e53385fe01d0ba92efc8e10aab3728b38bd3b0e598f4aeb50c81ba"
+    "eval/sealed/holdout_why.jsonl": "281753c8991e4f4d445a0777aa21e61ebf42b5f3f9a218c92416c97331727347"
   }
 }

@@ -264,6 +264,51 @@ def clarify_hits(qdir: Path = QDIR) -> list[tuple[str, str, str]]:
     return hits
 
 
+# --------------------------------------------------------------------------- #
+# GLOSSARY §6.2, last row: a window attached to something other than the
+# metric's own date key. This is a SEPARATE check from the ambiguous-term scan:
+# every word here can be unambiguous on its own, and the sentence still is not.
+#
+# Detected syntactically, and only two shapes, because a general reading of
+# "which noun does this window modify" is not something a regex can do honestly:
+#
+#   (i)  possessive     "refunds on LAST MONTH'S ORDERS"
+#   (ii) relative clause "orders THAT WERE CAPTURED twice ... last month"
+#
+# In both the window has moved off the metric's date and onto another event.
+# §1.2 calls mixing the three dates the most common source of a wrong number,
+# and these are the two sentence shapes that do it.
+# --------------------------------------------------------------------------- #
+WINDOW_NOUNS = r"(?:week|month|quarter|year|7\s+days)"
+POSSESSIVE = re.compile(rf"\b(?:last|this|next|previous)\s+{WINDOW_NOUNS}'s\b", re.I)
+RELATIVE_CLAUSE = re.compile(
+    r"\b(orders?|payments?|attempts?|refunds?|captures?|settlements?)\s+"
+    r"(?:that|which)\s+(?:were|was|had\s+been|have\s+been|are|is|got)\s+\w+",
+    re.I,
+)
+WINDOW_AFTER = re.compile(
+    rf"\b(?:last|this|next|previous)\s+{WINDOW_NOUNS}\b"
+    r"|\b(?:January|February|March|April|May|June|July|August|September|October"
+    r"|November|December)\b"
+    r"|\byesterday\b",
+    re.I,
+)
+
+
+def window_attachment_hits(qdir: Path = QDIR) -> list[tuple[str, str, str, str]]:
+    """(qid, population, shape, text) for every misattached-window sentence."""
+    hits: list[tuple[str, str, str, str]] = []
+    for row in load_rows(qdir):
+        en = row["variants"]["en"]
+        if POSSESSIVE.search(en):
+            hits.append((row["qid"], row["population"], "possessive", en))
+            continue
+        m = RELATIVE_CLAUSE.search(en)
+        if m and WINDOW_AFTER.search(en[m.end() :]):
+            hits.append((row["qid"], row["population"], "relative-clause", en))
+    return hits
+
+
 def allowed_and_failing(
     qdir: Path = QDIR,
 ) -> tuple[list[tuple], list[tuple]]:

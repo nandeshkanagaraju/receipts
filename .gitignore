@@ -35,7 +35,14 @@ eval/questions/_review/
 
 # ---- deliberately NOT ignored, listed here so nobody adds them later ----
 # eval/recordings/  model responses are committed: replay must work offline (D16, ADR-005)
-# eval/sealed/      sealed holdout truth is committed, read only by evalkit.scoring (SDD §6)
+# Sealed holdout truth. NEVER tracked: this repository is public and these files
+# are the answers to the blind set. Only their SHA-256 hashes are recorded, in
+# docs/FREEZE_MANIFEST.json (ADR-012). The line that used to sit here said the
+# opposite - "sealed holdout truth is committed" - a leftover from the SDD section 3
+# skeleton that outlived the ruling reversing it, and two commits duly pushed the
+# sealed files to a public remote.
+eval/sealed/*
+!eval/sealed/.gitkeep
 # eval/results/     committed reports; CI asserts byte-identical output (SDD §28)
 # truth/            constructed ground truth, recorded at generation time (D11)
 

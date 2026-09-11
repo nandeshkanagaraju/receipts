@@ -26,18 +26,39 @@ def test_injection_a_missing_artifact_is_refused(monkeypatch) -> None:
     assert any("make data" in p for p in problems), "the refusal does not say how to fix it"
 
 
-def test_injection_a_missing_sealed_gate_is_refused() -> None:
-    """Today the sealed questions do not exist, so the gate must refuse."""
+def test_injection_a_missing_sealed_gate_is_refused(monkeypatch) -> None:
+    """Injected: with the sealed gate test absent, the gate must refuse.
+
+    Previously this asserted the gate refuses *today*, because the sealed
+    questions did not exist yet. That is a fact about the milestone, not about
+    the guard, and it inverted into a false failure as soon as the questions
+    cleared. The absence is now injected.
+    """
+    monkeypatch.setattr(freeze_gen, "REPO", Path("/nonexistent-repo"))
     problems = freeze_gen.gate_sealed()
-    print(f"\nsealed gate -> {len(problems)} problem(s)")
+    print(f"\nmissing sealed gate -> {len(problems)} problem(s)")
     for p in problems:
         print(f"  {p}")
-    assert problems, "the sealed gate passed while the sealed questions do not exist"
+    assert problems, "a missing sealed gate was not refused"
+    assert any("unproven" in p for p in problems), "the refusal does not say why"
 
 
-def test_sealed_refusal_never_names_a_question(capsys) -> None:
-    """The refusal may say how many passed. It may not say which."""
+def test_injection_a_short_count_is_refused(monkeypatch) -> None:
+    """Injected: fewer than six clearing the gate must refuse, and say how many."""
+    monkeypatch.setattr(freeze_gen, "_run_pytest", lambda _t: (False, "sealed WHY: 3 of 6 pass\n"))
     problems = freeze_gen.gate_sealed()
+    print(f"short count -> {len(problems)} problem(s)")
+    for p in problems:
+        print(f"  {p}")
+    assert problems, "a short sealed count was accepted"
+    assert any("of 6" in p for p in problems), "the refusal does not report the count"
+
+
+def test_sealed_refusal_never_names_a_question(monkeypatch) -> None:
+    """The refusal may say how many passed. It may not say which."""
+    monkeypatch.setattr(freeze_gen, "_run_pytest", lambda _t: (False, "sealed WHY: 3 of 6 pass\n"))
+    problems = freeze_gen.gate_sealed()
+    assert problems, "precondition: nothing was refused, so there is no text to check"
     blob = " ".join(problems)
     for leak in ("S1", "S2", "S3", "S4", "HO-W0"):
         assert leak not in blob, f"the sealed refusal leaked {leak!r}"
