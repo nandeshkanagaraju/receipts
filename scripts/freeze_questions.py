@@ -486,6 +486,12 @@ def write_manifest(path: Path = MANIFEST) -> dict[str, dict[str, str]]:
 
 
 def tag_exists(tag: str = TAG) -> bool:
+    # A rehearsal sets RECEIPTS_SIMULATED_TAGS so tag-conditioned guards switch on
+    # *before* the tag is real. Without this a guard that activates on a tag is
+    # first exercised in CI, after the tag is pushed and hard to withdraw.
+    simulated = os.environ.get("RECEIPTS_SIMULATED_TAGS", "")
+    if tag in [s.strip() for s in simulated.split(",") if s.strip()]:
+        return True
     out = subprocess.run(["git", "tag", "-l", tag], cwd=REPO, capture_output=True, text=True)
     return bool(out.stdout.strip())
 
@@ -532,6 +538,18 @@ def main(argv: list[str] | None = None) -> int:
         print(f"  {name}: {len(digests)} file(s)")
         for rel, d in digests.items():
             print(f"    {rel}  {d}")
+    # Rehearse the world this tag creates before creating it. A tag-conditioned
+    # guard is dormant until the tag exists, so without this its first real run
+    # is in CI, after the tag is pushed. That has already cost one red main.
+    import post_tag_check
+
+    rehearsal = post_tag_check.rehearse(TAG)
+    if rehearsal:
+        print(f"REFUSING to create the {TAG} tag: the post-tag rehearsal failed.", file=sys.stderr)
+        for problem in rehearsal:
+            print(f"  {problem}", file=sys.stderr)
+        return 1
+
     print(f"\ntagged {TAG} at {create_tag()}")
     return 0
 

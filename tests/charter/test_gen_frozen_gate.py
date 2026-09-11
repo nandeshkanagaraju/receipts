@@ -9,33 +9,60 @@ claims cannot happen.
 
 from __future__ import annotations
 
+import os
 import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 REPO = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO / "scripts"))
+import freeze  # noqa: E402
 import freeze_gen  # noqa: E402
 
 
+def in_ci() -> bool:
+    return os.environ.get("CI", "").lower() in {"1", "true", "yes"}
+
+
 def standing_problems() -> tuple[list[str], str]:
-    """The gates this environment can actually evaluate, and what was covered.
+    """Every gate, checked by whichever route this environment allows.
 
-    `all_gates()` includes the sealed half, and `eval/sealed/` is untracked by
-    design, so on CI it does not exist and the sealed gate correctly reports
-    0 of N. Asserting the full set turned a green run red the first time the tag
-    was present, on a machine where nothing was wrong — the same
-    environment-dependence removed from three other guards this week, arriving
-    by a new route.
+    The sealed half is never skipped. It was, briefly, and a skip is how a
+    guarantee becomes a green tick on an empty check: `eval/sealed/` is untracked
+    by design, so CI has no sealed questions, and "not checkable here" quietly
+    meant "not checked at all" on the only machine that runs every push.
 
-    `freeze_gen.py --check` still requires every gate before tagging. What is
-    skipped here is the *standing* assertion, and only where the input is absent.
-    The dev/eval half runs either way, so the check never becomes vacuous.
+    So the proof travels instead of the evidence. The data job holds the seed,
+    generates the world, runs the sealed gate and writes one counts-only line to
+    `_ci/sealed_gate.txt`. That line moves to this job; the sealed questions never
+    do, because this repository is public, artifacts are downloadable and a pull
+    request workflow can restore a cache.
+
+    Two environments, two routes, no third option:
+
+    - **CI** — the marker must exist and must read exactly `N of N`. Missing is a
+      failure, not a skip: the whole point is that the gate cannot go quiet.
+    - **local** — the sealed files must be present and the gate runs against them.
+      Absent is a failure telling you to run `make data`, because locally the
+      files are the evidence and there is no reason to accept a proxy.
     """
     problems = freeze_gen.artifact_present() + freeze_gen.gate_dev_eval()
-    if (REPO / freeze_gen.SEALED_QUESTIONS).exists():
-        return problems + freeze_gen.gate_sealed(), "artifact + dev/eval + sealed"
-    return problems, "artifact + dev/eval (sealed files absent; not checkable here)"
+    if in_ci():
+        # No REPO argument: the marker is resolved against freeze_gen's own root,
+        # which is the thing a caller can redirect.
+        return problems + freeze_gen.gate_marker(), "artifact + dev/eval + sealed (marker)"
+    if not freeze_gen.sealed_questions().exists():
+        return (
+            problems
+            + [
+                "the sealed questions are missing and this is not CI, so there is "
+                "no marker to fall back on. Run `make data`."
+            ],
+            "artifact + dev/eval (sealed missing)",
+        )
+    return problems + freeze_gen.gate_sealed(), "artifact + dev/eval + sealed (direct)"
 
 
 def test_gate_holds_once_the_generator_is_frozen() -> None:
@@ -124,31 +151,90 @@ def test_meta_without_the_injection_the_same_check_passes(tmp_path: Path) -> Non
     )
 
 
-def test_the_sealed_skip_does_not_make_the_check_vacuous(monkeypatch) -> None:
-    """Sealed absent (CI's condition): the dev/eval half must still be evaluated.
-
-    A skip that quietly dropped everything would turn this guarantee into a
-    green tick on an empty check, which is worse than the failure it replaces.
-    """
-    monkeypatch.setattr(freeze_gen, "SEALED_QUESTIONS", "eval/sealed/absent.jsonl")
-    monkeypatch.setattr(freeze_gen, "artifact_present", lambda: [])
-    monkeypatch.setattr(freeze_gen, "gate_dev_eval", lambda: ["dev/eval was evaluated"])
-    monkeypatch.setattr(freeze_gen, "gate_sealed", lambda: ["sealed ran with no sealed files"])
-    problems, scope = standing_problems()
-    print(f"\nsealed absent -> scope: {scope}")
-    assert "dev/eval was evaluated" in problems, "the dev/eval half was skipped too"
-    assert "sealed ran with no sealed files" not in problems, (
-        "the sealed gate ran although the sealed questions are absent"
-    )
-    assert "not checkable here" in scope, "the skip is not reported to the reader"
-
-
-def test_the_sealed_half_runs_when_the_files_are_there(monkeypatch) -> None:
-    """Meta: the skip is driven by the file's absence, not permanently off."""
-    monkeypatch.setattr(freeze_gen, "SEALED_QUESTIONS", "LIMITATIONS.md")  # exists
+def test_ci_requires_the_marker_and_fails_without_it(monkeypatch, tmp_path: Path) -> None:
+    """CI with no marker must fail. A missing proof is not a passing gate."""
+    monkeypatch.setenv("CI", "true")
     monkeypatch.setattr(freeze_gen, "artifact_present", lambda: [])
     monkeypatch.setattr(freeze_gen, "gate_dev_eval", lambda: [])
-    monkeypatch.setattr(freeze_gen, "gate_sealed", lambda: ["sealed was evaluated"])
+    monkeypatch.setattr(freeze_gen, "REPO", tmp_path)  # no _ci/ here
     problems, scope = standing_problems()
-    assert "sealed was evaluated" in problems, "the sealed gate was skipped although present"
-    assert "sealed" in scope
+    print(f"\nCI, marker absent -> {len(problems)} problem(s)")
+    assert problems, "CI accepted a run with no sealed marker"
+    assert "marker" in scope
+
+
+def test_ci_accepts_the_marker_only_when_it_reads_n_of_n(monkeypatch, tmp_path: Path) -> None:
+    monkeypatch.setenv("CI", "true")
+    monkeypatch.setattr(freeze_gen, "artifact_present", lambda: [])
+    monkeypatch.setattr(freeze_gen, "gate_dev_eval", lambda: [])
+    monkeypatch.setattr(freeze_gen, "REPO", tmp_path)
+    marker = tmp_path / freeze_gen.SEALED_MARKER
+    marker.parent.mkdir(parents=True)
+
+    marker.write_text(freeze_gen.expected_marker() + "\n", encoding="utf-8")
+    assert standing_problems()[0] == [], "a correct marker was rejected"
+
+    n = freeze_gen.SEALED_WHY_COUNT
+    marker.write_text(f"sealed WHY: {n - 1} of {n} pass\n", encoding="utf-8")
+    problems = standing_problems()[0]
+    print(f"short marker -> {problems}")
+    assert problems, "CI accepted a marker reporting fewer than every question"
+
+
+def test_reachability_stubbing_the_gate_changes_the_marker_and_fails(
+    monkeypatch, tmp_path: Path
+) -> None:
+    """The marker is produced by the gate, not by the writer's optimism.
+
+    Stub the sealed gate to report a short count; the marker written from it must
+    change, and the CI check must then fail. Without this the marker could be a
+    constant that says `N of N` whatever the gate did -- which is exactly the
+    failure mode a proxy invites.
+    """
+    n = freeze_gen.SEALED_WHY_COUNT
+    monkeypatch.setattr(
+        freeze_gen, "_run_pytest", lambda _t: (False, f"sealed WHY: 1 of {n} pass\n")
+    )
+    marker = tmp_path / freeze_gen.SEALED_MARKER
+    line = freeze_gen.write_marker(marker)
+    print(f"\nstubbed gate -> marker: {line}")
+    assert line != freeze_gen.expected_marker(), "the marker ignored the gate's verdict"
+
+    monkeypatch.setenv("CI", "true")
+    monkeypatch.setattr(freeze_gen, "artifact_present", lambda: [])
+    monkeypatch.setattr(freeze_gen, "gate_dev_eval", lambda: [])
+    monkeypatch.setattr(freeze_gen, "REPO", tmp_path)
+    assert standing_problems()[0], "the CI check passed on a marker from a failing gate"
+
+
+def test_meta_the_unstubbed_gate_writes_the_expected_marker(tmp_path: Path) -> None:
+    """Guard off: the real gate reports `N of N`, so the failure above is the stub.
+
+    Routed like the standing check, and for the same reason. Where the sealed
+    questions are absent, the marker the data job wrote *is* the real gate's
+    verdict and the only evidence there is; demanding the files instead would
+    make this meta fail everywhere they cannot exist — which is CI, on every
+    push. The post-tag rehearsal caught that before it reached CI.
+    """
+    if in_ci():
+        assert freeze_gen.gate_marker() == [], (
+            "the marker written by the real gate does not read N of N"
+        )
+        return
+    if not freeze_gen.sealed_questions().exists():
+        pytest.fail("the sealed questions are missing; run `make data`")
+    line = freeze_gen.write_marker(tmp_path / freeze_gen.SEALED_MARKER)
+    print(f"real gate -> marker: {line}")
+    assert line == freeze_gen.expected_marker()
+
+
+def test_locally_missing_sealed_files_fail_rather_than_skip(monkeypatch) -> None:
+    """No CI, no sealed files: say `run make data`, do not wave it through."""
+    monkeypatch.delenv("CI", raising=False)
+    monkeypatch.setenv(freeze.SEALED_DIR_ENV, "/nonexistent-sealed-dir")
+    monkeypatch.setattr(freeze_gen, "artifact_present", lambda: [])
+    monkeypatch.setattr(freeze_gen, "gate_dev_eval", lambda: [])
+    problems, scope = standing_problems()
+    print(f"\nlocal, sealed absent -> {scope}")
+    assert problems, "a local run with no sealed files was accepted"
+    assert any("make data" in p for p in problems), "the failure does not say how to fix it"

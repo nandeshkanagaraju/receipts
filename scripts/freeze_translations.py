@@ -449,6 +449,18 @@ def main(argv: list[str] | None = None) -> int:
     print(f"recorded in {MANIFEST.relative_to(REPO)}:")
     for rel, d in digests.items():
         print(f"  {rel}  {d}")
+    # Rehearse the world this tag creates before creating it. A tag-conditioned
+    # guard is dormant until the tag exists, so without this its first real run
+    # is in CI, after the tag is pushed. That has already cost one red main.
+    import post_tag_check
+
+    rehearsal = post_tag_check.rehearse(TAG)
+    if rehearsal:
+        print(f"REFUSING to create the {TAG} tag: the post-tag rehearsal failed.", file=sys.stderr)
+        for problem in rehearsal:
+            print(f"  {problem}", file=sys.stderr)
+        return 1
+
     subprocess.run(
         ["git", "tag", "-a", TAG, "-m", "Question translations frozen"], cwd=REPO, check=True
     )

@@ -81,6 +81,16 @@ jobs:
           name: world
       - name: Artifact present
         run: du -sh data truth && ls -la data
+      - name: The sealed marker arrived, and nothing else did
+        # The sealed gate cannot run here: this job has no seed and no sealed
+        # files, and must not have either. What it has is the counts-only line
+        # the data job wrote, which the standing gen-frozen check requires.
+        run: |
+          cat _ci/sealed_gate.txt
+          if [ -e eval/sealed/holdout_why.jsonl ] || [ -e eval/sealed/holdout_anomalies.json ]; then
+            echo "sealed questions reached the test job; they must never travel" >&2
+            exit 1
+          fi
       - name: pytest (socket guard active, zero network calls)
         run: pytest
       - name: Duration
@@ -115,15 +125,52 @@ jobs:
           path: |
             data
             truth
+            _ci
+          # _ci holds one counts-only line proving the sealed gate ran. It is
+          # cached with the world because a cache hit skips generation, and a
+          # skipped generation would otherwise leave the test job with no proof.
+          # eval/sealed/ is NOT here and must never be: this repository is
+          # public, caches are restorable from pull-request workflows, and the
+          # sealed files are the answers to the blind set.
+          #
           # The generator source decides the data, so its hash is the key. The
           # seed is deliberately not in the key: it must never appear anywhere
           # a cache entry name can be read.
-          key: world-${{ hashFiles('kestrel_gen/**/*.py') }}-scale055
+          # -v2: the cached world predates the sealed marker. Without a new key the
+          # cache would hit, generation would be skipped, and the marker step with
+          # it -- leaving the test job with no proof and a red run.
+          key: world-${{ hashFiles('kestrel_gen/**/*.py') }}-scale055-v2
       - name: Build the world
         if: steps.worldcache.outputs.cache-hit != 'true'
         env:
           KESTREL_SEALED_SEED: ${{ secrets.KESTREL_SEALED_SEED }}
         run: make data
+      - name: Sealed gate (counts only)
+        if: steps.worldcache.outputs.cache-hit != 'true'
+        env:
+          KESTREL_SEALED_SEED: ${{ secrets.KESTREL_SEALED_SEED }}
+        # This is the only job that can run the sealed gate: it holds the seed and
+        # has just generated eval/sealed/. It writes one line -- "sealed WHY: N of
+        # N pass" -- and that line is all that leaves the job.
+        run: python -c "import sys; sys.path.insert(0, 'scripts'); import freeze_gen; print(freeze_gen.write_marker())"
+      - name: The marker exists and reads N of N
+        run: |
+          python -c "import sys; sys.path.insert(0, 'scripts'); import freeze_gen, pathlib; \
+            p = pathlib.Path(freeze_gen.SEALED_MARKER); \
+            sys.exit('marker missing: ' + freeze_gen.SEALED_MARKER) if not p.exists() else None; \
+            line = p.read_text().strip(); print(line); \
+            sys.exit('marker is not ' + freeze_gen.expected_marker()) if line != freeze_gen.expected_marker() else None"
+      - name: Nothing sealed leaves this job
+        # Belt and braces around the cache and artifact paths above. If a sealed
+        # file ever appears under a path that travels, this fails here rather
+        # than in a public artifact.
+        run: |
+          if find data truth _ci -name 'holdout_*' -o -path '*sealed*' | grep -q .; then
+            echo "a sealed file is inside a path that leaves this job" >&2
+            find data truth _ci -name 'holdout_*' -o -path '*sealed*' >&2
+            exit 1
+          fi
+          echo "no sealed content in data/, truth/ or _ci/"
       - name: Artifact size
         run: du -sh data truth
       - name: Upload the world for the test job
@@ -133,6 +180,7 @@ jobs:
           path: |
             data
             truth
+            _ci
           retention-days: 1
           compression-level: 1
       - name: Duration

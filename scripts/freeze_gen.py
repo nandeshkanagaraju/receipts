@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -34,9 +35,60 @@ TAG = "gen-frozen"
 SEALED_WHY_COUNT = 5
 GATE_TEST = "tests/freeze/test_confirm_gate.py"
 SEALED_GATE_TEST = "tests/freeze/test_sealed_gate.py"
-# The sealed questions themselves. Untracked by design, so their presence is
-# what tells a caller whether the sealed half of the gate is checkable here.
-SEALED_QUESTIONS = "eval/sealed/holdout_why.jsonl"
+# The sealed questions themselves. Untracked by design.
+SEALED_QUESTIONS_NAME = "holdout_why.jsonl"
+# Counts-only proof that the sealed gate ran. The sealed questions cannot travel
+# between CI jobs -- this repository is public, artifacts are downloadable and a
+# PR workflow can restore a cache -- but one line saying how many cleared can,
+# and carries nothing an attacker could use. Written by the job that holds the
+# seed, read by the job that does not.
+SEALED_MARKER = "_ci/sealed_gate.txt"
+
+
+def sealed_questions(repo: Path | None = None) -> Path:
+    return freeze.sealed_dir(repo or REPO) / SEALED_QUESTIONS_NAME
+
+
+def expected_marker() -> str:
+    return f"sealed WHY: {SEALED_WHY_COUNT} of {SEALED_WHY_COUNT} pass"
+
+
+def marker_line() -> str:
+    """Run the sealed gate and return its one counts-only line.
+
+    Returns the line whatever the verdict, so a failing gate writes a marker that
+    disagrees with the expected one rather than no marker at all. A missing file
+    and a failing gate should not look the same to the reader.
+    """
+    ok, out = _run_pytest(SEALED_GATE_TEST)
+    for ln in out.splitlines():
+        if ln.strip().startswith("sealed WHY:"):
+            return ln.strip()
+    return f"sealed WHY: unreported (gate {'passed' if ok else 'failed'} without a count)"
+
+
+def write_marker(path: Path | None = None) -> str:
+    target = path or (REPO / SEALED_MARKER)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    line = marker_line()
+    target.write_text(line + "\n", encoding="utf-8")
+    return line
+
+
+def gate_marker(repo: Path | None = None) -> list[str]:
+    """Validate the counts-only marker. Used where the sealed files cannot be."""
+    path = (repo or REPO) / SEALED_MARKER
+    if not path.exists():
+        return [
+            f"{SEALED_MARKER} is missing. The data job writes it straight after "
+            "generating the world; without it the sealed gate is unproven here, "
+            "and an unproven gate is not a passing one."
+        ]
+    found = path.read_text(encoding="utf-8").strip()
+    want = expected_marker()
+    if found != want:
+        return [f"{SEALED_MARKER} reads {found!r}, expected {want!r}"]
+    return []
 
 
 def artifact_present() -> list[str]:
@@ -97,6 +149,12 @@ def all_gates() -> list[str]:
 
 
 def tag_exists(tag: str = TAG) -> bool:
+    # A rehearsal sets RECEIPTS_SIMULATED_TAGS so tag-conditioned guards switch on
+    # *before* the tag is real. Without this a guard that activates on a tag is
+    # first exercised in CI, after the tag is pushed and hard to withdraw.
+    simulated = os.environ.get("RECEIPTS_SIMULATED_TAGS", "")
+    if tag in [s.strip() for s in simulated.split(",") if s.strip()]:
+        return True
     out = subprocess.run(["git", "tag", "-l", tag], cwd=REPO, capture_output=True, text=True)
     return bool(out.stdout.strip())
 
@@ -139,6 +197,18 @@ def main(argv: list[str] | None = None) -> int:
     if tag_exists():
         print(f"{TAG} already exists; refusing to move it", file=sys.stderr)
         return 1
+    # Rehearse the world this tag creates before creating it. A tag-conditioned
+    # guard is dormant until the tag exists, so without this its first real run
+    # is in CI, after the tag is pushed. That has already cost one red main.
+    import post_tag_check
+
+    rehearsal = post_tag_check.rehearse(TAG)
+    if rehearsal:
+        print(f"REFUSING to create the {TAG} tag: the post-tag rehearsal failed.", file=sys.stderr)
+        for problem in rehearsal:
+            print(f"  {problem}", file=sys.stderr)
+        return 1
+
     sha = record_generator_hash()
     print(f"generator_sha256 {sha}")
     subprocess.run(

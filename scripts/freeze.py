@@ -15,6 +15,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -22,6 +23,28 @@ REPO = Path(__file__).resolve().parents[1]
 MANIFEST = REPO / "docs" / "FREEZE_MANIFEST.json"
 
 SEALED_DIR = "eval/sealed"
+# Overridable so a freeze can rehearse the post-tag state CI actually runs in,
+# where eval/sealed/ is absent because it is untracked. Pointing this at an empty
+# directory is the only honest way to reproduce "the answers are not here" without
+# deleting the answers.
+SEALED_DIR_ENV = "RECEIPTS_SEALED_DIR"
+
+
+def sealed_dir(repo: Path | None = None) -> Path:
+    """Where the sealed files live, honouring the rehearsal override.
+
+    The override applies to *this* repository only. Callers that pass their own
+    root -- the injection tests build a temp repo with its own sealed directory --
+    must keep getting their own, or a rehearsal silently empties the fixtures out
+    from under them and the injection stops detecting anything. That is not
+    hypothetical: it is what the first rehearsal caught.
+    """
+    root = repo or REPO
+    override = os.environ.get(SEALED_DIR_ENV)
+    if override and root == REPO:
+        return Path(override)
+    return root / SEALED_DIR
+
 
 FROZEN_DOCS = (
     "docs/PDD.md",
@@ -57,7 +80,7 @@ def sealed_digests(repo: Path = REPO) -> dict[str, str]:
     freeze without anyone noticing, and a hash catches that without revealing
     what the file says.
     """
-    d = repo / SEALED_DIR
+    d = sealed_dir(repo)
     if not d.is_dir():
         return {}
     return {
