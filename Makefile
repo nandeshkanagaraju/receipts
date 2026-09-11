@@ -13,7 +13,7 @@ RUFF    := $(if $(VENV),$(VENV)/ruff,ruff)
 MYPY    := $(if $(VENV),$(VENV)/mypy,mypy)
 SET     ?= dev
 
-.PHONY: setup data test eval eval-holdout lint types up bench freeze-check freeze-questions freeze-gen seed-check freeze-translations
+.PHONY: setup data test eval eval-holdout lint types up bench freeze-check freeze-questions freeze-gen seed-check freeze-translations double-compute
 
 # --- implemented -------------------------------------------------------------
 
@@ -48,6 +48,13 @@ freeze-questions:
 
 freeze-translations:
 	$(PY) scripts/freeze_translations.py
+
+# The second, independent computation of every reference answer (M3, SDD §6).
+# Rewrites tests/fixtures/double.json, which test_reference_double_computation
+# compares against the SQL. Takes several minutes: it recomputes every cell of
+# every breakdown in pandas rather than sampling.
+double-compute:
+	$(PY) -m scripts.double_compute
 
 # --- not built yet -----------------------------------------------------------
 # Each names the module that will implement it (docs/BUILD_PROMPTS.md).

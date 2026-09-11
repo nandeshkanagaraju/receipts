@@ -29,7 +29,10 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest", "hypothesis", "ruff", "mypy", "types-PyYAML"]
+# pandas is dev-only: SDD §6 and BUILD_PROMPTS M3 specify it for the second,
+# independent computation of every reference answer (scripts/double_compute.py).
+# Nothing under src/receipts/ imports it, and a charter test keeps it that way.
+dev = ["pytest", "hypothesis", "ruff", "mypy", "types-PyYAML", "pandas"]
 
 [tool.setuptools]
 package-dir = {"" = "src"}
