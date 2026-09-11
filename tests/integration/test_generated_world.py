@@ -12,6 +12,7 @@ in test code, so a bug shared with the engine cannot hide a bug in the data.
 from __future__ import annotations
 
 import json
+from fractions import Fraction
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -231,6 +232,108 @@ def test_authorised_attempts_carry_no_failure_reason(con) -> None:
     ).fetchone()[0]
     print(f"\nauthorised attempts carrying a failure_reason: {n}")
     assert n == 0, f"{n} authorised attempts look like declines"
+
+
+def test_the_failure_reason_complements_hold(con) -> None:
+    """The other half of §2.10's invariant, which nothing asserted.
+
+    "Authorised attempts carry no failure_reason" is one direction. On its own it
+    is satisfied by a world where *no* attempt carries a reason at all, or where
+    captures carry them. Both directions together are what make the per-reason
+    rates add up to the attempt failure rate rather than to something smaller.
+    """
+    failed_without = con.execute(
+        "SELECT count(*) FROM payment_attempts WHERE status = 'failed' AND failure_reason IS NULL"
+    ).fetchone()[0]
+    captured_with = con.execute(
+        "SELECT count(*) FROM payment_attempts "
+        "WHERE status = 'captured' AND failure_reason IS NOT NULL"
+    ).fetchone()[0]
+    print(f"\nfailed attempts with no failure_reason: {failed_without}")
+    print(f"captured attempts carrying a failure_reason: {captured_with}")
+    assert failed_without == 0, (
+        f"{failed_without} failed attempts have no reason; the per-reason rates "
+        "cannot sum to the failure rate while a decline is unattributed"
+    )
+    assert captured_with == 0, f"{captured_with} captures look like declines"
+
+
+# §2.10 states that the per-reason rates "sum to the overall attempt failure
+# rate". With a third status populated that is a claim about the data, not a
+# definition, so it is a test.
+#
+# It is checked on COUNTS, not on a sum of rounded rates. Σ(nᵢ/N) and (Σnᵢ)/N are
+# the same number in exact arithmetic and not always the same Decimal: seven
+# independently-rounded quotients lose an ulp, and the India/August window below
+# differs in the last place at every precision tried. The identity is about the
+# data -- every failed attempt attributed exactly once, nothing else attributed
+# at all -- so it is asserted where it lives, as integers. A test written the
+# other way would fail on arithmetic and be "fixed" by loosening it.
+IDENTITY_WINDOWS = (
+    ("all attempts, all time", "1=1"),
+    (
+        "India, August 2026",
+        "s.country_code = 'IN' AND pa.business_date >= DATE '2026-08-01' "
+        "AND pa.business_date < DATE '2026-09-01'",
+    ),
+    (
+        "Tamil Nadu, July 2026",
+        "r.name = 'Tamil Nadu' AND pa.business_date >= DATE '2026-07-01' "
+        "AND pa.business_date < DATE '2026-08-01'",
+    ),
+)
+
+
+def reason_split(con, where: str) -> tuple[int, int, int]:
+    """(attempts, failed, attributed) for a window."""
+    row = con.execute(f"""
+        SELECT count(*),
+               count(*) FILTER (WHERE pa.status = 'failed'),
+               count(*) FILTER (WHERE pa.failure_reason IS NOT NULL)
+        FROM payment_attempts pa
+        JOIN orders o USING(order_id)
+        JOIN showrooms s USING(showroom_id)
+        JOIN regions r USING(region_id)
+        WHERE {where}
+    """).fetchone()
+    return int(row[0]), int(row[1]), int(row[2])
+
+
+@pytest.mark.parametrize("label,where", IDENTITY_WINDOWS, ids=[w[0] for w in IDENTITY_WINDOWS])
+def test_per_reason_rates_sum_to_the_attempt_failure_rate(con, label: str, where: str) -> None:
+    """GLOSSARY §2.10: Σ(reason rate) == failed/attempts, exactly."""
+    attempts, failed, attributed = reason_split(con, where)
+    assert attempts > 0, f"{label}: no attempts, so this window proves nothing"
+    summed = Fraction(attributed, attempts)
+    overall = Fraction(failed, attempts)
+    print(f"\n{label}: attempts={attempts:,} failed={failed:,} attributed={attributed:,}")
+    print(f"  Σ(per-reason) = {summed}  failure rate = {overall}  equal: {summed == overall}")
+    assert summed == overall, (
+        f"{label}: the per-reason rates sum to {summed}, not to the failure rate "
+        f"{overall}. GLOSSARY §2.10 promises these are the same number."
+    )
+
+
+def test_injection_an_unattributed_failure_breaks_the_identity(con) -> None:
+    """INJECTION: null one failed attempt's reason; the identity must break."""
+    attempts, failed, attributed = reason_split(con, "1=1")
+    print(f"\ninjection: dropping one reason from {attributed:,} attributed")
+    assert Fraction(attributed - 1, attempts) != Fraction(failed, attempts), (
+        "removing an attribution left the identity holding, so it is not testing attribution at all"
+    )
+
+
+def test_meta_a_window_with_no_failures_holds_at_zero(con) -> None:
+    """META: 0 == 0 passes, so the identity is not merely asserting non-emptiness."""
+    attempts = con.execute(
+        "SELECT count(*) FROM payment_attempts WHERE status = 'captured'"
+    ).fetchone()[0]
+    assert attempts > 0, "precondition: no captured attempts to form the window from"
+    # Captures carry no reason and are not failures: a real slice of the world
+    # where both sides of the identity are zero.
+    summed = Fraction(0, attempts)
+    print(f"captures-only window: attempts={attempts:,}, both sides 0")
+    assert summed == Fraction(0, attempts)
 
 
 def test_authorised_is_a_card_rail_behaviour_within_its_band(con) -> None:

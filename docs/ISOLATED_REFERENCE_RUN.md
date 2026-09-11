@@ -78,10 +78,43 @@ The main session keeps `/Users/nandeshjeya/Documents/Receipts`. It does not
 The block in `.claude/settings.json` and `.claude/hooks/deny_sealed_history.py`
 is repository-wide and will be present in the worktree too. **The isolated
 session is the one context permitted to lift it**, and only for
-`eval/reference_sql/HO-*` and `eval/questions/holdout.jsonl`. Lift it by running
-that session with its own settings — do not edit the committed
-`.claude/settings.json`, because that file is the main session's control and a
-change to it travels back on merge.
+`eval/reference_sql/HO-*` and `eval/questions/holdout*`. The lift is built; do
+not improvise one.
+
+```
+cd ../receipts-isolated
+touch .isolated-run                                   # lifts the hook's holdout half
+cp .claude/settings.isolated.json .claude/settings.json
+git update-index --assume-unchanged .claude/settings.json
+```
+
+`.isolated-run` is gitignored. `settings.isolated.json` is `main`'s deny list
+with exactly the holdout entries removed — every `.env` and `eval/sealed` entry
+is intact, and the marker does not lift those either, with or without it.
+`--assume-unchanged` is what stops the relaxed settings being staged;
+`test_isolated_lift_does_not_travel` is what fails if they reach `main` anyway.
+
+**This worktree has no world.** `data/` (254M) and `truth/` are gitignored and
+per-tree, so the new worktree starts without them. Copy them across rather than
+regenerating:
+
+```
+cp -R data truth ../receipts-isolated/
+```
+
+The copy needs no seed, and the seed stays in one tree. Then, before writing a
+single query, assert the world is the one this brief describes:
+
+```
+python -c "import json;print(json.load(open('data/MANIFEST.json'))['data_version'][:8])"
+```
+
+It must print `1c253c54`. If it does not, stop: the reference SQL would be
+written against a different world from the one the answers were measured in.
+
+Regenerating in the worktree (`make data`) is the fallback and it **reads
+`.env`**, which is the one thing this arrangement is trying to keep in a single
+place. Prefer the copy.
 
 ---
 
@@ -92,7 +125,8 @@ change to it travels back on merge.
 | Path | Why |
 |---|---|
 | `eval/questions/holdout.jsonl` | the questions. This is the point. |
-| `eval/questions/holdout_blind*.jsonl` | the blind 30, when they land (§7) |
+| `~/receipts-blind/human_questions.txt` | the blind 30 as **raw human text**, outside the repo (§7) |
+| `eval/questions/holdout_blind*.jsonl` | only if a previous run already wrote it |
 | `docs/GLOSSARY.md` | every definition the SQL must follow literally |
 | `docs/PDD.md`, `docs/SDD.md` | §6, §25.1, §25.3 |
 | `docs/M2_NOTES.md` | §2a magnitude ranges, §4 population arithmetic, and the M3/M4 rulings in §5 |
@@ -176,6 +210,28 @@ build*, not trusted *with everything*.
 
 ---
 
+### 4a. If a holdout scan fails, you are the only one who can fix it
+
+`test_holdout_questions_stay_inside_their_role_scope`,
+`test_holdout_kind_and_shape_flags_agree` and
+`test_no_holdout_question_breaks_authorisation_down` report a count and refuse to
+say which rows. That is deliberate, and it means the main session cannot act on
+them: **this session is the only context that can see the offending rows at all.**
+
+Fix by changing `role`, or `expected.kind` and the shape flags. **Never the
+question text.** The text is hashed in three languages in
+`docs/FREEZE_MANIFEST.json`, `translations-frozen` is pending on those hashes,
+and a reworded holdout question is a different question with the same qid.
+
+If a row cannot be fixed without changing its text, leave it, flag it in §5.3 and
+report the count. That is a ruling for the person who launched the session, not a
+decision for this one.
+
+Report a count in the hand-back: how many rows each scan flagged, and how many
+were fixed. Not which.
+
+---
+
 ## 5. Outputs
 
 Three, and nothing else.
@@ -191,6 +247,12 @@ Three, and nothing else.
 The only output the main session and the freeze gates read. Sorted keys, no
 timestamps, no values, no SQL.
 
+The `blind_*` counts are separate from the holdout ones because they answer a
+different question: the holdout counts say the work is complete, the blind counts
+say what the human actually wrote. They are the realised mix of §7, not the
+forecast — fill them from the file, and if they do not match ANS 22 · AMB 5 ·
+UNA 3, that is the finding rather than something to correct.
+
 ```json
 {
   "generated_by": "isolated-reference-run",
@@ -201,7 +263,13 @@ timestamps, no values, no SQL.
     "returned_at_least_one_row": 35,
     "double_computed": 35,
     "agree": 35,
-    "flagged_implausible": 0
+    "flagged_implausible": 0,
+    "blind_questions_read": 30,
+    "blind_classified_ans": 0,
+    "blind_classified_amb": 0,
+    "blind_classified_una": 0,
+    "blind_sql_files": 0,
+    "blind_authored_by": "human-blind"
   },
   "files": {
     "HO-002.sql": {
@@ -272,11 +340,24 @@ hashes, pass/fail verdicts, wall-clock timings, and a bare list of flagged qids.
 
 ## 7. The blind 30
 
-When `holdout_blind.jsonl` lands (HANDOFF §3.2; deadline 2026-09-13 20:00, with
-a documented fallback to `authored_by: "model-blind"`), **this session does all
-of it**: converting the file to the line format of SDD §25.1, classifying each
-question into a population, and writing `HO-B*.sql` for the ANS ones — expected
-22, again counted from the file.
+The blind questions arrive as **raw human text** at
+`~/receipts-blind/human_questions.txt` — outside the repository, one question per
+line, unclassified. `eval/questions/holdout_blind.jsonl` does not exist yet:
+**writing it is this session's job, not its input.**
+
+That means: converting each line to the format of SDD §25.1, classifying it into
+a population, translating it, and writing `HO-B*.sql` for the ANS ones.
+`authored_by` is `"human-blind"` — distinct from `"model-blind"`, which is the
+fallback label for questions a model wrote when no human file arrived (HANDOFF
+§3.2, deadline 2026-09-13 20:00). The two labels must never be mixed: which
+questions a human actually wrote is the entire value of the set.
+
+**ANS 22 · AMB 5 · UNA 3 is a forecast, not a quota.** Classify what the human
+actually wrote and report the realised mix, whatever it is. **Never reword a
+blind question to reach the target** — a blind question edited to fit a
+distribution is no longer blind, and the edit is invisible afterwards. If the
+realised mix is ANS 26 · AMB 2 · UNA 2, that is the finding and it goes in the
+hand-back.
 
 The main session sees counts only. It does not classify them, does not review
 them, and does not learn what they ask.
@@ -308,7 +389,17 @@ This run is done when all of the following hold, and `HO_MANIFEST.json` shows it
 - `double_computed == agree == sql_files`;
 - every file has an `is_test` exclusion where it touches a fact table, by AST;
 - `flagged_implausible` is 0, or each flag is explained in §5.3 and the person
-  who launched the session has ruled on it.
+  who launched the session has ruled on it;
+- **the branch's committed `.claude/settings.json` is byte-identical to main's.**
+  Check it, do not assume it:
+
+  ```
+  git diff main -- .claude/settings.json     # must print nothing
+  ```
+
+  `--assume-unchanged` stops an accidental `git add`; it does not stop a
+  deliberate one, and this is the failure that unblinds every future session
+  with nothing in a later diff to show it.
 
 `questions-frozen` waits for this run *and* for the blind set (§7). Freezing
 with an incomplete reference set would record a manifest that does not describe

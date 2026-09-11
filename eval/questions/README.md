@@ -8,6 +8,15 @@ genuinely broken — unanswerable as written, or wrong about the world — it is
 struck out in `LIMITATIONS.md` with a reason and left in the file. A set you can
 edit after seeing the scores is not a test.
 
+**After `questions-frozen`, a row is not edited silently.** Before the tag,
+membership and wording change under an explicit ruling, reported in that round —
+that is what the pre-freeze rounds are for. After it, a change takes a **reopen
+tag in that tag's family**, the way ADR-014 reopened the generator with
+`gen-frozen-2`: the old tag stays where it is, the reopen is argued for in an
+ADR, and the new tag records what moved. A question edited under a tag that still
+claims to describe it is worse than an unfrozen file, because the tag says the
+file has not moved.
+
 The questions are written **before any semantic-layer YAML exists** (PDD §5).
 That ordering is the point: the layer cannot be shaped around the test.
 
@@ -52,6 +61,11 @@ knowing where the sealed anomaly is.
 
 - `qid` prefixes: `DV-` dev, `EV-` eval, `HO-` holdout. Unique across all sets.
 - `expected.kind` ∈ `scalar` · `table` · `clarify` · `abstain` · `deny` · `why` · `live`.
+  `kind` is the coarse vocabulary and `compare` / `series` / `top_k` are the fine
+  one: a comparison answers with two labelled values, so it lands in `table` with
+  `compare: true`, and the scorer dispatches on the flags rather than on `kind`
+  alone. See `docs/adr/016-kind-is-coarse-shape-flags-are-fine.md` before
+  "fixing" such a row back to `scalar`.
   `table` adds `top_k`. `why` adds `anomaly_id`. `clarify`, `abstain` and `deny`
   carry no `reference_sql`.
 - `trap` is `null` when the question exercises no definitional trap.

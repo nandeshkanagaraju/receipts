@@ -68,6 +68,66 @@ any incentive not to do it.
 
 ---
 
+## The holdout read guard is a tripwire, not a wall
+
+One session has to read the holdout questions, because it writes their reference
+SQL. So the guard has a lift: if `.isolated-run` exists in the working tree, the
+`PreToolUse` hook permits `eval/questions/holdout*` and `eval/reference_sql/HO-*`.
+`.env` and `eval/sealed/**` are refused with the marker or without it, and there
+is no way to lift them short of editing the hook.
+
+**The lift is one `touch` away.** Any session that wants to read the holdout can
+create the marker. Nothing prevents that, and nothing could: a guard that lives
+in the same tree as the thing it guards is advisory against whoever holds the
+tree.
+
+What it buys is that crossing leaves a trace. The marker is a file rather than a
+flag, so it sits in the working tree until removed rather than in one invocation
+nobody reads back; the relaxed deny list lives in a tracked
+`.claude/settings.isolated.json` a reviewer can diff; and
+`test_isolated_lift_does_not_travel` fails if the relaxed list ever reaches
+`main`, which is the one failure that would unblind every future session
+silently. This is the same claim §1 of the isolated-run brief makes about the
+whole arrangement: it does not make the boundary impossible to cross, it makes a
+crossing visible afterwards.
+
+---
+
+## Authorised attempts are relabelled failures, so authorisation *behaviour* is not real
+
+`_authorise_expired_holds` (ADR-014) builds the third status by converting
+attempts that had already failed. The world is byte-identical to the one the
+confirm gates and the sealed set were measured against, which is why it was done
+that way — redrawing would put fourteen confirm-gate rows and five sealed ones
+back in play for a conformance fix. The price is that an `authorized` row is a
+relabelled failure, so **authorised density inherits the failure distribution**.
+
+That includes the planted anomalies. A5 puts a decline spike on GB + Orbit in
+August, where 55% of attempts were flipped to failed; those attempts are now
+~2% eligible for conversion to `authorized`, so the authorised rows inherit the
+spike's shape.
+
+The consequence, plainly: **a question about authorisation *behaviour* —
+authorised-but-never-captured broken down by issuing bank, card network, or
+failure reason — would report a planted anomaly as an authorisation pattern.**
+The system would be right about the data and wrong about the world.
+
+**Questions about the authorised-but-never-captured *amount* (the six trap rows,
+DV-032) are unaffected.** The amount is a sum over rows; which rows carry the
+label does not move it.
+
+This is a guard, not a promise. `test_no_open_question_breaks_authorisation_down_by_bank_network_or_reason`
+scans dev and eval and names offenders; the holdout equivalent reports a count.
+Both are fault-injected against the four shapes that would trip it, and against
+the legal questions — the amount, a non-authorisation breakdown, and the DENY row
+where "authorised" means *permitted* — which must not trip it.
+
+If such a question is ever wanted, the fix is not to loosen the scan: it is to
+draw authorisation independently, which means regenerating, which means
+re-establishing every gate above.
+
+---
+
 ## The holdout is 89 questions; PDD §11 specifies 90
 
 One generated sealed WHY question was dropped. Its metric is an **amount**, and

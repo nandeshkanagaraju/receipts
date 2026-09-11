@@ -132,3 +132,94 @@ def test_settings_wires_the_hook_in() -> None:
     wired = json.dumps(settings.get("hooks", {}))
     assert "deny_sealed_history" in wired, ".claude/settings.json does not call the hook"
     assert HOOK.exists(), "settings references a hook that is not there"
+
+
+# ---------------------------------------------------------------------------
+# The isolated-run lift (docs/ISOLATED_REFERENCE_RUN.md).
+#
+# `.isolated-run` lifts the holdout family and never the sealed one. The
+# asymmetry is the design: one session must read the holdout questions to write
+# their reference SQL, and no session ever needs the seed or the answers.
+# ---------------------------------------------------------------------------
+
+HOLDOUT_READS = (
+    "cat eval/questions/holdout.jsonl",
+    "head -3 eval/reference_sql/HO-012.sql",
+    "grep refund eval/questions/holdout_blind.jsonl",
+)
+NEVER_LIFTED = (
+    "cat .env",
+    "cat eval/sealed/holdout_why.jsonl",
+    "head -1 eval/sealed/holdout_anomalies.json",
+    f"git show HEAD:{SEALED}",
+)
+
+
+@pytest.mark.parametrize("command", HOLDOUT_READS)
+def test_meta_without_the_marker_the_holdout_is_refused(command: str, tmp_path: Path) -> None:
+    """Marker absent: the lift is not simply always on."""
+    assert hook.verdict(command, repo=tmp_path) is not None, (
+        f"not refused without a marker: {command}"
+    )
+
+
+@pytest.mark.parametrize("command", HOLDOUT_READS)
+def test_reachability_with_the_marker_the_holdout_is_permitted(
+    command: str, tmp_path: Path
+) -> None:
+    """Marker present: the read goes through.
+
+    Asserted by invoking the hook against a tree that has the marker, not by
+    reasoning about the pattern lists. A lift nobody can demonstrate is a lift
+    the isolated session will discover does not work, at the wall.
+    """
+    (tmp_path / hook.MARKER).write_text("", encoding="utf-8")
+    assert hook.verdict(command, repo=tmp_path) is None, (
+        f"the marker is present and this was still refused: {command}"
+    )
+
+
+@pytest.mark.parametrize("command", NEVER_LIFTED)
+def test_injection_the_marker_does_not_lift_the_seed_or_the_sealed_answers(
+    command: str, tmp_path: Path
+) -> None:
+    """INJECTION: marker present, and these must still be refused."""
+    (tmp_path / hook.MARKER).write_text("", encoding="utf-8")
+    message = hook.verdict(command, repo=tmp_path)
+    print(f"\nmarker present, {command[:40]!r} -> {'refused' if message else 'ALLOWED'}")
+    assert message is not None, (
+        f"the isolated-run marker lifted a guard it must never lift: {command}"
+    )
+
+
+def test_the_marker_is_not_present_in_this_tree() -> None:
+    """This session is not the isolated one, and the suite should say so."""
+    assert not hook.isolated(), (
+        "`.isolated-run` exists in this working tree. If this is the isolated "
+        "session that is expected; if it is not, the holdout guard is lifted."
+    )
+
+
+def test_the_hook_end_to_end_honours_the_marker(tmp_path: Path) -> None:
+    """Exit 2 without the marker, exit 0 with it, same command, same process."""
+    fake_repo = tmp_path / "repo" / ".claude" / "hooks"
+    fake_repo.mkdir(parents=True)
+    shim = tmp_path / "drive.py"
+    shim.write_text(
+        "import json, sys\n"
+        f"sys.path.insert(0, {str(HOOK.parent)!r})\n"
+        "import deny_sealed_history as h\n"
+        "from pathlib import Path\n"
+        f"repo = Path({str(tmp_path / 'repo')!r})\n"
+        "marker = repo / h.MARKER\n"
+        "before = h.verdict('cat eval/questions/holdout.jsonl', repo=repo) is not None\n"
+        "marker.write_text('')\n"
+        "after = h.verdict('cat eval/questions/holdout.jsonl', repo=repo) is not None\n"
+        "print(f'{before} {after}')\n",
+        encoding="utf-8",
+    )
+    out = subprocess.run([sys.executable, str(shim)], capture_output=True, text=True)
+    print(f"\nrefused before marker / after marker: {out.stdout.strip()}")
+    assert out.stdout.strip() == "True False", (
+        f"the marker did not change the verdict end to end: {out.stdout!r} {out.stderr}"
+    )

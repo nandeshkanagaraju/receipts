@@ -43,15 +43,36 @@ from __future__ import annotations
 import json
 import re
 import sys
+from pathlib import Path
 
-PROTECTED = (
+# Never liftable. No marker, no flag, no argument: the seed and the sealed
+# answers are not readable from this repository by anything, ever.
+ALWAYS_PROTECTED = (
     re.compile(r"eval/sealed", re.I),
+    re.compile(r"(?:^|[\s'\"/=])\.env\b", re.I),
+)
+
+# Liftable by the isolated-run marker. The holdout questions and their reference
+# SQL have to be readable by exactly one session -- the one writing them -- and
+# by nothing else. See docs/ISOLATED_REFERENCE_RUN.md.
+LIFTABLE = (
     re.compile(r"eval/questions/holdout", re.I),
     # Everything under eval/reference_sql/ that is not demonstrably a dev or
     # eval file. A bare directory reference and any glob match; DV-*/EV-* do not.
     re.compile(r"eval/reference_sql/(?!(?:DV|EV)-)", re.I),
-    re.compile(r"(?:^|[\s'\"/=])\.env\b", re.I),
 )
+
+PROTECTED = ALWAYS_PROTECTED + LIFTABLE
+
+# The marker is a file, not a flag, so lifting the guard leaves a trace in the
+# working tree rather than in one invocation nobody reads back.
+MARKER = ".isolated-run"
+
+
+def isolated(repo: Path | None = None) -> bool:
+    root = repo or Path(__file__).resolve().parents[2]
+    return (root / MARKER).exists()
+
 
 # Verbs that put file contents on the terminal.
 REVEALING = (
@@ -104,14 +125,23 @@ def segments(command: str) -> list[str]:
 
 def verdict(
     command: str,
-    protected: tuple[re.Pattern[str], ...] = PROTECTED,
+    protected: tuple[re.Pattern[str], ...] | None = None,
+    repo: Path | None = None,
 ) -> str | None:
     """Refusal message, or None to allow.
 
     `protected` is a parameter so a meta-test can withdraw one pattern and show
     the same command is then allowed -- proving the refusal comes from the rule
     rather than from something else in the command.
+
+    When `.isolated-run` exists the holdout family is permitted and the sealed
+    family is not. That asymmetry is the whole design: one session has to read
+    the holdout questions in order to write their reference SQL, and no session
+    ever has to read the seed or the sealed answers. The marker is a file so the
+    lift leaves a trace; it is a tripwire, not a wall, and LIMITATIONS.md says so.
     """
+    if protected is None:
+        protected = ALWAYS_PROTECTED if isolated(repo) else PROTECTED
     for segment in segments(command):
         if NON_DISPLAYING.match(segment):
             continue
