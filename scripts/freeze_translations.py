@@ -12,7 +12,8 @@ Two freezes, on two clocks, because the work runs on two clocks:
 | `questions-frozen` | English wording, structure, roles, traps,
   expected answers, GLOSSARY.md, M2_NOTES.md | never again |
 | `translations-frozen` | `variants.ta`, `variants.hi`,
-  `variants.ta-Latn`, `translation_provenance` | once a human has read the Tamil |
+  `variants.ta-Latn`, `translation_provenance`,
+  `translation_source_hash` | once a human has read the Tamil |
 
 Splitting them is not a convenience. A single freeze forces one of two bad
 outcomes: freeze early and every Tamil correction reopens the evaluation, or
@@ -268,7 +269,11 @@ def set_counts(path: Path) -> dict[str, int]:
 
 
 def translation_counts(qdir: Path = QDIR, sets: tuple[str, ...] = fq.SETS) -> dict[str, dict]:
-    return {name: set_counts(qdir / f"{name}.jsonl") for name in sets if (qdir / f"{name}.jsonl").exists()}
+    return {
+        name: set_counts(qdir / f"{name}.jsonl")
+        for name in sets
+        if (qdir / f"{name}.jsonl").exists()
+    }
 
 
 def format_counts(counts: dict[str, dict]) -> str:
