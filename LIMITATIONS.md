@@ -68,6 +68,46 @@ any incentive not to do it.
 
 ---
 
+## The holdout is 89 questions; PDD §11 specifies 90
+
+One generated sealed WHY question was dropped. Its metric is an **amount**, and
+on the committed seed that amount could not clear the confirm gate at its entry
+level within the magnitude ranges declared in `docs/M2_NOTES.md` §2a — ranges
+written before the world was generated. Its sibling question, over the same cause
+at the same entry level on a **rate**, clears and stays.
+
+The asymmetry is not an accident of this seed. An amount carries the volume
+variance that a rate divides out, so at equal magnitude an amount's z is smaller;
+the same effect moved DV-058, EV-047 and EV-147 from refund amount to refund rate
+in M1, on identical scope. This is the case where there was no rate left to move
+to, because the sibling already uses it.
+
+**The decision was taken on feasibility, before any system ran.** Nothing had
+been evaluated against these questions: no agent, no semantic layer, no compiler
+existed. What was measured was whether a question is answerable at all — whether
+the signal it asks about is detectable at the level it asks from. Dropping it is
+a filter no system's behaviour influenced.
+
+The alternative was to give that anomaly a third allowed metric, chosen after
+seeing which metrics clear on this seed. That was rejected: selecting a metric in
+response to sealed results would let the measurement shape the question design,
+which is the property the sealed set exists to protect. Re-seeding until a draw
+cleared both variants was rejected for the same reason — it conditions the draw
+on the outcome.
+
+Which question was dropped is not recorded here, and the ceiling in
+`kestrel_gen/sealed.py` and `docs/M2_NOTES.md` §3 deliberately still reads 6:
+lowering it to the realised count would name the variant in a public file.
+
+The realised count is what the tooling enforces. `scripts/freeze_questions.py`
+holds 89 as its target, and the population block in `eval/questions/README.md` is
+generated from those constants with a gate that fails if it drifts — so the
+headline a reader sees is the realised count, not the specified one. **At G5 the
+holdout is scored out of 89, and the missing question is not counted as a
+failure.**
+
+---
+
 ## An earlier sealed set was committed to a public repository and discarded
 
 The section above says `eval/sealed/` is deliberately not committed. For three

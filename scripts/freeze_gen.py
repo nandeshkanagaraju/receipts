@@ -31,7 +31,7 @@ import freeze  # noqa: E402
 REPO = Path(__file__).resolve().parents[1]
 MANIFEST = REPO / "docs" / "FREEZE_MANIFEST.json"
 TAG = "gen-frozen"
-SEALED_WHY_COUNT = 6
+SEALED_WHY_COUNT = 5
 GATE_TEST = "tests/freeze/test_confirm_gate.py"
 SEALED_GATE_TEST = "tests/freeze/test_sealed_gate.py"
 
@@ -72,7 +72,7 @@ def gate_sealed() -> list[str]:
     ok, out = _run_pytest(SEALED_GATE_TEST)
     passed = None
     for ln in out.splitlines():
-        if "of 6 pass" in ln:
+        if f"of {SEALED_WHY_COUNT} pass" in ln:
             passed = ln.strip()
     if ok:
         return []

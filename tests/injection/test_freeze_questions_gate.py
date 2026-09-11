@@ -23,6 +23,8 @@ import shutil
 import sys
 from pathlib import Path
 
+import pytest
+
 REPO = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO / "scripts"))
 import freeze_questions as fq  # noqa: E402
@@ -520,3 +522,47 @@ def test_a_checked_variant_must_carry_text(tmp_path: Path) -> None:
     for p in problems:
         print(f"  {p}")
     assert problems, "an empty variant labelled human was accepted"
+
+
+# ---------------------------------------------------------------------------
+# Every gate is actually called by all_gates().
+#
+# Retrospective. `gate_window_attachment` and `gate_clarify_terms` were written,
+# tested in isolation, and reported as "folded into all_gates()". They were not:
+# the edit that was supposed to wire them in never landed, and nothing noticed,
+# because a gate that is never called cannot fail. The §6.2 scan was a
+# precondition of the questions freeze in the report and in no other sense.
+#
+# So the wiring itself is now the assertion, rather than the gates' own logic:
+# stub each gate to return a marker and require the marker to surface.
+# ---------------------------------------------------------------------------
+
+GATES = [
+    "gate_files_present",
+    "gate_populations",
+    "gate_traps",
+    "gate_blind",
+    "gate_collisions",
+    "gate_window_attachment",
+    "gate_clarify_terms",
+    "gate_readme_population",
+]
+
+
+@pytest.mark.parametrize("gate", GATES)
+def test_every_gate_is_reached_by_all_gates(gate: str, monkeypatch) -> None:
+    marker = f"<{gate} was here>"
+    monkeypatch.setattr(fq, gate, lambda *a, **k: [marker])
+    problems = fq.all_gates(run_tests=False)
+    assert marker in problems, (
+        f"{gate} is defined but all_gates() never calls it, so it can never "
+        "refuse a freeze. A gate nobody calls is documentation."
+    )
+
+
+def test_meta_the_probe_finds_nothing_when_the_gate_returns_clean(monkeypatch) -> None:
+    """Guard off: the marker is absent when the gate is silent, so the checks
+    above are detecting the call and not some constant in the output."""
+    monkeypatch.setattr(fq, "gate_window_attachment", lambda *a, **k: [])
+    problems = fq.all_gates(run_tests=False)
+    assert not any("was here" in p for p in problems)

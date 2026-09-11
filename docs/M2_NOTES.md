@@ -265,6 +265,16 @@ a test of anything.
 | S3 | showroom | **its city** | 1 | order count |
 | S4 | acquiring bank or channel | **region** | 1 | EMI share |
 
+The `Count` column is a **ceiling, not a quota**. A variant marked conditional is
+written only if its metric clears the confirm gate at its entry level; one that
+does not clear yields no question rather than a question nobody can answer.
+
+**Realised on the committed seed: 5.** One conditional variant did not clear, so
+the holdout set is 89 rather than the 90 of PDD §11. `LIMITATIONS.md` records the
+decision, which was taken on feasibility before any system ran. The ceiling stays
+at 6 in this table and in `kestrel_gen/sealed.py`: lowering it to match the
+realised count would record *which* variant was dropped, in a public file.
+
 Each question names **only the metric, the entry level, and the window**. It must never
 name the card network, phone model, city, showroom, issuing bank, or size — those
 are the answer the why-agent is being scored on finding.
@@ -283,10 +293,17 @@ across regenerations with the same seed (D3: deterministic, ordered counters).
 |---|---|---|
 | `eval/questions/holdout.jsonl` (hand-written) | 54 | ANS 32 · AMB 7 · UNA 6 · DENY 6 · LIVE 3 |
 | Blind author (`holdout_blind_TODO.md`) | 30 | ANS 22 · AMB 5 · UNA 3 |
-| Generated (`eval/sealed/holdout_why.jsonl`) | 6 | WHY 6 |
-| **Total** | **90** | ANS 54 · AMB 12 · UNA 9 · DENY 6 · WHY 6 · LIVE 3 |
+| Generated (sealed) | 5 | WHY 5 |
+| **Total** | **89** | ANS 54 · AMB 12 · UNA 9 · DENY 6 · WHY 5 · LIVE 3 |
 
-The totals match SDD §25.2 exactly. Only the authorship is split.
+The authorship is split three ways; the total is one short of SDD §25.2 and
+PDD §11, both of which specify 90. The missing question is a generated sealed
+WHY whose metric could not clear the confirm gate at its entry level within the
+§2a ranges — see §3 above and `LIMITATIONS.md`.
+
+These counts are the ones `scripts/freeze_questions.py` enforces, and the
+population block in `eval/questions/README.md` is generated from them, so the
+three cannot drift apart.
 
 ---
 

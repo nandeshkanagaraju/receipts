@@ -1,4 +1,4 @@
-"""kestrel_gen/sealed.py [P] — plant S1-S4 and generate the six holdout questions.
+"""kestrel_gen/sealed.py [P] — plant S1-S4 and generate the holdout WHY questions.
 
 Separate from `anomalies.py` because the rules are different. A1-A8 have their
 parameters written at the top of a file a reader can inspect; S1-S4 have theirs
@@ -438,7 +438,7 @@ def _emi_share_by_month(facts, keep_order) -> list[tuple]:
 
 
 # --------------------------------------------------------------------------- #
-# The six questions
+# The questions
 # --------------------------------------------------------------------------- #
 def _window_words(lo: date, hi: date) -> str:
     if (hi - lo).days <= 7:
@@ -533,7 +533,14 @@ def choose_metrics(facts, world, plants: list[SealedPlant]) -> dict[str, list[tu
 def build_questions(
     plants: list[SealedPlant], chosen: dict[str, list[tuple[str, Any]]]
 ) -> list[dict[str, Any]]:
-    """Six questions. Each names the metric, the entry level and the window only.
+    """One question per metric that clears. Each names the metric, the entry
+    level and the window only.
+
+    `wanted` is a ceiling, not a quota: a metric that does not clear at its
+    entry level yields no question, and the realised count is whatever clears.
+    The ceiling stays at six here even though five is realised, because
+    lowering the entry for the short anomaly would record *which* one it is in
+    a public file.
 
     Never the network, model, showroom or bank: those are what the agent is
     scored on finding. Each question carries ITS OWN gate verdict, computed on
@@ -613,7 +620,7 @@ def build_questions(
 
 
 def apply_sealed(facts, world, sealed_params: list[dict[str, Any]], seed: int):
-    """Plant S1-S4 and build the six questions. Returns (plants, questions)."""
+    """Plant S1-S4 and build the questions. Returns (plants, questions)."""
     rng = np.random.default_rng(np.random.PCG64(seed + 8641))
     by_id = {p["anomaly_id"]: p for p in sealed_params}
     plants = [

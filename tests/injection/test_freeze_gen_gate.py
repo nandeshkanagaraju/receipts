@@ -45,18 +45,34 @@ def test_injection_a_missing_sealed_gate_is_refused(monkeypatch) -> None:
 
 def test_injection_a_short_count_is_refused(monkeypatch) -> None:
     """Injected: fewer than six clearing the gate must refuse, and say how many."""
-    monkeypatch.setattr(freeze_gen, "_run_pytest", lambda _t: (False, "sealed WHY: 3 of 6 pass\n"))
+    monkeypatch.setattr(
+        freeze_gen,
+        "_run_pytest",
+        # Derived, not pinned: this read "of 6" and broke when the realised
+        # holdout count became 5. The gate greps its own count out of the
+        # output, so a literal here tests last week's contract.
+        lambda _t: (False, f"sealed WHY: 1 of {freeze_gen.SEALED_WHY_COUNT} pass\n"),
+    )
     problems = freeze_gen.gate_sealed()
     print(f"short count -> {len(problems)} problem(s)")
     for p in problems:
         print(f"  {p}")
     assert problems, "a short sealed count was accepted"
-    assert any("of 6" in p for p in problems), "the refusal does not report the count"
+    assert any(f"of {freeze_gen.SEALED_WHY_COUNT}" in p for p in problems), (
+        "the refusal does not report the count"
+    )
 
 
 def test_sealed_refusal_never_names_a_question(monkeypatch) -> None:
     """The refusal may say how many passed. It may not say which."""
-    monkeypatch.setattr(freeze_gen, "_run_pytest", lambda _t: (False, "sealed WHY: 3 of 6 pass\n"))
+    monkeypatch.setattr(
+        freeze_gen,
+        "_run_pytest",
+        # Derived, not pinned: this read "of 6" and broke when the realised
+        # holdout count became 5. The gate greps its own count out of the
+        # output, so a literal here tests last week's contract.
+        lambda _t: (False, f"sealed WHY: 1 of {freeze_gen.SEALED_WHY_COUNT} pass\n"),
+    )
     problems = freeze_gen.gate_sealed()
     assert problems, "precondition: nothing was refused, so there is no text to check"
     blob = " ".join(problems)

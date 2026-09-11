@@ -21,7 +21,7 @@ import pytest
 REPO = Path(__file__).resolve().parents[2]
 DB = REPO / "data" / "kestrel.duckdb"
 SEALED = REPO / "eval" / "sealed" / "holdout_why.jsonl"
-EXPECTED = 6
+EXPECTED = 5
 MIN_REL, MIN_Z, MAX_TRAILING, MIN_TRAILING = 0.02, 2.0, 28, 8
 
 
