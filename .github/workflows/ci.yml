@@ -165,12 +165,25 @@ jobs:
         # file ever appears under a path that travels, this fails here rather
         # than in a public artifact.
         run: |
-          if find data truth _ci -name 'holdout_*' -o -path '*sealed*' | grep -q .; then
+          # Match the sealed *questions*, not the substring "sealed": the first
+          # version of this matched _ci/sealed_gate.txt -- the counts-only marker
+          # that exists precisely so nothing sealed has to travel -- and failed
+          # the job over its own safe proxy.
+          found=$(find data truth _ci \( -name 'holdout_*' -o -path '*eval/sealed*' \) -print)
+          if [ -n "$found" ]; then
             echo "a sealed file is inside a path that leaves this job" >&2
-            find data truth _ci -name 'holdout_*' -o -path '*sealed*' >&2
+            echo "$found" >&2
             exit 1
           fi
-          echo "no sealed content in data/, truth/ or _ci/"
+          # The marker is one line and says only how many cleared.
+          lines=$(wc -l < _ci/sealed_gate.txt)
+          if [ "$lines" -ne 1 ]; then
+            echo "the marker is $lines lines; it must be exactly one" >&2
+            exit 1
+          fi
+          grep -Eq '^sealed WHY: [0-9]+ of [0-9]+ pass$' _ci/sealed_gate.txt || {
+            echo "the marker is not a bare count line" >&2; exit 1; }
+          echo "no sealed content in data/, truth/ or _ci/; marker is one count line"
       - name: Artifact size
         run: du -sh data truth
       - name: Upload the world for the test job
