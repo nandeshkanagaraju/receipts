@@ -99,8 +99,13 @@ def _provenance(set_name: str) -> dict[str, Any]:
         if manifest.exists()
         else None
     )
+    # No commit SHA. SDD §25.5 does not ask for one, and it cannot be here: a
+    # report that names its own commit changes on every commit, so the committed
+    # report can never equal its own regeneration. The commit is recoverable from
+    # git -- it is the commit the report is *in* -- so carrying it inside is both
+    # redundant and self-defeating. Found by the CI byte-identity step within a
+    # minute of adding it, which is the argument for that step.
     return {
-        "commit": _git_sha(),
         "data_version": data_version,
         "set": set_name,
         "cut_populations": sorted(CUT_POPULATIONS),

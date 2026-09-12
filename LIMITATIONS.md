@@ -760,3 +760,29 @@ Two smaller things the same run caught, both in the reference SQL:
 - 27 scalar references had no `ORDER BY`. A single-row aggregate has nothing to
   order, but D4 says SQL always has one and a charter item is not a preference,
   so `order by value` was added to each.
+
+
+## M5: a redirect that did nothing, and read as coverage
+
+`prompts.load` was written as `load(prompt_id, *, version=None, directory=PROMPTS)`.
+A default argument is evaluated once, at import, so the parameter held the
+directory object rather than the name — and every test that redirected
+`prompts.PROMPTS` to a temporary directory went on reading the real one.
+
+The redirect was inert, and the tests still passed. That is the part worth
+recording. Two of them passed for reasons that had nothing to do with what they
+claimed to check: one asked for a prompt absent from *both* directories, so the
+refusal it asserted was correct by accident; the other compared a recorded
+SHA-256 against `load()`'s, which agreed because both read the same unredirected
+file. Only the test that edits a prompt by one character and expects the
+recording key to move could tell the difference, because it is the only one
+whose two halves had to disagree.
+
+This is the conjunction pattern again. Two reasonable rules: *defaults belong in
+the signature*, and *tests redirect module-level paths to `tmp_path`*. Neither is
+wrong. Their conjunction is a test suite that cannot fail.
+
+The fix resolves `PROMPTS` at call time in `load` and `available`. A test asserts
+both halves — that the default reaches the repo's own prompt directory, and that
+a redirect actually moves it — because asserting only the redirect is what hid
+this in the first place.
