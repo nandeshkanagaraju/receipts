@@ -106,3 +106,137 @@ class ReferenceAnswer:
 
     def as_pairs(self) -> tuple[tuple[str | None, Decimal], ...]:
         return tuple((r.key, r.value) for r in self.rows)
+
+
+# --------------------------------------------------------------------------- #
+# M4: what a system answers with, and what the scorer decides.
+#
+# `ScorableAnswer` is the only thing the scorer sees. Receipts and the baseline
+# both adapt INTO it, and the scorer knows nothing about either -- that is what
+# makes the comparison a comparison rather than two different measurements.
+# --------------------------------------------------------------------------- #
+
+# SDD §8. `VERIFIED` and `UNVERIFIED` are both *answers*; the difference is
+# whether the system flagged its own uncertainty, which is the whole subject of
+# the thesis. The baseline can only ever produce VERIFIED, so every wrong
+# baseline answer is silent (§25.3).
+AnswerStatus = Literal["VERIFIED", "UNVERIFIED", "CLARIFY", "ABSTAIN", "DENIED", "ERROR"]
+
+ANSWER_STATUSES: tuple[AnswerStatus, ...] = (
+    "VERIFIED",
+    "UNVERIFIED",
+    "CLARIFY",
+    "ABSTAIN",
+    "DENIED",
+    "ERROR",
+)
+ANSWERING: frozenset[str] = frozenset({"VERIFIED", "UNVERIFIED"})
+
+Population = Literal["ANS", "AMB", "UNA", "DENY", "WHY", "LIVE"]
+POPULATIONS: tuple[Population, ...] = ("ANS", "AMB", "UNA", "DENY", "WHY", "LIVE")
+
+# SDD §25.3, one vocabulary per population. `Untested` is M4's addition and is
+# not a §25.3 outcome: it is what a cut feature scores (LIMITATIONS.md, M18/M19),
+# and it exists so a cut cannot be silently counted as a failure.
+OUTCOMES: dict[str, tuple[str, ...]] = {
+    "ANS": ("Correct", "Wrong-flagged", "Silent-wrong", "Over-abstain", "Error", "Untested"),
+    "LIVE": ("Correct", "Wrong-flagged", "Silent-wrong", "Over-abstain", "Error", "Untested"),
+    "AMB": ("Correct-clarify", "Answered-ambiguous", "Error", "Untested"),
+    "UNA": ("Correct-abstain", "Answered-unanswerable", "Error", "Untested"),
+    "DENY": ("Correct-deny", "Leak", "Other", "Error", "Untested"),
+    "WHY": ("Hit", "Miss", "Error", "Untested"),
+}
+
+# Outcomes that count as the system getting it right, per population. Used only
+# for reporting; the scorer never collapses populations into one rate (§25.5).
+CORRECT_OUTCOMES: dict[str, str] = {
+    "ANS": "Correct",
+    "LIVE": "Correct",
+    "AMB": "Correct-clarify",
+    "UNA": "Correct-abstain",
+    "DENY": "Correct-deny",
+    "WHY": "Hit",
+}
+
+# Wrong *and* not flagged. The measure the thesis turns on (T1, T2).
+SILENT_WRONG: dict[str, tuple[str, ...]] = {
+    "ANS": ("Silent-wrong",),
+    "LIVE": ("Silent-wrong",),
+    "AMB": ("Answered-ambiguous",),
+    "UNA": ("Answered-unanswerable",),
+    "DENY": ("Leak",),
+    "WHY": (),
+}
+
+
+@dataclass(frozen=True)
+class ScorableAnswer:
+    """What a system produced, in the only shape the scorer reads.
+
+    Carries no timings and no token counts (D12). `receipt_id`, `plan_hash` and
+    `sql_hash` are identifiers, not measurements: they let a trial be traced back
+    without the report carrying anything that varies between runs (D16).
+    """
+
+    status: AnswerStatus
+    rows: tuple[tuple[str | None, Decimal], ...] = ()
+    currency: str | None = None
+    clarify: bool = False
+    reason: str | None = None
+    receipt_id: str | None = None
+    plan_hash: str | None = None
+    sql_hash: str | None = None
+    why_path: tuple[tuple[str, str], ...] = ()
+    text: str = ""
+
+    def __post_init__(self) -> None:
+        if self.status not in ANSWER_STATUSES:
+            raise ValueError(f"unknown status {self.status!r}")
+        for _key, value in self.rows:
+            # Keys are NOT required to be normalised here. A system answers with
+            # whatever it answers with -- "Chennai", " chennai " -- and SDD §25.3
+            # says those are the same key. Normalising is the scorer's job, and
+            # requiring it here would make the adapter responsible for a rule the
+            # scorer already owns. `ReferenceRow` is different: it is canonical.
+            if not isinstance(value, Decimal):
+                raise TypeError(f"row value must be Decimal, got {type(value).__name__}")
+
+    @property
+    def answered(self) -> bool:
+        return self.status in ANSWERING
+
+
+@dataclass(frozen=True)
+class Trial:
+    """One question, in one language, under one role (SDD §8)."""
+
+    qid: str
+    set_name: str
+    population: Population
+    language: str
+    role: str
+    text: str
+
+    @property
+    def trial_id(self) -> str:
+        return f"{self.qid}|{self.language}|{self.role}"
+
+
+@dataclass(frozen=True)
+class Outcome:
+    """The scorer's verdict on one trial."""
+
+    trial_id: str
+    qid: str
+    population: Population
+    language: str
+    outcome: str
+    detail: str = ""
+
+    def __post_init__(self) -> None:
+        allowed = OUTCOMES[self.population]
+        if self.outcome not in allowed:
+            raise ValueError(
+                f"{self.qid}: {self.outcome!r} is not an outcome for {self.population} "
+                f"(allowed: {allowed})"
+            )

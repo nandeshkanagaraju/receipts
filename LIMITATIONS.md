@@ -133,6 +133,62 @@ who knew the rule. Recorded as an open weakness rather than a solved one.
 
 ---
 
+## There is no `timing.json`: D2 beats SDD §25.5
+
+SDD §25.5 says each run writes timings to a `timing.json` that is never compared.
+The harness writes no such file.
+
+D2 forbids a clock read anywhere under `receipts/`, and `evalkit` is on that list.
+Writing a timing means reading a clock, in an engine package, which the charter
+test catches — and did, after the code was written and before it was committed.
+
+The charter wins. A run that cannot read a clock cannot vary with one, which is
+the whole of D16's byte-identical guarantee; a timing file that is "never
+compared" is a promise about how a number is used, where D2 is a fact about what
+the code can do. Given a choice between the two, the one a test can enforce is
+worth more than the one a reviewer has to remember.
+
+**What is lost:** nothing the thesis measures. No threshold is a latency, and the
+report carries none. If per-run timings are wanted later they belong in the
+caller — `make`, or a wrapper — where a clock read is allowed, not in `evalkit`.
+
+Worth naming the near-miss: the obvious response to a charter test failing on new
+code is to add an exception for the new code. That would have been the fourth
+time in this build a guard was nearly weakened by the thing it caught.
+
+---
+
+## M18 and M19 are cut: the WHY and LIVE populations are untested, not failed
+
+Cut on schedule grounds, **before any system ran against them**, under the
+cut-line discipline PDD §13 exists for. Nothing about their difficulty or their
+results informed the decision, because there were no results.
+
+- **M18, the why-agent.** The WHY population is **24 questions** — 19 hand-written
+  across dev and eval, 5 generated and sealed.
+- **M19, the Tool Bridge gateway.** The LIVE population is **10 questions** — 2
+  dev, 5 eval, 3 holdout.
+
+**These are reported as untested, never as failures.** A cut feature that scores
+zero and a feature that answers wrongly are different claims, and pooling them
+would understate the system in exactly the direction that flatters nobody. The
+report carries them as a population with a denominator and no outcomes, and the
+headline sentence names them as out of scope.
+
+**The M4 scorer still handles both populations correctly.** Their scoring paths
+are built, tested and exercised by fixtures — WHY hit/miss on the primary
+`(dimension, value)` at some level of the path, LIVE on value match like ANS. A
+cut feature is not a licence to drop the code that would measure it: if the
+why-agent arrives, the scorer is ready, and the cut is then a line in this file
+rather than a rewrite.
+
+What this costs the thesis: T2 compares silent-wrong rates on the holdout, and
+the holdout's 5 WHY and 3 LIVE questions are excluded from both arms of that
+comparison rather than counted as wrong for either. The denominator is stated
+wherever the ratio is.
+
+---
+
 ## The holdout read guard is a tripwire, not a wall
 
 One session has to read the holdout questions, because it writes their reference

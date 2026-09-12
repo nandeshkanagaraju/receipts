@@ -86,11 +86,17 @@ data:
 	elif /usr/bin/time -v true >/dev/null 2>&1; then TIMER="/usr/bin/time -v"; fi; \
 	$$TIMER $(PY) -m kestrel_gen --seed 20260910 --scale $${SCALE:-0.55} --out data
 
+# SET defaults to dev. The holdout has its own target and its own confirmation,
+# so reaching it takes two deliberate acts rather than one forgotten flag (D17).
 eval:
-	$(call NOT_BUILT,eval SET=$(SET),M4 — scoring/reports/harness)
+	$(PY) -m receipts.evalkit.harness --system $${SYSTEM:-oracle} --set $${SET:-dev}
 
 eval-holdout:
-	$(call NOT_BUILT,eval-holdout,M21 — holdout run)
+	@if [ "$$CONFIRM_HOLDOUT" != "yes" ]; then \
+		echo "the holdout runs once (D17). CONFIRM_HOLDOUT=yes if that is what you mean." >&2; \
+		exit 1; \
+	fi
+	CONFIRM_HOLDOUT=yes $(PY) -m receipts.evalkit.harness --system $${SYSTEM:-oracle} --set holdout
 
 up:
 	$(call NOT_BUILT,up,M20 — deploy/compose)
