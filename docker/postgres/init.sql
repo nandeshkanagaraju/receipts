@@ -23,11 +23,11 @@ GRANT USAGE ON SCHEMA public TO receipts_ro;
 -- absent: SDD §5.2 keeps it out of the semantic layer, and this makes that true
 -- at the database as well, so a free-form query cannot reach it even with the
 -- guard disabled.
-GRANT SELECT ON
-    orders, order_items, payment_attempts, refunds,
-    settlements, settlement_items,
-    showrooms, cities, regions, countries, products, product_notes, prices, fx_rates
-TO receipts_ro;
+--
+-- This script runs on an EMPTY database -- Postgres executes it before anything
+-- has created a table -- so the grants cannot name tables here. They are applied
+-- by the loader after the tables exist, which is also the only moment at which
+-- the list can be checked against what is really there.
 
 -- Every transaction read-only, whatever the session asks for. A statement that
 -- writes is refused by the transaction, not only by the missing grant.
@@ -36,5 +36,6 @@ ALTER ROLE receipts_ro SET default_transaction_read_only = on;
 -- A statement timeout, so a runaway query cannot hold the warehouse open.
 ALTER ROLE receipts_ro SET statement_timeout = '15s';
 
--- Nothing granted on tables created later, either.
+-- Nothing granted on tables created later by anyone else, either. A table added
+-- tomorrow is not readable until somebody says so.
 ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE ALL ON TABLES FROM receipts_ro;

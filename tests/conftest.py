@@ -35,21 +35,66 @@ _REAL = {
 }
 
 
-def _blocked(what: str):
+# Loopback is not "the network". D9 exists so that a test run cannot reach a
+# model provider, a package index, or anything else outside this machine -- and
+# `test_adapters_agree` needs a real Postgres on localhost, which is the one
+# thing standing between "the compiler is portable" and "the compiler happens to
+# work on DuckDB".
+#
+# So the guard narrows rather than switches off: loopback is allowed, every other
+# destination is refused exactly as before, and
+# `test_the_socket_guard_still_blocks_the_outside_world` asserts the second half.
+# Widening a guard without testing the part that stays is how a guard quietly
+# becomes a comment.
+LOOPBACK_HOSTS = frozenset({"localhost", "127.0.0.1", "::1", "0.0.0.0", ""})
+
+
+def _is_loopback(address: object) -> bool:
+    if isinstance(address, tuple) and address:
+        host = address[0]
+        return isinstance(host, str) and host in LOOPBACK_HOSTS
+    if isinstance(address, str):
+        return address in LOOPBACK_HOSTS
+    return False
+
+
+def _blocked(what: str, real):
     def _fail(*args, **kwargs):
+        # The address is the first positional argument for `connect`,
+        # `connect_ex` and `create_connection`; the second for the bound-method
+        # forms, where `self` comes first.
+        candidates = [a for a in args if isinstance(a, tuple | str)]
+        if any(_is_loopback(a) for a in candidates):
+            return real(*args, **kwargs)
         raise NetworkAccessAttempted(
             f"network access via {what} is forbidden in the test suite (D9); "
-            "use recorded responses instead"
+            "use recorded responses instead. Loopback is allowed for the local "
+            "Postgres that test_adapters_agree needs."
+        )
+
+    return _fail
+
+
+def _blocked_lookup(what: str, real):
+    def _fail(host, *args, **kwargs):
+        if isinstance(host, str) and host in LOOPBACK_HOSTS:
+            return real(host, *args, **kwargs)
+        raise NetworkAccessAttempted(
+            f"name resolution via {what} is forbidden in the test suite (D9)"
         )
 
     return _fail
 
 
 def pytest_configure(config: pytest.Config) -> None:
-    socket.socket.connect = _blocked("socket.connect")  # type: ignore[method-assign]
-    socket.socket.connect_ex = _blocked("socket.connect_ex")  # type: ignore[method-assign]
-    socket.create_connection = _blocked("socket.create_connection")  # type: ignore[assignment]
-    socket.getaddrinfo = _blocked("socket.getaddrinfo")  # type: ignore[assignment]
+    socket.socket.connect = _blocked("socket.connect", _REAL["connect"])  # type: ignore[method-assign]
+    socket.socket.connect_ex = _blocked("socket.connect_ex", _REAL["connect_ex"])  # type: ignore[method-assign]
+    socket.create_connection = _blocked(  # type: ignore[assignment]
+        "socket.create_connection", _REAL["create_connection"]
+    )
+    socket.getaddrinfo = _blocked_lookup(  # type: ignore[assignment]
+        "socket.getaddrinfo", _REAL["getaddrinfo"]
+    )
     config._receipts_started = time.monotonic()  # type: ignore[attr-defined]
 
 

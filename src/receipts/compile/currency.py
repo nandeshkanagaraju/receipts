@@ -170,9 +170,16 @@ def converted_amount(expression: exp.Expression, fx: FxPlan) -> exp.Expression:
     """
     if not fx.needed:
         return expression
+    # BOTH sides cast to DECIMAL explicitly. Left alone, sqlglot's Postgres
+    # generator adds its own `CAST(... AS DOUBLE PRECISION)` to make the division
+    # safe -- which forces the whole expression to double, and Postgres then has
+    # no `round(double precision, integer)` and refuses the query outright.
+    # DuckDB accepted it happily, so the difference only showed up in
+    # `test_adapters_agree`, which is what that test is for.
+    decimal = exp.DataType.build("DECIMAL(38,8)")
     factor = exp.Div(
-        this=exp.column(fx.rate_column, FX_TABLE),
-        expression=exp.column(fx.rate_column, TARGET_ALIAS),
+        this=exp.cast(exp.column(fx.rate_column, FX_TABLE), decimal),
+        expression=exp.cast(exp.column(fx.rate_column, TARGET_ALIAS), decimal),
     )
     return exp.Mul(
         this=exp.cast(expression, exp.DataType.build("DECIMAL(38,8)")),
@@ -181,8 +188,21 @@ def converted_amount(expression: exp.Expression, fx: FxPlan) -> exp.Expression:
 
 
 def round_to_minor(expression: exp.Expression) -> exp.Expression:
-    """Half-even, once, at the outermost select (SDD §11.3)."""
-    return cast(exp.Expression, exp.func("ROUND", expression, exp.Literal.number(0)))
+    """Half-even, once, at the outermost select (SDD §11.3).
+
+    The argument is cast to DECIMAL explicitly rather than left to the engine.
+    `ROUND(x, 0)` needs a numeric `x` in Postgres, and "it is numeric already" is
+    an assumption about what every layer of expression-building did with the
+    types on the way here.
+    """
+    return cast(
+        exp.Expression,
+        exp.func(
+            "ROUND",
+            exp.cast(expression, exp.DataType.build("DECIMAL(38,8)")),
+            exp.Literal.number(0),
+        ),
+    )
 
 
 def round_half_even(value: Decimal, places: int = 0) -> Decimal:

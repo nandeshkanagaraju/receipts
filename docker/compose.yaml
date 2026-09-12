@@ -1,0 +1,33 @@
+# The OLTP half of the two-adapter story (SDD §5.3, §13).
+#
+# Postgres holds the last 90 business days of the fact tables plus every
+# reference table. The overlap with DuckDB is what `test_adapters_agree` runs on:
+# the same plan, compiled for two dialects, must return identical results. That
+# test is the only thing standing between "the compiler is portable" and "the
+# compiler happens to work on DuckDB".
+#
+# MySQL is cut (PDD §13, cut order item 1) and deliberately absent.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: receipts-postgres
+    environment:
+      POSTGRES_USER: receipts
+      POSTGRES_PASSWORD: receipts
+      POSTGRES_DB: kestrel
+    ports:
+      - "55432:5432"
+    volumes:
+      # Runs once, on an empty data directory. The read-only role is created
+      # here so it exists before anything can connect as anyone else.
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/20-role.sql:ro
+      - receipts-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U receipts -d kestrel"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  receipts-pgdata:

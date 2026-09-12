@@ -1184,3 +1184,39 @@ Both are `xfail` with a message naming the missing module. They are written now
 rather than later because a pending guarantee that is silently absent is
 indistinguishable from one that passed — and F8 and F9 are the two cases that
 protect surfaces nothing else covers.
+
+## M13: the cross-adapter test found a portability defect on its first run
+
+`ROUND(x, 0)` needs a numeric `x` in Postgres — there is no
+`round(double precision, integer)`. DuckDB accepts the double happily, so the
+compiler had been emitting a query that worked on one store and was **refused
+outright** by the other, and nothing before `test_adapters_agree` could see it.
+
+The cause was one layer further down than it looked. sqlglot's Postgres generator
+adds its own `CAST(... AS DOUBLE PRECISION)` inside a division to make integer
+division safe, which forced the whole FX expression to double. Both sides of the
+rate ratio are now cast to `DECIMAL(38,8)` explicitly, and `ROUND`'s argument
+too, rather than relying on what every layer of expression-building happened to
+do with the types on the way.
+
+Worth recording because of what it says about the test rather than the bug: the
+defect was invisible to every DuckDB test, to the 15-question dev preview, and to
+the reference comparison — all of which run on DuckDB. **A second engine is a
+second opinion about the compiler**, in the same way the reference SQL is a
+second opinion about the glossary.
+
+## M13: the D9 socket guard now allows loopback
+
+`test_adapters_agree` needs a real Postgres on localhost, and the guard blocked
+every socket.
+
+D9's purpose is that a test run cannot reach a model provider, a package index,
+or anything else off this machine. A loopback connection to a container started
+by `make up-db` is not that. So the guard **narrows** rather than switching off:
+`localhost`, `127.0.0.1` and `::1` are allowed; every other destination is
+refused exactly as before, and `test_the_socket_guard_still_blocks_the_outside_
+world` asserts the second half against three real external addresses.
+
+Widening a guard without testing the part that stays is how a guard quietly
+becomes a comment. The cost of this exemption is real and worth naming: a test
+could now reach a *local* service that is not Postgres, and nothing would object.

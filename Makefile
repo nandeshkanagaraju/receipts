@@ -104,6 +104,13 @@ up:
 bench:
 	$(call NOT_BUILT,bench,M20 — benchmark)
 
+up-db:                   ## Start Postgres and load the 90-day overlap (SDD §5.3).
+	docker compose -f docker/compose.yaml up -d --wait
+	$(PY) scripts/load_postgres.py
+
+down-db:                 ## Stop Postgres. The volume survives.
+	docker compose -f docker/compose.yaml down
+
 fault-table:             ## Print the F1-F12 fault-injection status table (SDD §12.5).
 	$(PY) scripts/fault_table.py
 
