@@ -148,7 +148,13 @@ def test_meta_without_the_injection_the_blind_set_is_not_complained_about() -> N
     # the moment a second gate had an opinion about that file -- `gate_anchor_drift`
     # reports on it too, for an unrelated and correct reason. A meta keyed to a
     # filename appearing anywhere in the output is keyed to the wrong thing.
-    assert not fq.tag_exists(), f"{fq.TAG} must not exist yet"
+    # No assertion about whether the tag exists. This test is about the blind
+    # gate's opinion of a corpus, which does not change when a tag is cut --
+    # "the tag must not exist yet" was a leftover from the version of this file
+    # that asserted the repo was not yet freezable, and it would have failed on
+    # the first run after questions-frozen. The post-tag rehearsal caught it
+    # before the tag was created, which is the ninth instance of the pattern in
+    # docs/M3_NOTES.md and the first one caught rather than suffered.
 
 
 # --------------------------------------------------------------------------- #

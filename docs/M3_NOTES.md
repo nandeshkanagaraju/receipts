@@ -143,6 +143,7 @@ Six instances in this build, all of them mine:
 | 6 | `test_meta_the_real_corpus_now_passes_its_gates` | the live corpus is gate-clean | `gate_ta_latn` landed one round later |
 | 7 | `test_real_corpus_is_currently_refused` | "the live repo is not freezable" | (same guard, second break) |
 | 8 | `test_the_holdout_arms_are_named_with_the_marker` | the blind arm *has* drift to name | the window re-render fixed the arm |
+| 9 | `test_meta_without_the_injection_the_blind_set_is_not_complained_about` | `questions-frozen` does not exist yet | **caught by the rehearsal, before the tag** |
 
 ### The part worth carrying forward
 
@@ -174,6 +175,20 @@ that drift by construction, so it holds today and after every future fix.
 
 The same fix shape as number 6, arrived at for the same reason, four rounds
 later.
+
+**Number 9 is the one that did not cost anything.** A stray
+`assert not tag_exists()` had survived from an earlier version of its file, where
+the test was about the repo not yet being freezable. It would have failed on the
+first CI run after `questions-frozen` was pushed — the same shape as number 4,
+which is how `gen-frozen` went red.
+
+It did not, because `scripts/post_tag_check.py` ran the suite with the tag
+simulated *before* creating it, and the freeze refused. Eight instances were
+found by being hurt; this one was found by the guard built after the fourth.
+
+That is the argument for the rehearsal in one line: **a tag-conditioned assertion
+is unfalsifiable until the tag exists, so the only cheap moment to test it is a
+moment you have to manufacture.**
 
 ### The rule
 
