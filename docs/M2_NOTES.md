@@ -499,7 +499,7 @@ directions: 0.4 units of currency is not zero, and there is nothing to be within
 
 This is not hypothetical. GLOSSARY §2.11 says EMI is offered only in India and
 Malaysia, so **an EMI share for the UK or the UAE is legitimately zero rather
-than missing**, and one holdout question (HO-043) asks for exactly that. The
+than missing**, and one holdout question asks for exactly that. The
 distinction it tests is worth stating: a system that abstains there is wrong,
 because the number is known and it is zero.
 
@@ -628,7 +628,7 @@ the guard rather than the gate, and a guard rejection currently maps to
 `GUARD_REJECTED`.
 
 **Fault injection required:** a `store_ops_uk` question about settlement fees —
-HO-025 is exactly this — routed down the free-form path must produce `DENIED`
+HO-909 is exactly this — routed down the free-form path must produce `DENIED`
 naming the `finance` capability, with a meta-test showing it produces something
 else when the capability check is disabled.
 

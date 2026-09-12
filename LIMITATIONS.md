@@ -92,6 +92,47 @@ G5 write-up rather than in a footnote.
 
 ---
 
+## Holdout qids are in commit messages on a public repo, permanently
+
+A windowed scan of every durable surface — commit messages, tracked files, tags,
+remote branches, pull requests, issues, CI job names and CI logs — finds holdout
+qids in **commit messages on `main`**, classified against the real corpus:
+
+    BARE       6    a qid with nothing attached
+    PROPERTY  18    a qid within three lines of a metric, place, window or answer shape
+    TEXT       1    a qid within three lines of a question-shaped sentence
+
+Every other surface is clean. Tracked files were cleaned in the same round: the
+illustrative qids became placeholders, and what remains there is functional —
+`HO_MANIFEST.json`'s own filenames, the exception keys `scripts/skeleton_audit.py`
+must address, and the pinned old wording that
+`tests/freeze/test_skeleton_audit.py` uses as a meta-check.
+
+**The commit messages cannot be fixed.** Editing them means rewriting the history
+of a public repository, which this project has already declined to do for the more
+serious case of the discarded sealed set. They stay, recorded here, in the same
+position as the five `review/*` merges above: a rule adopted mid-build cannot be
+enforced backward, and pretending otherwise by scoping the scan quietly is worse
+than saying so.
+
+What the `TEXT` hit means in practice: one commit message carries something
+question-shaped near a holdout qid. A determined reader of this repository's
+history can recover a little of one holdout question from it. That is a real
+reduction in how blind the holdout is, and the honest statement of the holdout's
+strength has to carry it.
+
+Going forward the surface is closed rather than watched: `scripts/publish_report.py`
+refuses to publish content naming a qid at all, the `PreToolUse` hook refuses
+`gh gist create` by any other route, and the same `classify` function backs both
+the guard and the audit so the two definitions cannot drift.
+
+What is **not** closed: nothing stops a qid entering a commit message. A commit
+message is written at the moment attention is lowest, the guard would have to be a
+hook on `git commit`, and the twenty-five hits above were all written by someone
+who knew the rule. Recorded as an open weakness rather than a solved one.
+
+---
+
 ## The holdout read guard is a tripwire, not a wall
 
 One session has to read the holdout questions, because it writes their reference

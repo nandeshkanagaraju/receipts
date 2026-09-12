@@ -227,13 +227,17 @@ def load_rows(qdir: Path = QDIR) -> list[dict]:
 # --------------------------------------------------------------------------- #
 SKELETON_EXCEPTIONS: dict[frozenset[str], str] = {
     frozenset({"EV-142", "HO-043", "HO-044"}): (
+        # The qids have to appear -- this key is how the exception addresses
+        # them -- but the reason does not have to say what the holdout rows ask.
+        # It said, and a qid with a metric and a place beside it is exactly what
+        # ISOLATED_REFERENCE_RUN.md §6 calls a leak. Rewritten to the behaviours
+        # under test; the round's report carries the rest.
         "deny vs legitimate-zero vs calendar-ambiguous. EV-142 is a DENY: a UK "
-        "role asking about Malaysia, refused before any metric resolves. HO-043 "
-        "asks for EMI share in the UK, where EMI does not exist, so the correct "
-        "answer is a legitimate zero rather than an error or an abstention. "
-        "HO-044 asks for India 'last quarter', which is calendar-ambiguous under "
-        "a fiscal year starting in April. The three share a surface shape and "
-        "test three unrelated behaviours."
+        "role asking about Malaysia, refused before any metric resolves. The two "
+        "holdout rows test the other two behaviours -- one where the correct "
+        "answer is a legitimate zero rather than an error or an abstention, one "
+        "where the window is calendar-ambiguous under a fiscal year starting in "
+        "April. The three share a surface shape and test three unrelated things."
     ),
 }
 

@@ -144,7 +144,7 @@ def test_settings_wires_the_hook_in() -> None:
 
 HOLDOUT_READS = (
     "cat eval/questions/holdout.jsonl",
-    "head -3 eval/reference_sql/HO-012.sql",
+    "head -3 eval/reference_sql/HO-902.sql",
     "grep refund eval/questions/holdout_blind.jsonl",
 )
 NEVER_LIFTED = (
@@ -242,12 +242,12 @@ MANIFEST_READS = (
     "python -c \"import json;json.load(open('eval/reference_sql/HO_MANIFEST.json'))\"",
 )
 ANSWER_KEY_READS = (
-    "cat eval/reference_sql/HO-012.sql",
+    "cat eval/reference_sql/HO-902.sql",
     "cat eval/reference_sql/*.sql",
-    "head eval/reference_sql/HO-001.sql",
-    "git show HEAD:eval/reference_sql/HO-004.sql",
+    "head eval/reference_sql/HO-906.sql",
+    "git show HEAD:eval/reference_sql/HO-907.sql",
     # Both on one command line: the manifest does not launder the file beside it.
-    "head eval/reference_sql/HO_MANIFEST.json eval/reference_sql/HO-001.sql",
+    "head eval/reference_sql/HO_MANIFEST.json eval/reference_sql/HO-906.sql",
 )
 
 

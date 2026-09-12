@@ -16,7 +16,7 @@ neither is sufficient alone:
 1. **Deny rules** in `.claude/settings.json` — the `Read` tool and the obvious
    Bash spellings, mirroring what already exists for `eval/questions/holdout*`.
    A prefix deny cannot express the rest.
-2. **The `PreToolUse` hook** — `git show HEAD:eval/reference_sql/HO-001.sql`,
+2. **The `PreToolUse` hook** — `git show HEAD:eval/reference_sql/HO-906.sql`,
    and the wildcard `cat eval/reference_sql/*.sql`, which names no holdout file
    and would display all of them.
 
@@ -46,8 +46,8 @@ SETTINGS = REPO / ".claude" / "settings.json"
 sys.path.insert(0, str(REPO / ".claude" / "hooks"))
 import deny_sealed_history as hook  # noqa: E402
 
-HO = "eval/reference_sql/HO-001.sql"
-HOB = "eval/reference_sql/HO-B07.sql"
+HO = "eval/reference_sql/HO-906.sql"
+HOB = "eval/reference_sql/HO-B90.sql"
 DV = "eval/reference_sql/DV-001.sql"
 EV = "eval/reference_sql/EV-017.sql"
 
@@ -72,9 +72,9 @@ REFUSED = [
     f"git show HEAD:{HO}",
     f"git show 3677b05:{HOB}",
     f"git diff HEAD -- {HO}",
-    "git log -p -- eval/reference_sql/HO-001.sql",
+    "git log -p -- eval/reference_sql/HO-906.sql",
     f"git cat-file -p HEAD:{HO}",
-    "git grep captured -- eval/reference_sql/HO-001.sql",
+    "git grep captured -- eval/reference_sql/HO-906.sql",
     f"git blame {HO}",
     # The wildcard cases: no holdout file is named, every one is displayed.
     "cat eval/reference_sql/*.sql",

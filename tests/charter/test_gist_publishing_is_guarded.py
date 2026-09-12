@@ -40,11 +40,11 @@ PUBLISHER = REPO / "scripts" / "publish_report.py"
 # --------------------------------------------------------------------------- #
 
 LEAKY = (
-    "HO-003 is expected-empty.",  # property attached
-    "see eval/reference_sql/HO-012.sql for the shape",  # a path
-    "the blind rows HO-B07 and HO-B11 are ANS",  # blind qids
-    "flagged: HO-046, HO-051",  # bare, comma-separated
-    "| HO-033 | near-zero | ruled |",  # inside a table
+    "HO-901 is expected-empty.",  # property attached
+    "see eval/reference_sql/HO-902.sql for the shape",  # a path
+    "the blind rows HO-B90 and HO-B91 are ANS",  # blind qids
+    "flagged: HO-904, HO-905",  # bare, comma-separated
+    "| HO-903 | near-zero | ruled |",  # inside a table
 )
 CLEAN = (
     "33 of 35 references are scalar; 1 is correctly empty.",
@@ -84,7 +84,7 @@ def test_the_publisher_refuses_end_to_end_and_creates_nothing(tmp_path: Path) ->
     a second guard to stay safe is not a test of this one.
     """
     leaky = tmp_path / "report.md"
-    leaky.write_text("# Report\n\nHO-003 is expected-empty.\n", encoding="utf-8")
+    leaky.write_text("# Report\n\nHO-901 is expected-empty.\n", encoding="utf-8")
     out = subprocess.run(
         [sys.executable, str(PUBLISHER), str(leaky), "--check"],
         cwd=REPO,
@@ -94,7 +94,7 @@ def test_the_publisher_refuses_end_to_end_and_creates_nothing(tmp_path: Path) ->
     print(f"\npublisher exit={out.returncode}")
     assert out.returncode == 1, "the publisher accepted a report naming a holdout qid"
     assert "REFUSING" in out.stderr
-    assert "HO-003" in out.stderr, "the refusal does not say which qid it found"
+    assert "HO-901" in out.stderr, "the refusal does not say which qid it found"
 
 
 def test_meta_a_clean_report_passes_the_same_driver(tmp_path: Path) -> None:

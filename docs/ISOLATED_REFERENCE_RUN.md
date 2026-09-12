@@ -273,7 +273,7 @@ UNA 3, that is the finding rather than something to correct.
     "blind_authored_by": "human-blind"
   },
   "files": {
-    "HO-002.sql": {
+    "HO-908.sql": {
       "sha256": "…",
       "runs": true,
       "returns_rows": true,
@@ -323,7 +323,7 @@ manifest, the hand-back message.
 - Any reference SQL, in whole or in part — including a single `WHERE` clause.
 - Any reference **value**, scalar or cell, rounded or exact, in any currency.
 - Any metric name, dimension name, date window, country, showroom, model, bank
-  or network **attached to a qid**. "HO-014 uses refund rate" is a leak; "33 of
+  or network **attached to a qid**. "HO-0NN uses refund rate" is a leak; "33 of
   35 questions are scalar" is not.
 - Any diff that would show the above. `git show`, `git diff`, `git log -p` over
   `eval/reference_sql/HO-*` belong to this session only, and their output does

@@ -28,7 +28,7 @@ ATTRIBUTES = REPO / ".gitattributes"
 CANARY = "CANARY-a3f9-refund-rate-in-Madurai-last-month"
 
 SUPPRESSED = (
-    "eval/reference_sql/HO-012.sql",
+    "eval/reference_sql/HO-902.sql",
     "eval/questions/holdout.jsonl",
     "eval/questions/holdout_blind.jsonl",
 )

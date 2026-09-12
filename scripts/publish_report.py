@@ -15,7 +15,7 @@ bare, with a property attached, or with text. There is no severity ladder to arg
 about at the moment of publishing, which is the moment nobody wants to argue.
 
 A report that needs to name a holdout row names a count instead. "33 of 35 are
-scalar" is a report. "HO-014 is expected-empty" is not, however true.
+scalar" is a report. "HO-0NN is expected-empty" is not, however true.
 
 `gh gist create` run directly is refused by `.claude/hooks/deny_sealed_history.py`,
 which points at this script. That is what makes this the only path rather than the
@@ -33,11 +33,107 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[1]
 
 # A holdout or blind qid, in any spelling this corpus uses.
-HOLDOUT_QID = re.compile(r"\bHO-(?:B)?\d{2,3}\b")
+#
+# No leading \b, deliberately. In source text a qid often follows an escape --
+# "…\nHO-003 is…" -- and the escape's `n` is a word character, so \b does not
+# match there and the guard missed it. Erring toward catching: a word ending in
+# "HO" immediately followed by "-003" would also match, which is a false positive
+# the safe way round.
+HOLDOUT_QID = re.compile(r"HO-(?:B)?\d{2,3}\b")
 
 # Sealed and seed material has no business in a gist either, and unlike a qid it
 # has no legitimate near-miss.
 FORBIDDEN_PATHS = re.compile(r"eval/sealed/\S+|KESTREL_SEALED_SEED\s*=", re.I)
+
+# What makes a qid mention worse than bare: a metric, a place, a window, a
+# currency, or an answer shape. ISOLATED_REFERENCE_RUN.md §6 calls any of these
+# attached to a qid a leak.
+PROPERTY_WORDS = re.compile(
+    r"\b(refund\w*|captur\w*|settle\w*|gmv|revenue|success rate|failure|emi|upi|"
+    r"netbanking|wallet|pay.?later|chennai|madurai|coimbatore|bengaluru|mumbai|delhi|"
+    r"dubai|abu dhabi|london|manchester|uk|india|singapore|malaysia|tamil nadu|"
+    r"last month|last week|last quarter|yesterday|july|august|september|"
+    r"rupees|pounds|dollars|inr|gbp|usd|aed|myr|sgd|showroom|issuing bank|"
+    r"acquiring bank|card network|empty|no rows|zero rows|volume floor|scalar|"
+    r"expected-empty|near.?zero|top \d+|of \d+ (?:groups?|rows?)|reaches \d+)\b",
+    re.I,
+)
+PATH_ONLY = re.compile(r"eval/reference_sql/|\.sql\b|eval/questions/")
+
+# How far a property may sit from a qid and still count as attached. Three lines
+# covers a markdown paragraph and a short code block; the boundaries below stop it
+# reaching across into unrelated prose.
+WINDOW = 3
+BOUNDARY = re.compile(r"^\s*$|^\s*(?:#{1,6}\s|---+\s*$|```|\|?-{3,})")
+
+
+def _blocks(lines: list[str]) -> list[list[int]]:
+    """Group line indices into paragraphs / code blocks.
+
+    A property three lines below a qid but in the next section is not attached to
+    it. Splitting on blank lines, headings, rules and fences is what makes the
+    window mean "near, in the same thought" rather than "near in the file".
+    """
+    blocks: list[list[int]] = []
+    current: list[int] = []
+    in_fence = False
+    for i, line in enumerate(lines):
+        if line.lstrip().startswith("```"):
+            in_fence = not in_fence
+            if current:
+                blocks.append(current)
+            current = []
+            continue
+        if not in_fence and BOUNDARY.match(line):
+            if current:
+                blocks.append(current)
+            current = []
+            continue
+        current.append(i)
+    if current:
+        blocks.append(current)
+    return blocks
+
+
+def classify(text: str, window: int = WINDOW, known: set[str] | None = None) -> dict[str, int]:
+    """Tally qid mentions by severity, counting a property within `window` lines.
+
+    The line-based version of this missed a property one line away from its qid,
+    which is the ordinary shape of a markdown table row followed by its note. The
+    audit and this guard share this function so the two cannot drift: a leak is
+    whatever `classify` says it is, in one place.
+
+    `known`, when given, counts only qids present in that set -- the audit passes
+    the real corpus, because a placeholder in a test fixture cannot leak anything.
+    The guard passes nothing and counts every qid-shaped token, because at publish
+    time the cheap answer is the right one.
+    """
+    lines = text.splitlines()
+    tally = {"TEXT": 0, "PROPERTY": 0, "PATH": 0, "BARE": 0}
+    for block in _blocks(lines):
+        for i in block:
+            found = [m.group(0) for m in HOLDOUT_QID.finditer(lines[i])]
+            if not found:
+                continue
+            # `known` restricts the tally to qids that exist in the corpus, which
+            # is what an audit wants: a placeholder cannot leak. The guard passes
+            # nothing and counts every qid-shaped token, which is what a refusal
+            # wants. Restricting *here* rather than by pre-filtering lines matters:
+            # dropping lines first makes non-adjacent lines adjacent and inflates
+            # PROPERTY, which is how the first pass over-reported by six.
+            if known is not None and not any(q in known for q in found):
+                continue
+            near = [lines[j] for j in block if abs(j - i) <= window]
+            joined = " ".join(near)
+            if any("?" in n for n in near):
+                tally["TEXT"] += 1
+            elif PROPERTY_WORDS.search(joined):
+                tally["PROPERTY"] += 1
+            elif PATH_ONLY.search(lines[i]):
+                tally["PATH"] += 1
+            else:
+                tally["BARE"] += 1
+    return tally
 
 
 def findings(text: str) -> list[str]:
@@ -45,9 +141,12 @@ def findings(text: str) -> list[str]:
     out: list[str] = []
     qids = sorted(set(HOLDOUT_QID.findall(text)))
     if qids:
+        tally = classify(text)
+        worst = next((k for k in ("TEXT", "PROPERTY", "PATH", "BARE") if tally[k]), "BARE")
         out.append(
-            f"names {len(qids)} holdout qid(s): {', '.join(qids)}. A report that "
-            "needs to name a holdout row names a count instead."
+            f"names {len(qids)} holdout qid(s): {', '.join(qids)} (worst class "
+            f"{worst}). A report that needs to name a holdout row names a count "
+            "instead."
         )
     paths = sorted(set(FORBIDDEN_PATHS.findall(text)))
     if paths:

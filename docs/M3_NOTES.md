@@ -13,10 +13,14 @@ written first and tested against itself will pass all three.
 
 ### C1. Two questions answer with the empty list, one in each arm
 
-**`DV-060` (dev)** and **`HO-003` (holdout)** are both correctly answered by *no
-rows*. HO-003 asks for groups above a volume floor stated in the question; only
-four groups exist and the largest reaches 27, below the floor. Both
-implementations agree, and it is an expected-empty answer, not a defect.
+**`DV-060` (dev)** and **the holdout expected-empty row** are both correctly
+answered by *no rows*. The holdout one asks for groups above a volume floor stated
+in the question, and no group reaches it. Both implementations agree, and it is an
+expected-empty answer rather than a defect.
+
+The holdout row is not named here. The count is what a reader needs, and the
+ruling that accepted it said "the holdout expected-empty row" for the same
+reason.
 
 That makes them the two questions in the corpus a broken system passes for free.
 A stub returning nothing for every list question answers both correctly, and
