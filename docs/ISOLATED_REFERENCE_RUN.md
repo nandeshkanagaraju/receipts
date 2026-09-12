@@ -419,6 +419,87 @@ them, and does not learn what they ask.
 
 ---
 
+## 7a. Window re-render for the blind arm
+
+A later, much smaller run. Everything in §6 still applies; §2's setup is the same.
+
+### What is wrong
+
+`scripts/anchors.py` compares the facts a translation names — places,
+currencies, numbers and time windows — against the facts its English names. Four
+rows of `holdout_blind.jsonl` carry translations that state **no window** where
+their English states one: four Tamil variants and three Hindi, seven in all.
+
+These were machine-written in the first isolated run. A missing window in a
+machine draft is most likely a defect, not a phrasing the vocabulary has not met —
+which is the difference between this and the hand-written Tanglish, where four
+apparent misses turned out to be the reviewer's spoken forms and were fixed by
+extending the vocabulary rather than the questions.
+
+The main session knows the count and nothing else. It cannot know which rows, and
+did not look.
+
+### Finding them
+
+```
+python scripts/anchor_report.py holdout_blind
+```
+
+With `.isolated-run` present it names the qids and the missing anchors. Without
+it, the same command prints counts — the marker is the only switch, and there is
+no flag that widens the output.
+
+### The job
+
+For **exactly those seven variants**, re-render the window phrasing so each
+carries the window its English states.
+
+**Touch nothing else.** Not the English. Not the qid. Not `role`, `population`,
+`expected`, `authored_by`, the other language, or any row the report did not name.
+The point of this run is one field on seven variants.
+
+Keep `translation_provenance` as it is: these are machine drafts and stay
+`machine_unverified`. Re-run `--backfill` afterwards so the source hashes follow
+the changed text.
+
+Then:
+
+```
+python scripts/anchor_report.py            # must show holdout_blind 0 drifting
+BLIND_MISSING=no python scripts/freeze_questions.py --check
+```
+
+The freeze will still refuse while the reviewer's own Tanglish row is outstanding.
+That is expected and is not yours to fix.
+
+### The finding to report as well
+
+Some of those seven may be missing a window because **the English is ambiguous
+about it**, not because the translation is wrong. An English that states no window
+clearly, or states one only by implication, cannot be rendered faithfully into a
+language that must choose.
+
+Where that is the case, **do not fix it and do not reword the English** — the
+question set is frozen in everything but this one field, and an English reworded
+to suit a translation is a question changed to suit its answer.
+
+Report the split as counts: how many of the seven were a translation defect, and
+how many were an ambiguous English. The second number is a finding for the
+reviewer to rule on, not work for this session.
+
+### Hand-back
+
+Counts only, per §6:
+
+- variants re-rendered;
+- variants left alone because the English is ambiguous;
+- `holdout_blind` drifting rows before and after;
+- confirmation that no English, qid, or other field changed.
+
+No qids, no text, no before-and-after. The count is the whole report.
+
+---
+
 ## 8. Hand-back
 
 A single message to the person who launched the session, containing:
