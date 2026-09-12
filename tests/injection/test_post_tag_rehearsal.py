@@ -106,10 +106,10 @@ def test_meta_with_the_rehearsal_passing_the_same_run_tags(monkeypatch, capsys) 
 def test_every_freeze_script_rehearses_before_it_tags(name: str) -> None:
     """Reachability: the call exists, and it precedes the tag in the same function.
 
-    Source-level on purpose. `freeze-questions` is blocked on the blind 30 and
-    `freeze-translations` is deliberately deferred until the Tanglish lands, so
-    neither can be driven to its tag today — and "we could not test it yet" is
-    how a guard ends up never being called at all.
+    Source-level on purpose. `freeze-questions` and `freeze-translations` are
+    both held until the reviewer's Tanglish lands, so neither can be driven to
+    its tag today — and "we could not test it yet" is how a guard ends up never
+    being called at all.
     """
     body = main_body(name)
     assert "post_tag_check.rehearse(" in body, f"{name}'s main() never rehearses"

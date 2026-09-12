@@ -353,8 +353,10 @@ fallback label for questions a model wrote when no human file arrived (HANDOFF
 §3.2, deadline 2026-09-13 20:00). The two labels must never be mixed: which
 questions a human actually wrote is the entire value of the set.
 
-**The file holds 29 lines, not 30.** That count stands, and it is not a problem
-to solve. **Write exactly what the file contains: never pad to 30, never reword,
+**The file holds 32 questions, not 30.** Realised after the run, and recorded
+here so the next reader does not re-derive it: the source is `ROLE|question`
+records hard-wrapped at 72 columns, so an earlier count of 29 counted *lines*,
+not questions. No line was discarded. **Write exactly what the file contains: never pad to 30, never reword,
 never split one line into two to reach a count.** A blind set bent into a target
 is no longer blind, and the bend is invisible once made.
 
@@ -392,7 +394,7 @@ Write `ta` and `hi`, labelled `machine_unverified` like every other machine
 draft. **`ta-Latn` stays `pending` for the blind arm permanently.**
 
 The reason is structural, not a shortage of effort: the reviewer writes the
-Tanglish by hand for the rest of the corpus, and hand-writing it for these 29
+Tanglish by hand for the rest of the corpus, and hand-writing it for these 32
 would mean reading them — which unblinds the one person the blind set exists to
 keep out. M14 reports the blind arm in **en/ta/hi only**, and `LIMITATIONS.md`
 records the asymmetry.

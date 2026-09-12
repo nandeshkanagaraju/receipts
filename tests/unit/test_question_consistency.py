@@ -42,9 +42,9 @@ OPEN_SETS = ("dev", "eval")  # quotable in full
 # part of the corpus the author did not write, so they are the part most worth
 # checking and the part nobody may read to check by hand. Written by the isolated
 # run (docs/ISOLATED_REFERENCE_RUN.md §7), which is the one context that can see
-# them. The ROW FLOOR below is deliberately NOT raised to take them in: the
-# realised blind count is reconciled on main from the isolated run's hand-back,
-# so that the count is not chosen by the session that also chose the questions.
+# them. The ROW FLOOR below was deliberately left at 54 by that session and
+# raised to 86 here, from the hand-back, so the count was not chosen by the
+# session that also chose the questions.
 SEALED_SETS = ("holdout", "holdout_blind")
 
 # The holdout WHY questions live outside eval/questions/ and are generated, not
@@ -58,14 +58,22 @@ SEALED_WHY_ROWS = 5
 # to believe a scan that read almost nothing.
 #
 #   54  hand-written holdout rows (eval/questions/holdout.jsonl)
-#  + 5  generated sealed WHY rows, where the sealed files are present
-#  +30  blind rows, once holdout_blind.jsonl lands  <-- the isolated session
-#        bumps this constant to 84, or 89 with the sealed files present
+#  +32  blind rows (eval/questions/holdout_blind.jsonl), written by an
+#        independent author, handed back by the isolated run and reconciled here
+#  = 86
+#  + 5  generated sealed WHY rows, added by holdout_floor() only where the sealed
+#        files are present. They are untracked by design and cannot exist in CI,
+#        so they are counted separately rather than folded into this constant.
+#
+# The blind arm was forecast at 30 and realised at 32 -- the source file wrapped
+# at 72 columns, so an earlier count of its lines was not a count of its
+# questions. The floor follows the files. A floor written from a forecast fails
+# on the day the forecast is wrong, which is the day it matters.
 #
 # Both scans assert this floor because both previously asserted `offending == 0`
 # and nothing else: empty the file, rename a population value or narrow the
-# filter, and they passed having checked nothing. Standing rule 8.
-HOLDOUT_ROW_FLOOR = 54
+# filter, and they passed having checked nothing. Standing rule 9.
+HOLDOUT_ROW_FLOOR = 86
 
 # Which places each role may be asked about. `global_finance` has no ceiling.
 # Terms are matched as whole words against the English variant, case-folded.

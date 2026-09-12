@@ -100,13 +100,46 @@ def test_empty_file_is_refused_not_treated_as_zero_questions(tmp_path: Path) -> 
     assert any("eval.jsonl is empty" in p for p in problems)
 
 
-def test_real_corpus_is_currently_refused() -> None:
-    """The live repo must not be taggable yet: eval and holdout are unwritten."""
+def test_injection_an_incomplete_corpus_is_refused(monkeypatch) -> None:
+    """INJECTION: a corpus missing its blind set must not be freezable.
+
+    This asserted that the *live* repo was refused, on the theory that eval and
+    holdout were unwritten. That was true until the isolated run handed the blind
+    set back, at which point the gates went clean and the test failed with
+    nothing wrong -- the fourth guard in this repository to assert on the
+    milestone rather than on the guard. The refusal is now provoked.
+    """
+    # The real corpus, with only the blind file out of reach: every other gate
+    # still has what it needs, so a non-empty result can only come from this one.
+    # (A synthetic corpus cannot drive all_gates -- the window-attachment and
+    # README gates need the real files.)
+    monkeypatch.setattr(fq, "BLIND", "holdout_blind_absent.jsonl")
+    monkeypatch.delenv(fq.BLIND_ENV, raising=False)
     problems = fq.all_gates(run_tests=False)
-    print(f"\nreal corpus: {len(problems)} problem(s) blocking {fq.TAG}")
+    print(f"\nincomplete corpus: {len(problems)} problem(s) blocking {fq.TAG}")
     for p in problems:
-        print(f"  {p}")
-    assert problems, "the real corpus should not be freezable while sets are missing"
+        print(f"  {p[:80]}")
+    assert problems, "an incomplete corpus was freezable"
+    assert any("missing" in p for p in problems), (
+        "the refusal came from somewhere other than the absent blind set"
+    )
+
+
+def test_meta_the_real_corpus_now_passes_its_gates() -> None:
+    """Guard off: the live corpus is gate-clean, so the refusal above is injected.
+
+    Being gate-clean is not permission to tag. `questions-frozen` waits on the
+    reviewer's `ta-Latn`, which is a translations concern and deliberately not
+    something these gates measure.
+    """
+    problems = fq.all_gates(run_tests=False)
+    print(f"\nreal corpus: {len(problems)} problem(s)")
+    for p in problems:
+        print(f"  {p[:80]}")
+    assert not problems, (
+        "the real corpus fails its own gates, so the injection above proves "
+        "nothing:\n  " + "\n  ".join(problems)
+    )
     assert not fq.tag_exists(), f"{fq.TAG} must not exist yet"
 
 
@@ -133,15 +166,21 @@ def test_blind_gate_accepts_the_full_file(tmp_path: Path) -> None:
 
 
 def test_injection_short_blind_file_is_refused(tmp_path: Path) -> None:
-    """INJECTION: 29 of 30 must be caught, and the count reported."""
+    """INJECTION: one short of the target must be caught, and the count reported.
+
+    Both numbers are derived. This read "29 of 30" as literals and broke when the
+    target moved to 32 -- a test pinned to last month's count is a test of the
+    calendar.
+    """
+    short = fq.HOLDOUT_BLIND_TARGET - 1
     qdir = build_corpus(tmp_path)
-    write_blind(qdir, fq.HOLDOUT_BLIND_TARGET - 1)
+    write_blind(qdir, short)
     problems = fq.gate_blind(qdir, allow_missing=False)
-    print(f"\n29 blind questions -> {len(problems)} problem(s)")
+    print(f"\n{short} blind questions -> {len(problems)} problem(s)")
     for p in problems:
         print(f"  {p}")
     assert problems, "a short blind file was NOT refused"
-    assert "29" in problems[0] and str(fq.HOLDOUT_BLIND_TARGET) in problems[0]
+    assert str(short) in problems[0] and str(fq.HOLDOUT_BLIND_TARGET) in problems[0]
 
 
 def test_injection_missing_blind_file_is_refused_without_the_flag(tmp_path: Path) -> None:

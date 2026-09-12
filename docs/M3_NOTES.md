@@ -11,23 +11,38 @@ question corpus that a scorer can get wrong quietly, so each is written here as 
 **fixture to build before the scorer, not a check to add after it.** A scorer
 written first and tested against itself will pass all three.
 
-### C1. DV-060 answers with the empty list
+### C1. Two questions answer with the empty list, one in each arm
 
-DV-060's correct answer is *no rows*. That makes it the one question in the
-corpus a broken system passes for free: a stub that returns nothing for every
-list question answers DV-060 correctly, and "correct" is exactly what the scorer
-will say.
+**`DV-060` (dev)** and **`HO-003` (holdout)** are both correctly answered by *no
+rows*. HO-003 asks for groups above a volume floor stated in the question; only
+four groups exist and the largest reaches 27, below the floor. Both
+implementations agree, and it is an expected-empty answer, not a defect.
+
+That makes them the two questions in the corpus a broken system passes for free.
+A stub returning nothing for every list question answers both correctly, and
+"correct" is exactly what a naive scorer will say — **on both arms**, which is
+worse than on one, because agreement across arms reads as corroboration.
 
 **The scorer must distinguish expected-empty-got-empty from
-expected-rows-got-empty.** These are not the same outcome and cannot share a code
-path that only compares row counts.
+expected-rows-got-empty, for both arms.** These are not the same outcome and
+cannot share a code path that compares only row counts.
 
-**Fixture, before the scorer exists:** a stub that returns the empty list for
-every `kind: table` question must score **0** on the arm while still passing
-DV-060. If the arm scores anything above 0, or DV-060 fails, the scorer is
-conflating the two. The point of the fixture is that DV-060 passing is not
-evidence of anything on its own — it is evidence only in the company of the rest
-of the arm failing.
+**Fixture, before the scorer exists.** Two named cases: `DV-060` and the holdout
+expected-empty row. A stub returning nothing for every question must
+
+- score **0 overall**, and
+- still "pass" **every** empty-expected row.
+
+If it scores above 0, the scorer is crediting silence. If any empty-expected row
+fails, it is punishing a correct answer. Both halves have to hold at once, and
+that is the whole proof: **those rows passing is not evidence of anything on its
+own.** It is evidence only in the company of everything else failing.
+
+**A volume floor silently dropped is wrong, not partially right.** A system that
+ignores a threshold stated in the question and returns the four groups that exist
+has answered a different question. It must score **wrong** — not partial credit
+for the rows being real, not a near-miss for being close. The rows are real; the
+question was not about them.
 
 ### C2. `top_k` exceeds the available keys
 
@@ -62,6 +77,37 @@ passes a system that silently dropped the comparison, which is half the question
 
 **Fixture:** a scorer branching on `kind` alone must fail one of these ten rows.
 If it passes all ten, it is not dispatching on the flags, whatever the code says.
+
+---
+
+## The blind arm is three times as ambiguous as forecast
+
+The independent author wrote **32** questions, not the 30 forecast, and their
+population mix is not the one the corpus authors predicted:
+
+| | ANS | AMB | UNA | total |
+|---|---:|---:|---:|---:|
+| Forecast | 22 | 5 | 3 | 30 |
+| **Realised** | **13** | **15** | **4** | **32** |
+
+Six of the fifteen ambiguous questions are ambiguous for reasons
+`docs/GLOSSARY.md` §6.2 names by term.
+
+The classification was not bent toward the forecast, and the sequencing is what
+makes that checkable: the isolated session was told the forecast was not a quota,
+and told not to reword a blind question to reach it, **before** it saw the file.
+It classified what was written and reported the gap.
+
+**What this means for M4.** The blind arm is where the AMB path gets its real
+test, and the corpus's own AMB questions are not a substitute — they were written
+by people who knew which words were undefined. A clarify path tuned on 20 eval
+AMB rows faces 15 here that were written by someone who did not know what would
+be ambiguous, which is the case that matters.
+
+**M14 reports the blind arm separately**, never pooled into a single holdout
+number, and in en/ta/hi only (`ta-Latn` is permanently pending for that arm).
+Pooling would let 54 author-written questions average away the behaviour of the
+32 that test what the authors cannot see about their own assumptions.
 
 ---
 

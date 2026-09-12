@@ -58,12 +58,21 @@ QUESTION_DOCS = ("docs/GLOSSARY.md", "docs/M2_NOTES.md")
 BLIND = "holdout_blind.jsonl"
 BLIND_ENV = "BLIND_MISSING"
 
-# docs/M2_NOTES.md §4. The holdout SET is 89; only 54 are hand-written here.
-# 89, not the 90 of PDD §11: one generated sealed WHY question was dropped on
-# feasibility grounds before any system ran (LIMITATIONS.md). This constant is
-# the realised count, and the arithmetic below is checked against it.
-HOLDOUT_BLIND_TARGET = 30
+# docs/M2_NOTES.md §4. The holdout SET is 91; only 54 are hand-written here.
+# 91, not the 90 of PDD §11, and not for one reason but two that nearly cancel:
+# one generated sealed WHY question was dropped on feasibility grounds before any
+# system ran, and the independent author wrote 32 blind questions rather than the
+# 30 forecast. Both are in LIMITATIONS.md. These constants are realised counts
+# taken from the files, never forecasts, and the arithmetic below is checked
+# against them.
+HOLDOUT_BLIND_TARGET = 32
 HOLDOUT_SEALED_WHY = 5
+
+# The blind arm's realised population mix, counted from holdout_blind.jsonl after
+# the isolated run handed it back. The forecast was ANS 22 · AMB 5 · UNA 3; an
+# independent author asked far more ambiguous questions than the corpus authors
+# predicted. Recorded as what was written, never bent toward the forecast.
+BLIND_POPULATIONS = "ANS 13 · AMB 15 · UNA 4"
 
 SETS = ("dev", "eval", "holdout")
 TRAPS = (
@@ -80,7 +89,7 @@ TRAPS = (
 )
 TRAP_MIN = 3
 
-# SDD §25.2. holdout is the hand-written portion: 30 slots are written blind and
+# SDD §25.2. holdout is the hand-written portion: 32 are written blind and
 # 5 WHY are generated in M2 (docs/M2_NOTES.md §3-4).
 TARGETS: dict[str, dict[str, int]] = {
     "dev": {"ANS": 36, "AMB": 8, "UNA": 6, "DENY": 4, "WHY": 4, "LIVE": 2},
@@ -171,7 +180,7 @@ def gate_clarify_terms(qdir: Path = QDIR) -> list[str]:
 
 
 def gate_blind(qdir: Path = QDIR, allow_missing: bool | None = None) -> list[str]:
-    """The 30 blind questions must be present, or their absence declared.
+    """The blind questions must be present, or their absence declared.
 
     They are the only part of the evaluation not written by the author, so a
     holdout frozen without them is a materially weaker test than the one the PDD
@@ -190,7 +199,7 @@ def gate_blind(qdir: Path = QDIR, allow_missing: bool | None = None) -> list[str
     if allow_missing:
         return []
     return [
-        f"{BLIND} is missing. The 30 blind questions are the only part of the "
+        f"{BLIND} is missing. The blind questions are the only part of the "
         f"evaluation not written by the author. Set {BLIND_ENV}=yes to freeze "
         f"without them; the absence is then recorded in LIMITATIONS.md and the "
         f"manifest, and the holdout result must be reported on those terms."
@@ -267,8 +276,7 @@ def render_population_block() -> str:
         "| Source | Count | Populations |",
         "|---|---|---|",
         f"| `holdout.jsonl` (hand-written) | {hand} | {hand_pops} |",
-        f"| Blind author, `holdout_blind_TODO.md` | {HOLDOUT_BLIND_TARGET} | "
-        "ANS 22 · AMB 5 · UNA 3 |",
+        f"| Blind author, `holdout_blind.jsonl` | {HOLDOUT_BLIND_TARGET} | {BLIND_POPULATIONS} |",
         f"| Generated in M2, sealed | {HOLDOUT_SEALED_WHY} | WHY {HOLDOUT_SEALED_WHY} |",
     ]
     return "\n".join(lines)
@@ -453,7 +461,7 @@ def blind_status(qdir: Path = QDIR) -> dict[str, object]:
         "count": 0,
         "declared_missing": True,
         "note": (
-            "Frozen without the 30 blind questions. The holdout is the author's "
+            "Frozen without the blind questions. The holdout is the author's "
             "own work throughout; see LIMITATIONS.md."
         ),
     }

@@ -74,13 +74,13 @@ Every other question in the corpus gets four variants: English, Tamil, Hindi and
 `ta-Latn` — Tanglish, Tamil written in Latin script, which the reviewer writes by
 hand because a machine draft of code-mixed Chennai speech is not worth having.
 
-The 29 blind questions get three. `ta` and `hi` are machine drafts written by the
+The 32 blind questions get three. `ta` and `hi` are machine drafts written by the
 isolated session and labelled `machine_unverified` like every other machine
 draft. **`ta-Latn` stays `pending` for the blind arm and is never filled.**
 
 The reason is structural and cannot be worked around by effort. Hand-writing the
 Tanglish means reading the questions, and the reviewer is precisely the person the
-blind set exists to keep out — the value of those 29 questions is that the person
+blind set exists to keep out — the value of those 32 questions is that the person
 who built the system has not seen them. Filling the field would cost more than
 the field is worth.
 
@@ -157,7 +157,7 @@ re-establishing every gate above.
 
 ---
 
-## The holdout is 89 questions; PDD §11 specifies 90
+## The holdout is 91 questions; PDD §11 specifies 90
 
 One generated sealed WHY question was dropped. Its metric is an **amount**, and
 on the committed seed that amount could not clear the confirm gate at its entry
@@ -188,12 +188,62 @@ Which question was dropped is not recorded here, and the ceiling in
 `kestrel_gen/sealed.py` and `docs/M2_NOTES.md` §3 deliberately still reads 6:
 lowering it to the realised count would name the variant in a public file.
 
+### And two more than forecast, from the blind author
+
+The other half of the arithmetic runs the other way. The blind set was forecast
+at 30 questions and the independent author wrote **32**. No line was discarded.
+
+An earlier count of 29 was wrong, and the way it was wrong is worth keeping: the
+source file holds `ROLE|question` records hard-wrapped at 72 columns, so counting
+its lines counted wrapped fragments, not questions. A line count and a question
+count are not the same measurement, and nothing in the file announces which one
+you are taking.
+
+So: −1 sealed, +2 blind, and the holdout is **91**.
+
 The realised count is what the tooling enforces. `scripts/freeze_questions.py`
-holds 89 as its target, and the population block in `eval/questions/README.md` is
+holds 91 as its target, and the population block in `eval/questions/README.md` is
 generated from those constants with a gate that fails if it drifts — so the
 headline a reader sees is the realised count, not the specified one. **At G5 the
-holdout is scored out of 89, and the missing question is not counted as a
+holdout is scored out of 91, and the dropped sealed question is not counted as a
 failure.**
+
+---
+
+## The blind author asked far more ambiguous questions than we forecast
+
+The blind set's realised population mix, counted after the hand-back:
+
+| | ANS | AMB | UNA |
+|---|---:|---:|---:|
+| Forecast | 22 | 5 | 3 |
+| **Realised** | **13** | **15** | **4** |
+
+Three times the forecast ambiguity, and fewer than two thirds the answerable
+questions. Six of the fifteen are ambiguous for reasons `docs/GLOSSARY.md` §6.2
+names by term — the everyday words that have no single meaning at Kestrel until
+one is chosen.
+
+**The classification was not bent toward the forecast.** The isolated session was
+told, before it saw the file, that ANS 22 · AMB 5 · UNA 3 was a forecast and not
+a quota, that it must classify what was actually written, and that rewording a
+blind question to reach a target unblinds it. It classified what was there and
+reported the gap. That instruction existing *before* the count came back is what
+makes the number worth anything.
+
+What it says about the corpus is the uncomfortable part, and it is the finding:
+**the authors of a question set systematically underestimate how ambiguous
+outside questions are.** Both corpus authors had spent months in the glossary,
+where "collect" means captured and "best" is undefined until a metric is named.
+Someone who has not asks the question the way it occurs to them, and it is
+ambiguous more often than we guessed — by a factor of three.
+
+**M14 reports the blind arm separately**, never pooled into a single holdout
+number. Pooling would let 54 questions written by the system's authors average
+away the behaviour of 32 written by someone else, which is the only part of the
+holdout that tests what we cannot see about our own assumptions. It is also
+reported **in en/ta/hi only**, with `ta-Latn` permanently pending for that arm —
+see the Tanglish section above.
 
 ---
 

@@ -24,7 +24,7 @@ ROLES = {"rm_tamil_nadu", "store_ops_uk", "global_finance", "admin"}
 # translations-frozen gate refuses it (scripts/freeze_translations.py).
 PROVENANCE = {"human", "machine_verified", "machine_unverified", "pending"}
 
-# SDD §25.2. holdout is the hand-written portion only: 30 slots are written blind
+# SDD §25.2. holdout is the hand-written portion only: 32 are written blind
 # and 5 WHY are generated in M2 (docs/M2_NOTES.md §3-4).
 TARGETS: dict[str, dict[str, int]] = {
     "dev": {"ANS": 36, "AMB": 8, "UNA": 6, "DENY": 4, "WHY": 4, "LIVE": 2},

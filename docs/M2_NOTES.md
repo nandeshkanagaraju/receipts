@@ -269,8 +269,9 @@ The `Count` column is a **ceiling, not a quota**. A variant marked conditional i
 written only if its metric clears the confirm gate at its entry level; one that
 does not clear yields no question rather than a question nobody can answer.
 
-**Realised on the committed seed: 5.** One conditional variant did not clear, so
-the holdout set is 89 rather than the 90 of PDD §11. `LIMITATIONS.md` records the
+**Realised on the committed seed: 5.** One conditional variant did not clear.
+That alone would have made the holdout 89 against the 90 of PDD §11; the blind
+author's 32 questions took it to 91 instead (§4). `LIMITATIONS.md` records the
 decision, which was taken on feasibility before any system ran. The ceiling stays
 at 6 in this table and in `kestrel_gen/sealed.py`: lowering it to match the
 realised count would record *which* variant was dropped, in a public file.
@@ -292,14 +293,23 @@ across regenerations with the same seed (D3: deterministic, ordered counters).
 | Source | Count | Populations |
 |---|---|---|
 | `eval/questions/holdout.jsonl` (hand-written) | 54 | ANS 32 · AMB 7 · UNA 6 · DENY 6 · LIVE 3 |
-| Blind author (`holdout_blind_TODO.md`) | 30 | ANS 22 · AMB 5 · UNA 3 |
+| Blind author (`holdout_blind.jsonl`) | 32 | ANS 13 · AMB 15 · UNA 4 |
 | Generated (sealed) | 5 | WHY 5 |
-| **Total** | **89** | ANS 54 · AMB 12 · UNA 9 · DENY 6 · WHY 5 · LIVE 3 |
+| **Total** | **91** | ANS 45 · AMB 22 · UNA 10 · DENY 6 · WHY 5 · LIVE 3 |
 
-The authorship is split three ways; the total is one short of SDD §25.2 and
-PDD §11, both of which specify 90. The missing question is a generated sealed
-WHY whose metric could not clear the confirm gate at its entry level within the
-§2a ranges — see §3 above and `LIMITATIONS.md`.
+The authorship is split three ways, and the total is **one over** SDD §25.2 and
+PDD §11, both of which specify 90 — for two reasons pulling opposite ways:
+
+- **minus one:** a generated sealed WHY question whose metric could not clear the
+  confirm gate at its entry level within the §2a ranges (§3 above);
+- **plus two:** the independent author wrote **32** blind questions, not the 30
+  forecast. The earlier count of 29 was a count of *lines* in a source file
+  hard-wrapped at 72 columns, which is not a count of questions. No line was
+  discarded.
+
+Every number in this table is realised — counted from the files after the fact.
+None is a target, and the blind row in particular was never bent toward its
+forecast: see `LIMITATIONS.md` on what the realised mix turned out to be.
 
 These counts are the ones `scripts/freeze_questions.py` enforces, and the
 population block in `eval/questions/README.md` is generated from them, so the
