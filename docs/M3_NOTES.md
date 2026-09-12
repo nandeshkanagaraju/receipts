@@ -141,6 +141,8 @@ Six instances in this build, all of them mine:
 | 4 | `test_gate_holds_once_the_generator_is_frozen` | `all_gates()`, including the half CI cannot evaluate | the tag was pushed and the guard woke up in CI |
 | 5 | `test_real_corpus_is_currently_refused` | "the live repo is not freezable while sets are missing" | the blind set landed |
 | 6 | `test_meta_the_real_corpus_now_passes_its_gates` | the live corpus is gate-clean | `gate_ta_latn` landed one round later |
+| 7 | `test_real_corpus_is_currently_refused` | "the live repo is not freezable" | (same guard, second break) |
+| 8 | `test_the_holdout_arms_are_named_with_the_marker` | the blind arm *has* drift to name | the window re-render fixed the arm |
 
 ### The part worth carrying forward
 
@@ -162,6 +164,16 @@ available that it is not about attention.)
 A near relative is pinning a **count** rather than a state — the blind-file
 injection asserted the literal strings `"29"` and `"30"`, and broke when the
 target moved to 32. Same failure, smaller blast radius.
+
+Number 8 is the sharpest: a test of a *redaction* that borrowed its subject from
+the live corpus. The behaviour under test — with the marker, name them; without
+it, count them — has nothing to do with whether anything currently drifts, and it
+broke the moment the drift was fixed. **A guard whose fixture is the production
+corpus inherits the corpus's timeline.** It now constructs two synthetic rows
+that drift by construction, so it holds today and after every future fix.
+
+The same fix shape as number 6, arrived at for the same reason, four rounds
+later.
 
 ### The rule
 

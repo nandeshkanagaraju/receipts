@@ -30,6 +30,12 @@ scan reports a missing fact that is present.
 The draft of this module matched Latin words as substrings too, and `ten` inside
 `tenure` produced a phantom number. Latin is word-bounded for that reason.
 
+The warning above was then earned twice. Three Hindi stems were written in
+citation form and never reached their oblique -- `रुपये` does not appear inside
+`रुपयों` -- so the anchor went unmatched and a present fact was reported missing.
+Every Indic stem now has a test that an inflected form reaches it, with an
+injection that untrims one and fails.
+
 **What it does not cover:** anything requiring the sentence to be understood —
 a metric swapped for a sibling, a comparison dropped, a role changed. Those are
 guarded by their own scans, or by a person.
@@ -98,7 +104,7 @@ INDIC: dict[str, tuple[str, ...]] = {
     "malaysia": ("மலேசிய", "मलेशिया"),
     "london": ("லண்ட", "लंदन"),
     "manchester": ("மான்செஸ்ட", "मैनचेस्टर"),
-    "cur_inr": ("ரூபாய", "रुपये", "रुपए"),
+    "cur_inr": ("ரூபாய", "रुपय", "रुपए"),  # रुपय reaches रुपये and रुपयों
     "cur_usd": ("டாலர", "डॉलर"),
     "cur_gbp": ("பவுண்ட", "पाउंड"),
     "cur_aed": ("திர்ஹ", "दिरहम"),
@@ -107,13 +113,13 @@ INDIC: dict[str, tuple[str, ...]] = {
     "w_last_7_days": ("கடந்த 7 நாட்க", "पिछले 7 दिन", "बीते 7 दिन"),
     "w_first_half": ("முதல் பாதி", "पहली छमाही"),
     "w_last_week": ("கடந்த வார", "पिछले हफ़्ते", "पिछले हफ्ते", "गत सप्ताह"),
-    "w_last_month": ("கடந்த மாத", "पिछले महीने", "पिछले माह"),
+    "w_last_month": ("கடந்த மாத", "पिछले महीने", "पिछले माह", "गत माह", "गत महीने"),
     "w_last_quarter": ("கடந்த காலாண்ட", "पिछली तिमाही"),
     "w_this_week": ("இந்த வார", "इस हफ़्ते", "इस सप्ताह"),
     "w_this_month": ("இந்த மாத", "इस महीने"),
     "w_this_quarter": ("இந்த காலாண்ட", "इस तिमाही"),
     "w_next_quarter": ("அடுத்த காலாண்ட", "अगली तिमाही"),
-    "w_this_year": ("இந்த ஆண்ட", "इस साल", "इस वर्ष"),
+    "w_this_year": ("இந்த ஆண்ட", "इस साल", "इस वर्ष", "इस वित्त वर्ष"),
     "w_last_year": ("கடந்த ஆண்ட", "पिछले साल", "पिछले वर्ष"),
     "m_june": ("ஜூன", "जून"),
     "m_july": ("ஜூலை", "जुलाई"),

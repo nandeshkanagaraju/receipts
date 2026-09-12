@@ -42,20 +42,56 @@ def test_the_holdout_arms_are_counts_only_without_the_marker(name: str) -> None:
     assert "drifting" in text, "the count is missing, so the report says nothing at all"
 
 
-@pytest.mark.parametrize("name", ["holdout", "holdout_blind"])
-def test_the_holdout_arms_are_named_with_the_marker(name: str) -> None:
-    """Meta: the redaction is the marker, not an empty result.
+SYNTHETIC = [
+    {
+        "qid": "HO-901",
+        "population": "ANS",
+        "variants": {"en": "Refund rate in Chennai last month.", "ta": "மதுரையில் refund rate."},
+    },
+    {
+        "qid": "HO-902",
+        "population": "ANS",
+        "variants": {"en": "Captured GMV in July.", "ta": "ஆகஸ்டில் capture ஆன GMV."},
+    },
+]
 
-    Without this, the test above passes for a report that names nothing ever --
-    which would leave the isolated session unable to find the rows it is being
-    sent to fix.
+
+@pytest.mark.parametrize("name", ["holdout", "holdout_blind"])
+def test_the_naming_behaviour_holds_whether_or_not_the_real_arm_drifts(
+    name: str, monkeypatch
+) -> None:
+    """With the marker the arm is named; without it, counted. Synthetic rows.
+
+    This asserted that the real arm *has* drift to name, which was true only
+    while the defect existed. The window re-render session fixed the arm and the
+    test went from meaningful to false -- the eighth instance of the
+    milestone-assertion pattern (`docs/M3_NOTES.md`).
+
+    The behaviour under test is the redaction, not the corpus, so the rows are
+    constructed here: two synthetic holdout rows whose translations name the
+    wrong city and the wrong month. They drift by construction, today and after
+    every future fix.
     """
     import re
 
-    drifting = "drifting" in joined(name, allow_names=False)
-    assert drifting, f"precondition: {name} has no drift to name"
-    text = joined(name, allow_names=True)
-    assert re.search(QID, text), f"{name} named nothing even with naming allowed"
+    monkeypatch.setattr(anchor_report, "rows_of", lambda _name: SYNTHETIC)
+
+    counted = "\n".join(anchor_report.report(name, allow_names=False))
+    named = "\n".join(anchor_report.report(name, allow_names=True))
+    print(f"\ncounted: {counted}")
+
+    assert "2 drifting" in counted, "the synthetic arm did not drift, so nothing is being tested"
+    assert not re.search(QID, counted), f"{name} named a qid without the marker"
+    assert re.search(QID, named), f"{name} named nothing with the marker present"
+    assert "HO-901" in named and "HO-902" in named, "the marker did not name every drifting row"
+
+
+def test_the_synthetic_rows_really_drift() -> None:
+    """Precondition for the pair above: constructed rows, constructed drift."""
+    import anchors
+
+    for row in SYNTHETIC:
+        assert anchors.drift(row), f"{row['qid']} does not drift, so the fixture is inert"
 
 
 def test_the_open_sets_are_named_without_any_marker() -> None:

@@ -19,7 +19,11 @@ SET     ?= dev
 
 setup:
 	uv venv --python python3.11 .venv
-	uv pip install --python $(PY) -e ".[dev]"
+	# --python .venv/bin/python, not $(PY). Before the venv exists $(PY) falls
+	# back to the bare name `python`, and uv looks for an interpreter by that
+	# name on PATH -- which a fresh machine need not have. The path is what was
+	# just created one line above, so name it.
+	uv pip install --python .venv/bin/python -e ".[dev]"
 	# Tracked hooks, so a fresh clone gets the commit-msg guard without anyone
 	# remembering to install it. Twenty-five holdout qids reached commit messages
 	# on main, every one written by someone who knew the rule.

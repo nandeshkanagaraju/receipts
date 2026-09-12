@@ -271,3 +271,111 @@ def test_the_tanglish_window_forms_are_recognised(tanglish: str, wanted: str) ->
     """Hand-written Tanglish attaches case with a hyphen; the stems tolerate it."""
     found = anchors.extract(tanglish)
     assert wanted in found, f"{wanted} not found in {tanglish!r}; got {sorted(found)}"
+
+
+# --------------------------------------------------------------------------- #
+# Every Indic stem reaches an inflected form.
+#
+# The module's own docstring warns that a stem written in citation form never
+# matches the inflected word, and that the failure is silent -- the anchor simply
+# does not match and a present fact is reported missing. The warning was then
+# earned twice: `கோயம்புத்தூர்` in the first draft, and three Hindi stems found by
+# the window re-render session, of which `रुपये` is the clearest -- it does not
+# appear inside `रुपयों`.
+#
+# A false negative in a checker is worse than a false positive: it reports a
+# translation as wrong when it is right, and the obvious response is to stop
+# believing the checker.
+# --------------------------------------------------------------------------- #
+
+# One inflected form per anchor, as the corpus and its languages actually write
+# them. Tamil takes locative or dative; Hindi takes its oblique.
+INFLECTED: dict[str, tuple[str, ...]] = {
+    "chennai": ("சென்னையில்", "சென்னைக்கு", "चेन्नई में"),
+    "madurai": ("மதுரையில்", "मदुरै में"),
+    "coimbatore": ("கோயம்புத்தூரில்", "कोयंबटूर में"),
+    "bengaluru": ("பெங்களூரில்", "बेंगलुरु में"),
+    "tamil_nadu": ("தமிழ்நாட்டில்", "தமிழ்நாட்டுக்கு", "तमिलनाडु में"),
+    "india": ("இந்தியாவில்", "भारत में"),
+    "uk": ("இங்கிலாந்தில்", "ब्रिटेन में"),
+    "dubai": ("துபாயில்", "दुबई में"),
+    "uae": ("அமீரகத்தில்", "अमीरात में"),
+    "singapore": ("சிங்கப்பூரில்", "सिंगापुर में"),
+    "malaysia": ("மலேசியாவில்", "मलेशिया में"),
+    "london": ("லண்டனில்", "लंदन में"),
+    "manchester": ("மான்செஸ்டரில்", "मैनचेस्टर में"),
+    "cur_inr": ("ரூபாயில்", "ரூபாய்க்கு", "रुपयों में", "रुपये में", "रुपए"),
+    "cur_usd": ("டாலரில்", "डॉलरों में"),
+    "cur_gbp": ("பவுண்டில்", "पाउंडों में"),
+    "cur_aed": ("திர்ஹத்தில்", "दिरहम में"),
+    "cur_myr": ("ரிங்கிட்டில்", "रिंगिट में"),
+    "w_yesterday": ("நேற்று", "कल"),
+    "w_last_week": ("கடந்த வாரத்தில்", "पिछले हफ़्ते"),
+    "w_last_month": ("கடந்த மாதத்திற்கு", "पिछले महीने", "गत माह"),
+    "w_last_quarter": ("கடந்த காலாண்டில்", "पिछली तिमाही"),
+    "w_last_7_days": ("கடந்த 7 நாட்களில்", "पिछले 7 दिनों में"),
+    "w_this_week": ("இந்த வாரத்தில்", "इस हफ़्ते"),
+    "w_this_month": ("இந்த மாதத்தில்", "इस महीने"),
+    "w_this_quarter": ("இந்த காலாண்டில்", "इस तिमाही"),
+    "w_next_quarter": ("அடுத்த காலாண்டில்", "अगली तिमाही"),
+    "w_this_year": ("இந்த ஆண்டிற்கு", "इस साल", "इस वित्त वर्ष"),
+    "w_last_year": ("கடந்த ஆண்டில்", "पिछले साल"),
+    "w_first_half": ("முதல் பாதியில்", "पहली छमाही में"),
+    "m_june": ("ஜூனில்", "जून में"),
+    "m_july": ("ஜூலையில்", "जुलाई में"),
+    "m_august": ("ஆகஸ்டில்", "अगस्त में"),
+    "m_september": ("செப்டம்பரில்", "सितंबर में"),
+}
+
+
+def test_every_indic_anchor_has_an_inflected_form_under_test() -> None:
+    """The table cannot quietly fall behind the vocabulary."""
+    missing = sorted(set(anchors.INDIC) - set(INFLECTED))
+    assert not missing, f"Indic anchors with no inflected form under test: {missing}"
+
+
+@pytest.mark.parametrize("key", sorted(INFLECTED))
+def test_an_inflected_form_reaches_its_stem(key: str) -> None:
+    for form in INFLECTED[key]:
+        found = anchors.extract(form)
+        assert key in found, (
+            f"{key} not reached by {form!r} -- the stem is not trimmed short of "
+            f"the inflection. Got {sorted(found) or 'nothing'}."
+        )
+
+
+@pytest.mark.parametrize(
+    "key,untrimmed,inflected",
+    [
+        ("cur_inr", "रुपये", "रुपयों में"),
+        ("coimbatore", "கோயம்புத்தூர்", "கோயம்புத்தூரில்"),
+        ("tamil_nadu", "தமிழ்நாடு", "தமிழ்நாட்டில்"),
+    ],
+)
+def test_injection_an_untrimmed_stem_fails_the_check(
+    key: str, untrimmed: str, inflected: str, monkeypatch
+) -> None:
+    """INJECTION: put a citation form back and the inflected word stops matching.
+
+    Each of these is a real regression: the first was found by the window
+    re-render session, the second by this file's first draft.
+    """
+    patched = dict(anchors.INDIC)
+    patched[key] = (untrimmed,)
+    monkeypatch.setattr(anchors, "INDIC", patched)
+    found = anchors.extract(inflected)
+    print(f"\nuntrimmed {untrimmed!r} vs {inflected!r} -> {sorted(found) or 'nothing'}")
+    assert key not in found, (
+        f"{untrimmed!r} still matched {inflected!r}, so this injection proves "
+        "nothing about stem trimming"
+    )
+
+
+def test_meta_the_trimmed_stems_match_where_the_untrimmed_ones_do_not(monkeypatch) -> None:
+    """Guard off: the same inflected words match with the real vocabulary."""
+    for key, _untrimmed, inflected in (
+        ("cur_inr", "रुपये", "रुपयों में"),
+        ("coimbatore", "கோயம்புத்தூர்", "கோயம்புத்தூரில்"),
+        ("tamil_nadu", "தமிழ்நாடு", "தமிழ்நாட்டில்"),
+    ):
+        assert key in anchors.extract(inflected), f"{key} is not reached by {inflected!r}"
