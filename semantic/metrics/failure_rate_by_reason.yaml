@@ -12,6 +12,13 @@ numerator:
   agg: count
   expr: payment_attempts.attempt_id
   where: "payment_attempts.status = 'failed'"
+# The denominator is ALL attempts in the window, NOT the attempts in this
+# reason's group. Computed with an OVER () window so it does not follow the
+# GROUP BY -- without which each reason's rate came out as failed/failed = 1.0
+# and the eight reasons summed to 800%. §2.10 warns about exactly this: "a set
+# of per-reason figures that sums to 100% has been computed against the wrong
+# denominator". The glossary predicted the bug; the compiler committed it.
+denominator_scope: ungrouped
 denominator:
   agg: count
   expr: payment_attempts.attempt_id

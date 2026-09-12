@@ -331,19 +331,45 @@ def resolve_window(
 # --------------------------------------------------------------------------- #
 
 
+def _implied_currency(plan: QueryPlan, catalog: Catalog) -> str | None:
+    """The one currency the filtered countries share, or None if they do not.
+
+    SDD §9.1 rule 6's third step. A question filtered to India has exactly one
+    sensible reporting currency and nobody should have to say so; a question
+    spanning six countries has none and falls through to the default.
+    """
+    countries = {value for f in plan.filters if f.dimension == "country" for value in f.values}
+    if not countries:
+        return None
+    table = catalog.country_currencies()
+    found = {table.get(name) or table.get(name.upper()) for name in countries}
+    found.discard(None)
+    return next(iter(found)) if len(found) == 1 else None
+
+
 def _normalise(value: str) -> str:
     return " ".join(value.casefold().split())
 
 
-def _resolve_filter_value(value: str, known: tuple[str, ...]) -> str | None:
-    """Case-insensitive exact match first, then nothing. Never a fuzzy accept.
+def _resolve_filter_value(
+    value: str, known: tuple[str, ...], synonyms: dict[str, str] | None = None
+) -> str | None:
+    """Exact match, then a declared synonym, then nothing. Never a fuzzy accept.
 
-    A near-miss is an *issue* carrying the nearest known values, not a silent
-    substitution: answering about Madurai because someone typed Maduari is a
-    confident wrong answer, which is the failure this whole project is about.
+    SDD §9.1 rule 3 asks for synonym matching, and the difference between a
+    synonym and a guess is where it came from. "UK" is a declared alias for
+    "United Kingdom", a value that exists in the data. "Maduari" is a typo, and
+    answering about Madurai because of it is a confident wrong answer -- so that
+    stays an issue carrying the nearest known values.
     """
     folded = {_normalise(k): k for k in known}
-    return folded.get(_normalise(value))
+    direct = folded.get(_normalise(value))
+    if direct is not None:
+        return direct
+    canonical = (synonyms or {}).get(value.casefold())
+    if canonical is not None and _normalise(canonical) in folded:
+        return folded[_normalise(canonical)]
+    return None
 
 
 def validate(
@@ -365,6 +391,9 @@ def validate(
     prefs = prefs or {}
     issues: list[Issue] = []
     applied: list[str] = []
+    # Values rewritten to their canonical spelling, so the compiler filters on a
+    # value the database actually holds rather than on what somebody typed.
+    resolved_filters: dict[str, tuple[str, ...]] = {}
 
     # 1. The metric exists. Guaranteed by the planner's enum; re-checked anyway,
     #    because "guaranteed elsewhere" is how a guarantee stops being checked.
@@ -430,8 +459,15 @@ def validate(
         known = catalog.values_for(filter_.dimension)
         if not known:
             continue  # no index for this dimension: nothing to check against
+        synonyms = catalog.dimension(filter_.dimension).value_synonyms
+        resolved_values: list[str] = []
         for value in filter_.values:
-            if _resolve_filter_value(value, known) is None:
+            canonical = _resolve_filter_value(value, known, synonyms)
+            if canonical is not None:
+                resolved_values.append(canonical)
+                if canonical != value:
+                    applied.append(f"{filter_.dimension} {value!r} → {canonical!r}")
+            if canonical is None:
                 issues.append(
                     Issue(
                         "UNKNOWN_FILTER_VALUE",
@@ -440,6 +476,8 @@ def validate(
                         tuple(difflib.get_close_matches(value, known, 3)),
                     )
                 )
+        if len(resolved_values) == len(filter_.values) and tuple(resolved_values) != filter_.values:
+            resolved_filters[filter_.dimension] = tuple(resolved_values)
 
     # 4. The window.
     start, end, window_applied, window_issues = resolve_window(
@@ -464,11 +502,23 @@ def validate(
             )
             compare_start = first_date
 
-    # 6. Reporting currency.
+    # 6. Reporting currency, in the order SDD §9.1 rule 6 gives:
+    #    explicit -> the role's default -> the single currency of the countries
+    #    filtered to -> USD.
+    #
+    # The middle two were missing and it went straight to USD, so every UK
+    # question came back in dollars. The numbers were *right* and in the wrong
+    # currency, which is the worst shape for an error to have: 107,381,818 is a
+    # perfectly plausible answer to "how much did we collect in the UK", and it
+    # is 86,894,100 pounds.
     currency = draft_plan.reporting_currency
     if not currency:
-        currency = prefs.get("reporting_currency") or "USD"
-        applied.append(f"reporting currency → {currency} (not stated in the question)")
+        currency = prefs.get("reporting_currency") or _implied_currency(draft_plan, catalog)
+        if currency:
+            applied.append(f"reporting currency → {currency} (not stated in the question)")
+        else:
+            currency = "USD"
+            applied.append("reporting currency → USD (no role default and mixed currencies)")
 
     # 7. A metric reached through a default_for phrase, where a sibling exists.
     if metric.siblings:
@@ -479,8 +529,18 @@ def validate(
     if issues:
         return Issues(tuple(issues))
     assert start is not None and end is not None
+    final_plan = draft_plan
+    if resolved_filters:
+        final_plan = draft_plan.model_copy(
+            update={
+                "filters": tuple(
+                    f.model_copy(update={"values": resolved_filters.get(f.dimension, f.values)})
+                    for f in draft_plan.filters
+                )
+            }
+        )
     resolved = ResolvedPlan(
-        plan=draft_plan,
+        plan=final_plan,
         start=start,
         end_exclusive=end,
         compare_start=compare_start,

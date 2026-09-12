@@ -29,6 +29,27 @@ from ..domain.ids import content_hash
 # for recognising names a person might type, and nobody types a showroom id.
 VALUE_INDEX_CAP = 400
 
+# The six countries Kestrel trades in and their currencies (SDD §5.1). Written
+# down rather than queried: the compiler is pure and has to decide whether an FX
+# join is needed without reading a row. A country added to the data and not here
+# fails `test_country_currency_map_matches_the_artifact`.
+COUNTRY_CURRENCY: dict[str, str] = {
+    "IN": "INR",
+    "India": "INR",
+    "AE": "AED",
+    "United Arab Emirates": "AED",
+    "SG": "SGD",
+    "Singapore": "SGD",
+    "MY": "MYR",
+    "Malaysia": "MYR",
+    "GB": "GBP",
+    "United Kingdom": "GBP",
+    "US": "USD",
+    "United States": "USD",
+}
+
+REGION_IDS: tuple[str, ...] = tuple(f"{code}-" for code in ("IN", "AE", "SG", "MY", "GB", "US"))
+
 
 class CatalogError(ValueError):
     """A question the catalog cannot answer, raised rather than guessed at."""
@@ -54,7 +75,7 @@ class Entity:
     required_capability: str | None = None
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class Dimension:
     name: str
     entity: str
@@ -63,6 +84,8 @@ class Dimension:
     type: str
     label: dict[str, str]
     synonyms: dict[str, tuple[str, ...]]
+    # Alias -> canonical value, for values that exist in the data (SDD §9.1).
+    value_synonyms: dict[str, str] = field(default_factory=dict)
 
     @property
     def column(self) -> str:
@@ -110,6 +133,14 @@ class Metric:
     fx_date_column: str | None = None
     attribution: str | None = None
     required_dimensions: tuple[str, ...] = ()
+    # Entities this metric must always be joined to, whatever the plan asks for.
+    # `payment_success_rate_order` needs `payment_attempts` even when nobody
+    # filters by method, so that adding a method filter changes the NUMERATOR
+    # and not only the denominator (GLOSSARY §1.9).
+    requires_entities: tuple[str, ...] = ()
+    # "ungrouped" makes the denominator a window over the whole result rather
+    # than a count within each GROUP BY group (GLOSSARY §2.10).
+    denominator_scope: str = "grouped"
     snapshot: bool = False
     snapshot_boundary: str | None = None
     row_level: bool = False
@@ -193,6 +224,25 @@ class Catalog:
         return {
             "metrics": tuple(sorted(m.name for m in metrics)),
             "dimensions": tuple(sorted({d for m in metrics for d in m.allowed_dimensions})),
+        }
+
+    def country_currencies(self) -> dict[str, str]:
+        """Country name and code -> currency (SDD §5.1).
+
+        Held here rather than queried, because the compiler is [P] and must be
+        able to decide whether a conversion is needed without touching the data.
+        """
+        return dict(COUNTRY_CURRENCY)
+
+    def region_currencies(self) -> dict[str, str]:
+        """Region id -> currency, via the region's country prefix."""
+        return {
+            region: currency
+            for region, currency in (
+                (region_id, COUNTRY_CURRENCY.get(region_id.split("-")[0], ""))
+                for region_id in REGION_IDS
+            )
+            if currency
         }
 
     def values_for(self, dimension: str) -> tuple[str, ...]:

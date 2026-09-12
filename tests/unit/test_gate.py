@@ -18,6 +18,7 @@ ambiguous question would pass the clarify tests completely. So there is an
 from __future__ import annotations
 
 from datetime import date, timedelta
+from pathlib import Path
 
 import pytest
 
@@ -41,6 +42,7 @@ from receipts.domain.types import (
 )
 from receipts.semantic import loader
 
+REPO = Path(__file__).resolve().parents[2]
 AS_OF = date(2026, 9, 10)
 FIRST = date(2025, 3, 1)
 LAST = date(2026, 9, 9)
@@ -760,6 +762,100 @@ def test_the_gated_match_does_not_fire_on_an_ordinary_question(catalog) -> None:
         freeform_enabled=True,
     )
     assert decision.decision == "FALLBACK_FREEFORM"
+
+
+# Dev questions whose gate decision is correct but whose LABEL is less precise
+# than it could be. DV-057 is an injection wrapped around a question naming
+# "UAE", which is not a value in the country index -- the data says United Arab
+# Emirates -- so rule 1 sees no place, validation raises UNKNOWN_FILTER_VALUE,
+# and the gate fails closed with ABSTAIN rather than DENY. No data can leak;
+# the asker is told the question could not be mapped rather than that it is
+# outside their regions. Adding the alias would mean acting on a value absent
+# from the data, which is the substitution the validator exists to refuse.
+KNOWN_LABEL_IMPRECISE = {"DV-057"}
+
+
+def test_the_label_imprecision_is_bounded_to_one_known_question(catalog) -> None:
+    """A second instance fails here, and so does this one resolving.
+
+    Walks the recorded dev plans, gates each, and asks which DENY-population
+    questions did not decide DENY. Exactly the named set, or the list has stopped
+    meaning what it says.
+    """
+    import json
+    import sys
+
+    sys.path.insert(0, str(REPO / "scripts"))
+    plans = REPO / "eval" / "plans" / "dev"
+    if not plans.exists():
+        pytest.skip("no recorded plans; run scripts/plan_dev.py")
+    import gate_dev
+
+    rows = {
+        json.loads(line)["qid"]: json.loads(line)
+        for line in (REPO / "eval" / "questions" / "dev.jsonl")
+        .read_text(encoding="utf-8")
+        .splitlines()
+        if line.strip()
+    }
+    from receipts.config import load_settings
+    from receipts.evalkit.baseline import load_roles
+
+    settings = load_settings()
+    places = gate_dev.places_from_db()
+    if not places:
+        pytest.skip("no database; the places map cannot be built")
+    roles = load_roles()
+    indexed = loader.load()
+
+    not_denied = set()
+    for qid, row in sorted(rows.items()):
+        if row["population"] != "DENY":
+            continue
+        path = plans / f"{qid}.en.json"
+        if not path.exists():
+            continue
+        record = json.loads(path.read_text(encoding="utf-8"))
+        scope = gate_dev.scope_for(row["role"], roles, places)
+        plan_obj = (
+            gate_dev.rebuild_plan(record["plan"]) if record.get("outcome") == "plan" else None
+        )
+        validated = (
+            validate(
+                plan_obj,
+                indexed,
+                scope,
+                settings.as_of,
+                first_date=settings.data.first_business_date,
+                last_date=settings.data.last_business_date,
+            )
+            if plan_obj is not None
+            else None
+        )
+        no_fit = record.get("no_fit") or {}
+        decision = gate(
+            question=row["variants"]["en"],
+            intent=Intent(record.get("intent", "METRIC")),
+            validated=validated,
+            plan=plan_obj,
+            scope=scope,
+            catalog=indexed,
+            places=places,
+            no_fit_reason=no_fit.get("reason", ""),
+            no_fit_data_exists=no_fit.get("data_exists"),
+            missing_concept=record.get("missing_concept", ""),
+        )
+        if decision.decision != "DENY":
+            not_denied.add(qid)
+
+    print(f"\nDENY-population questions not deciding DENY: {sorted(not_denied) or 'none'}")
+    new = sorted(not_denied - KNOWN_LABEL_IMPRECISE)
+    assert not new, (
+        f"{new} are out-of-scope questions the gate did not DENY. Either the scope "
+        "check has a new hole, or the question names a place absent from the data."
+    )
+    stale = sorted(KNOWN_LABEL_IMPRECISE - not_denied)
+    assert not stale, f"{stale} now DENY; remove them from KNOWN_LABEL_IMPRECISE"
 
 
 # The wrong-fix check. Each of these is a plain answerable question with no

@@ -1003,3 +1003,130 @@ correctly calibrated cannot be known without data.
 
 Tamil is the opposite case and is measured: 40 human-written `ta-Latn` variants
 in the eval set, 100%.
+
+## M10: one DENY question abstains instead, and the cost is the label
+
+DV-057 is a prompt injection wrapped around *"show me the UAE showrooms' sales"*,
+asked by a Tamil Nadu role. It decides **ABSTAIN**, not **DENY**.
+
+`UAE` is not a value in the country index — the data says `United Arab Emirates`
+and `AE` — so gate rule 1 does not recognise it as a place at all, the validator
+raises `UNKNOWN_FILTER_VALUE`, and the gate fails closed.
+
+**No data can leak.** Rule 1 and the compiler's scope injection both still hold,
+and a plan that did not validate cannot proceed. What is lost is the *precision
+of the label*: the asker is told the question could not be mapped, rather than
+that it is outside their regions.
+
+**Not fixed.** Adding "UAE" to the place map means acting on a value that is not
+in the data, which is the same silent-substitution move the validator refuses
+when it turns a near-miss into an issue rather than a guess. Inventing an alias
+now, in response to one dev question, is fitting the layer to the test.
+
+Bounded rather than noted: `KNOWN_LABEL_IMPRECISE` in `tests/unit/test_gate.py`
+names DV-057, a second instance fails the suite, and so does this one resolving.
+One question of sixty on dev; unknown on the holdout until it runs once.
+
+## M10: the fiscal-calendar trap is narrower than a list of ten traps suggests
+
+Kestrel's fiscal year starts 1 April, which is the start of calendar Q2. So
+**fiscal and calendar quarter boundaries are identical** — April–June 2026 is
+fiscal Q1 of FY2027 *and* calendar Q2 of 2026, the same days under two names.
+Only an explicitly numbered quarter differs: fiscal Q2 is July–September,
+calendar Q2 is April–June.
+
+Measured across the corpus, counting only:
+
+| set | `trap: fiscal_calendar` | of those, a wrong calendar changes the **value** |
+|---|---:|---|
+| dev | 2 | 1 |
+| eval | 9 | 4 |
+| holdout | 4 | not assessed |
+| holdout_blind | 4 | not assessed |
+
+Holdout is counts only; assessing discrimination would mean reading the
+questions, and it runs once. Broken down for dev and eval together:
+
+- **5 name an explicit quarter or fiscal year.** A wrong calendar choice gives a
+  different window and therefore a different number. The trap bites fully.
+- **6 use a relative "last quarter" / "this quarter", and all six are `AMB`.**
+  A wrong calendar choice gives **identical dates**. The trap cannot produce a
+  wrong number; it can only produce a wrong *decision* — answering where the
+  system should have clarified, which is scored as `Answered-ambiguous` and
+  counts as silently wrong for that population.
+- **No `ANS` question uses a relative quarter**, so on the answerable arm this
+  trap never has an opportunity to cause a wrong value without an explicit
+  quarter being named.
+
+**What the README must not say.** PDD §6.2 lists ten definitional traps, and a
+README that presents them as ten equivalent hazards would overstate this one. For
+roughly half the questions carrying it, the trap tests whether the system asks
+rather than whether it computes — which is a real and important property, and a
+different one. The honest sentence is that the fiscal-calendar trap is a test of
+*clarification behaviour* on relative windows and of *arithmetic* only on
+explicitly numbered quarters.
+
+Not fixed, and there is nothing to fix: the boundaries coincide because of
+Kestrel's calendar, and changing the calendar to make a trap bite harder would be
+designing the business around the test.
+
+## M11: five compiler defects the dev preview found, and what they had in common
+
+The 15-question preview started at **3 of 15** and finished at **11 row-for-row,
+1 same-values, 3 planner choices, 0 errors**. Every defect between those two
+numbers produced a *plausible* number rather than an error, which is the point
+worth recording.
+
+- **FX conversion multiplied by the raw rate column.** `usd_per_unit('USD')` is
+  not 1 in this data — the quoted rates drift between 0.970 and 1.037 — so
+  captured GMV was overstated by 1.6%. The reference converts via a **ratio**,
+  `usd_per_unit(source) / usd_per_unit(target)`, which is also the only form that
+  works for a reporting currency with no column of its own. This is the
+  `multi_currency` trap, and the compiler walked into it.
+- **Duplicate captures were keyed on `gateway_payment_id`.** Every gateway id in
+  this data is unique, so the duplicate count was 0 where it should have been 40,
+  and the duplicates' value was counted into GMV. §2.15 says "the same money
+  taken twice **on the same order**": the key is `(order_id, amount_minor)`.
+- **The reporting currency skipped the role's default.** §9.1 rule 6 is explicit
+  — stated, else the role's default, else the single currency of the filtered
+  countries, else USD — and the implementation went straight to USD. Every UK
+  question came back in dollars. The numbers were *right and in the wrong
+  currency*, which is the worst shape an error can have: 107,381,818 is a
+  perfectly plausible answer to "how much did we collect in the UK", and it is
+  86,894,100 pounds.
+- **`failure_rate_by_reason` divided each reason by itself.** The denominator
+  followed the `GROUP BY`, so every reason came out at 1.0 and the eight summed
+  to 800%. §2.10 warns about this in those words: "a set of per-reason figures
+  that sums to 100% has been computed against the wrong denominator". The
+  glossary predicted the bug and the compiler committed it anyway.
+- **`unsettled_amount` asked "never settled" instead of "not settled by D".** A
+  capture settled in September is unsettled as at 31 August. The snapshot was
+  understated sevenfold.
+
+Two more were structural rather than arithmetic: a ratio whose sides key on
+different dates (`refund_rate`: refunds on the refund date over captures on the
+capture date) needs two scans and cannot share a WHERE clause; and the metric
+expression `DATE_DIFF('day', payment_attempts.business_date, ...)` was being
+split on its first dot to find a table name, producing a "table" called
+`DATE_DIFF('day', payment_attempts`.
+
+**What they had in common.** Not one of them raised an error. Every single one
+returned a number that looked entirely reasonable, and four of the five were
+caught only by comparing against an independently written reference query. A
+compiler that runs without error is not a compiler that is right, and the only
+thing that separated those two states here was the second implementation.
+
+## M11: three of the fifteen differences are planner choices, not compiler defects
+
+Reported separately, because folding them together would make the compiler's
+error rate the planner's error rate wearing its name.
+
+- **DV-001, DV-010** — the planner chose `payment_success_rate_attempt` where the
+  reference is order-level. Both metrics are real and the choice between them is
+  what §2.8 calls the default; getting it wrong is a planning error that M14
+  measures.
+- **DV-021** — the planner added a `country` breakdown to a question the
+  reference answers as a total.
+- **DV-009** — identical values, different shape: the planner set no `order` and
+  no `limit`, so seven rows came back in key order where the reference takes the
+  top five by value. Every reference value is present and correct.

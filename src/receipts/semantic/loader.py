@@ -41,7 +41,7 @@ FORBIDDEN_TABLES = frozenset({"customers"})
 
 # Placeholders the compiler substitutes; they are not columns and must not be
 # resolved as such at load time.
-COMPILER_TOKENS = frozenset({"AS_OF"})
+COMPILER_TOKENS = frozenset({"AS_OF", "WINDOW_END"})
 
 REQUIRED_LANGS = ("en", "ta", "hi")
 
@@ -255,6 +255,10 @@ def load_dimensions(path: Path, entity_names: set[str]) -> tuple[Dimension, ...]
         synonyms = {
             str(lang): _as_tuple(values) for lang, values in (raw.get("synonyms") or {}).items()
         }
+        value_synonyms: dict[str, str] = {}
+        for canonical, aliases in (raw.get("value_synonyms") or {}).items():
+            for alias in _as_tuple(aliases):
+                value_synonyms[str(alias).casefold()] = str(canonical)
         out.append(
             Dimension(
                 name=name,
@@ -264,6 +268,7 @@ def load_dimensions(path: Path, entity_names: set[str]) -> tuple[Dimension, ...]
                 type=str(raw.get("type", "string")),
                 label={str(k): str(v) for k, v in labels.items()},
                 synonyms=synonyms,
+                value_synonyms=value_synonyms,
             )
         )
     return tuple(out)
@@ -319,6 +324,8 @@ def load_metrics(
                 fx_date_column=raw.get("fx_date_column"),
                 attribution=raw.get("attribution"),
                 required_dimensions=_as_tuple(raw.get("required_dimensions")),
+                requires_entities=_as_tuple(raw.get("requires_entities")),
+                denominator_scope=str(raw.get("denominator_scope") or "grouped"),
                 snapshot=bool(raw.get("snapshot", False)),
                 snapshot_boundary=raw.get("snapshot_boundary"),
                 row_level=bool(raw.get("row_level", False)),

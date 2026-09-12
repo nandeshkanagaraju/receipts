@@ -12,14 +12,24 @@ definition: >-
   neither.
 type: ratio
 entity: orders
+# Defined over the JOINED attempt row, not over an EXISTS on the order. The two
+# agree exactly when nothing is filtered -- an order with any captured attempt,
+# over an order with any attempt -- and they disagree the moment a method, bank
+# or network filter is applied, which is precisely when §1.9 says they must.
+#
+# With EXISTS_CAPTURE the numerator asks "did this order get paid at all", so an
+# order that tried UPI, failed, and paid by card counted as a UPI SUCCESS. That
+# is the exact error §1.9 warns about: it makes a method's rate rise when the
+# method fails. The join plus `requires_entities` makes the filter reach both
+# sides, so the numerator asks "did this order get paid ON THIS METHOD".
+requires_entities: [payment_attempts]
 numerator:
   agg: count_distinct
   expr: orders.order_id
-  where: "EXISTS_CAPTURE"
+  where: "payment_attempts.status = 'captured'"
 denominator:
   agg: count_distinct
   expr: orders.order_id
-  where: "EXISTS_ATTEMPT"
 time_dimension: orders.business_date
 money: false
 unit: ratio

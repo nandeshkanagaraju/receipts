@@ -17,6 +17,23 @@ dimensions:
     expr: countries.name
     join_via: ["countries.country_code = showrooms.country_code"]
     type: string
+    # SDD §9.1 rule 3 asks for filter values to be matched against the dimension
+    # value index "with case-insensitive and trilingual-synonym matching". These
+    # are the value synonyms for country: the short forms and ISO codes people
+    # write. Without them "UK" is simply not a country, and four of the fifteen
+    # dev preview questions failed validation on a word everybody uses.
+    #
+    # They are aliases for values that EXIST in the data, which is the difference
+    # between this and inventing one: "UK" resolves to "United Kingdom", a row
+    # that is there. A value with no such row is still an issue carrying the
+    # nearest known names, never a silent substitution.
+    value_synonyms:
+      United Kingdom: [UK, U.K., Britain, GB, Great Britain]
+      United Arab Emirates: [UAE, U.A.E., Emirates, AE, Dubai]
+      United States: [USA, US, U.S., America]
+      India: [IN, Bharat]
+      Singapore: [SG]
+      Malaysia: [MY]
     label: {en: Country, ta: நாடு, hi: देश}
     synonyms:
       en: [country, market, nation]

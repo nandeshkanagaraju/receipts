@@ -19,16 +19,29 @@ named_predicates:
     EXISTS (SELECT 1 FROM payment_attempts pa
             WHERE pa.order_id = orders.order_id AND pa.status = 'captured'
               AND pa.is_test = FALSE)
+  # A duplicate capture is "the same money taken twice **on the same order**"
+  # (GLOSSARY §2.15), so the key is (order_id, amount_minor), ordered by attempt.
+  #
+  # These were first written on `gateway_payment_id`, on the reasoning that two
+  # rows sharing a gateway id are one payment recorded twice. That is a true
+  # sentence about payment gateways and a false one about this data: every
+  # gateway_payment_id here is unique, so IS_DUPLICATE_CAPTURE matched nothing
+  # and IS_FIRST_CAPTURE matched everything. Duplicate captures counted as zero
+  # and their value was counted into captured GMV.
   IS_FIRST_CAPTURE: >-
     payment_attempts.attempt_id = (
-      SELECT MIN(d.attempt_id) FROM payment_attempts d
-      WHERE d.gateway_payment_id = payment_attempts.gateway_payment_id
-        AND d.status = 'captured')
+      SELECT d.attempt_id FROM payment_attempts d
+      WHERE d.order_id = payment_attempts.order_id
+        AND d.amount_minor = payment_attempts.amount_minor
+        AND d.status = 'captured' AND NOT d.is_test
+      ORDER BY d.attempt_no, d.attempt_id LIMIT 1)
   IS_DUPLICATE_CAPTURE: >-
     payment_attempts.attempt_id <> (
-      SELECT MIN(d.attempt_id) FROM payment_attempts d
-      WHERE d.gateway_payment_id = payment_attempts.gateway_payment_id
-        AND d.status = 'captured')
+      SELECT d.attempt_id FROM payment_attempts d
+      WHERE d.order_id = payment_attempts.order_id
+        AND d.amount_minor = payment_attempts.amount_minor
+        AND d.status = 'captured' AND NOT d.is_test
+      ORDER BY d.attempt_no, d.attempt_id LIMIT 1)
   HAS_PHONE_LINE: >-
     EXISTS (SELECT 1 FROM order_items oi JOIN products p ON p.sku = oi.sku
             WHERE oi.order_id = orders.order_id AND p.is_accessory = FALSE)
@@ -39,9 +52,18 @@ named_predicates:
     EXISTS (SELECT 1 FROM payment_attempts pa
             WHERE pa.order_id = orders.order_id AND pa.status = 'captured'
               AND pa.method = 'emi' AND pa.is_test = FALSE)
+  # "Not settled BY D", not "never settled" (GLOSSARY §2.14). A capture settled
+  # in September is unsettled as at 31 August, and the first version -- which
+  # asked only whether a settlement row existed at all -- reported it as settled
+  # and understated the snapshot sevenfold on the dev preview.
+  #
+  # WINDOW_END is a compiler token substituted with the window's inclusive last
+  # day, not a column. The loader knows not to try to resolve it.
   NOT_SETTLED: >-
     NOT EXISTS (SELECT 1 FROM settlement_items si
-                WHERE si.attempt_id = payment_attempts.attempt_id)
+                JOIN settlements st ON st.settlement_id = si.settlement_id
+                WHERE si.attempt_id = payment_attempts.attempt_id
+                  AND st.settled_on <= WINDOW_END)
 
 entities:
   - name: orders
