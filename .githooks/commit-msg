@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# Refuse a commit message that names a holdout row. Wired in by `make setup`
+# (core.hooksPath), so a fresh clone is covered without anyone remembering.
+#
+# Thin on purpose: the rule lives in scripts/commit_msg_guard.py, which shares
+# classify() with the gist guard and the durable-surface audit. A hook that
+# reimplemented the pattern would be a fourth definition to drift.
+set -euo pipefail
+
+python="python3"
+if [ -x .venv/bin/python ]; then
+  python=".venv/bin/python"
+fi
+
+exec "$python" scripts/commit_msg_guard.py "$1"

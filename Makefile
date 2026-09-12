@@ -20,7 +20,11 @@ SET     ?= dev
 setup:
 	uv venv --python python3.11 .venv
 	uv pip install --python $(PY) -e ".[dev]"
-	@echo "setup: done. Interpreter: $$($(PY) --version)"
+	# Tracked hooks, so a fresh clone gets the commit-msg guard without anyone
+	# remembering to install it. Twenty-five holdout qids reached commit messages
+	# on main, every one written by someone who knew the rule.
+	git config core.hooksPath .githooks
+	@echo "setup: done. Interpreter: $$($(PY) --version), hooks: $$(git config --get core.hooksPath)"
 
 test:
 	$(PYTEST)
