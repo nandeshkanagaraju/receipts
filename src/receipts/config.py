@@ -93,6 +93,13 @@ class LLMSettings(Strict):
     secondary: Provider
     max_tokens: MaxTokens
     budget_per_question: Budget
+    # The baseline gets its own, larger, per-question budget. Its prompt carries
+    # the entire glossary and full DDL by design (SDD §25.4), which is ~16k
+    # tokens before the question is even asked, and one budget covering both
+    # systems would have to be either too small to run the baseline at all or
+    # large enough to stop bounding Receipts. Two numbers, each meaning one
+    # thing.
+    baseline_budget_per_question: Budget
 
 
 class Freeform(Strict):

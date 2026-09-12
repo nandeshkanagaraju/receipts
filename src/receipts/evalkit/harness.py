@@ -73,6 +73,56 @@ def null(trial: Trial, reference: ReferenceAnswer | None) -> ScorableAnswer:
 
 SYSTEMS: dict[str, System] = {"oracle": oracle, "null": null}
 
+# Systems that need building rather than calling: a connection, a model, a
+# rendered prompt. Kept apart from `SYSTEMS` so the two control systems stay
+# constructible with nothing at all, which is what makes them controls.
+SYSTEM_BUILDERS: dict[str, Callable[[], System]] = {}
+
+
+def _build_baseline() -> System:
+    """B0 (SDD §25.4), wired to whichever model mode the environment asks for.
+
+    Never a live client under pytest: `receipts.llm.anthropic` refuses to be
+    constructed there (D9), so a test that reached this path would fail loudly
+    rather than quietly dial out.
+    """
+    import duckdb
+
+    from ..config import load_settings
+    from ..llm.budget import BudgetedLLM, QuestionBudget
+    from ..llm.replay import RecordingLLM, ReplayLLM
+    from .baseline import build as build_baseline
+    from .reference import DB_PATH
+
+    settings = load_settings()
+    mode = os.environ.get("RECEIPTS_LLM_MODE", settings.llm.mode)
+    provider, model = settings.llm.primary.provider, settings.llm.primary.model
+    recordings = REPO / "eval" / "recordings" / "baseline"
+
+    if mode == "replay":
+        llm: Any = ReplayLLM(recordings, provider=provider, model=model)
+    elif mode == "record":
+        from ..llm.anthropic import AnthropicLLM
+
+        llm = RecordingLLM(AnthropicLLM(model=model), directory=recordings)
+    else:
+        raise SystemExit(f"baseline needs mode replay or record, not {mode!r}")
+
+    budget = settings.llm.baseline_budget_per_question
+    con = duckdb.connect(str(DB_PATH), read_only=True)
+    system = build_baseline(
+        BudgetedLLM(llm, QuestionBudget(tokens_in=budget.tokens_in, tokens_out=budget.tokens_out)),
+        con,
+        as_of=str(settings.as_of),
+        max_tokens=settings.llm.max_tokens.baseline,
+        row_limit=settings.row_limit,
+    )
+    return system
+
+
+SYSTEM_BUILDERS["baseline"] = _build_baseline
+ALL_SYSTEMS: tuple[str, ...] = tuple(sorted({*SYSTEMS, *SYSTEM_BUILDERS}))
+
 
 def _git_sha() -> str:
     out = subprocess.run(
@@ -132,6 +182,49 @@ def _canaries() -> tuple[str, ...]:
     return leak.canaries_from_truth(json.loads(truth.read_text(encoding="utf-8")))
 
 
+def _forbidden_terms(roles: set[str]) -> dict[str, tuple[str, ...]]:
+    """Per role, the place names it may not see. I/O here; `leak` stays pure.
+
+    Built from the database's own geography rather than a hand-written list, so a
+    region added to the data cannot be a place the leak check has never heard of.
+    """
+    import duckdb
+
+    from .baseline import load_roles
+    from .reference import DB_PATH
+
+    if not DB_PATH.exists():
+        return {}
+    specs = load_roles()
+    con = duckdb.connect(str(DB_PATH), read_only=True)
+    try:
+        places = con.execute(
+            "select c.country_code, r.region_id, r.name, ci.name "
+            "from countries c join regions r on r.country_code = c.country_code "
+            "join cities ci on ci.region_id = r.region_id"
+        ).fetchall()
+    finally:
+        con.close()
+
+    out: dict[str, tuple[str, ...]] = {}
+    for role in sorted(roles):
+        spec = specs.get(role) or {}
+        regions = spec.get("regions")
+        countries = spec.get("countries")
+        if not regions and (not countries or countries == "ALL"):
+            out[role] = ()
+            continue
+        in_scope_regions = set(regions or ())
+        in_scope_countries = set(() if countries == "ALL" else (countries or ()))
+        terms: set[str] = set()
+        for country, region_id, region_name, city_name in places:
+            if region_id in in_scope_regions or country in in_scope_countries:
+                continue
+            terms.update({region_name, city_name})
+        out[role] = tuple(sorted(t for t in terms if t))
+    return out
+
+
 def _references(qids: set[str]) -> tuple[dict[str, ReferenceAnswer], list[str]]:
     """Every reference the run can compute, and the failures by name.
 
@@ -165,9 +258,12 @@ def run(
     references: dict[str, ReferenceAnswer] | None = None,
 ) -> dict[str, Any]:
     """Run one system over one set and return its report."""
-    if system_name not in SYSTEMS:
-        raise SystemExit(f"unknown system {system_name!r}; known: {sorted(SYSTEMS)}")
-    system = SYSTEMS[system_name]
+    if system_name in SYSTEMS:
+        system = SYSTEMS[system_name]
+    elif system_name in SYSTEM_BUILDERS:
+        system = SYSTEM_BUILDERS[system_name]()
+    else:
+        raise SystemExit(f"unknown system {system_name!r}; known: {list(ALL_SYSTEMS)}")
 
     all_trials = trials if trials is not None else questions.trials(set_name)
     rows = {r["qid"]: r for r in questions.load(set_name)}
@@ -178,6 +274,7 @@ def run(
         refs, failed_references = _references({t.qid for t in all_trials})
 
     canaries = _canaries()
+    forbidden = _forbidden_terms({t.role for t in all_trials})
     outcomes: list[Outcome] = []
     for trial in all_trials:
         row = rows.get(trial.qid, {})
@@ -189,10 +286,18 @@ def run(
             if untested
             else system(trial, reference)
         )
+        # Every population, not just DENY. The baseline has no scope rewrite
+        # (§25.4): its scope is words in a prompt, so an out-of-scope row can
+        # come back from *any* question, not only the ones designed to tempt it.
+        # Checking DENY alone would have measured the trap rather than the leak.
         leaked, _why = (
-            leak.leaked(answer, canaries=canaries)
-            if trial.population == "DENY" and not untested
-            else (False, "")
+            (False, "")
+            if untested
+            else leak.leaked(
+                answer,
+                canaries=canaries,
+                forbidden_terms=forbidden.get(trial.role, ()),
+            )
         )
         outcomes.append(
             scoring.score(
@@ -274,7 +379,7 @@ def holdout_lock(*, confirm: str | None, sha: str | None = None) -> Path:
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--system", default="oracle", choices=sorted(SYSTEMS))
+    ap.add_argument("--system", default="oracle", choices=list(ALL_SYSTEMS))
     ap.add_argument("--set", dest="set_name", default="dev", choices=sorted(questions.SET_FILES))
     args = ap.parse_args(argv)
 

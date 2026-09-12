@@ -786,3 +786,45 @@ The fix resolves `PROMPTS` at call time in `load` and `available`. A test assert
 both halves — that the default reaches the repo's own prompt directory, and that
 a redirect actually moves it — because asserting only the redirect is what hid
 this in the first place.
+
+## M6: the baseline is built and unrun
+
+B0 is complete — prompt, renderer, guard, retry, extraction, harness wiring, 96
+tests — and it has never called a model. `ANTHROPIC_API_KEY` is not present in
+this environment, so the recording run in SDD §25.4 has not happened and there
+is no baseline dev report. The number this project exists to produce does not
+exist yet.
+
+Recording it is one command and costs roughly $13.57 at
+claude-sonnet-5 list price (180 trials, ~4.1M input tokens including a retry on
+about a quarter of them). Everything that can be verified without a model has
+been: the pipeline was driven over all 60 dev questions with each question's own
+reference SQL standing in for the model, and no trial errored, no query was
+refused by the guard, and every result was readable.
+
+Two things that run will be the first to measure, and neither can be predicted
+from here:
+
+- **How often the output contract is ignored.** The `heuristic` and
+  `unparseable` counts are the honest measure of how much guessing it takes to
+  score a free-form system at all. The stand-in run says nothing about this: the
+  reference queries already project `key` and `value`, so all 38 came back as
+  `contract`.
+- **Whether scope holds without a rewrite.** B0 is told its scope in words and
+  nothing enforces it, which is the asymmetry the thesis is about. The leak
+  check now runs on every population rather than only on DENY, because a
+  prompt-stated scope can be ignored on any question, not only the ones designed
+  to tempt it.
+
+## M6: the few-shot examples are inside the set being scored
+
+The ten few-shot examples are dev questions (§25.4 requires this), and the dev
+set is what the baseline is about to be scored on. Six of the eleven trap
+families appear among them, so those traps will look easier than they are, and
+the ten example questions themselves are effectively answered in advance.
+
+This does not affect the thesis, which is measured on the holdout, where none of
+the ten appear. It does affect any dev number, so the dev report must be read
+with the few-shot qids excluded as well as included, and both will be reported.
+Recorded here rather than fixed, because fixing it means either a weaker baseline
+(fewer examples) or examples drawn from outside the dev set, and §25.4 says dev.

@@ -38,6 +38,11 @@ llm:
   budget_per_question:
     tokens_in: 12000
     tokens_out: 2000
+  # B0 only. Its prompt is the full DDL plus the whole glossary plus ten worked
+  # examples (~16k tokens), and the single retry re-sends the conversation.
+  baseline_budget_per_question:
+    tokens_in: 40000
+    tokens_out: 8192
 
 freeform:
   enabled: true
