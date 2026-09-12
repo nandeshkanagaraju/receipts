@@ -1,0 +1,94 @@
+# Romanised Hindi (Hinglish) markers. One token per line; `#` starts a comment.
+#
+# Same principle as the Tamil file: function words and question words, never
+# content words, because code-mixed Hindi keeps its business nouns in English.
+#
+# Short grammatical particles that collide with words in other languages are
+# deliberately ABSENT -- `se`, `ka`, `ki`, `ko`, `hai`, `me` -- because two
+# letters of evidence is not evidence, and a false Hindi reading of an English
+# question costs more than a missed Hinglish one. CUT-LINE note: code-mixed
+# Hindi is the droppable half of M8, and this file is short by intent rather
+# than by neglect.
+
+# question words and quantities
+kitna
+kitne
+kitni
+kaise
+kaisa
+kaisi
+kyun
+kyon
+kaun
+kahan
+kahaan
+kab
+kaunsa
+kaunsi
+
+# time
+kal
+aaj
+parso
+pichle
+pichhle
+agle
+mahine
+mahina
+hafte
+hafta
+saal
+abhi
+tab
+
+# verbs and copulas
+hua
+huyi
+hui
+huye
+hue
+tha
+thi
+# `the` -- the plural of `tha` -- is deliberately ABSENT. It is also the most
+# common word in English, and while it was here every English question
+# containing it was detected as Hinglish. Two of the sixty dev English variants
+# went that way. A lexicon entry that is also an English word does not degrade
+# the detector, it inverts it.
+hoga
+hogi
+honge
+raha
+rahi
+rahe
+kiya
+kiye
+liya
+diya
+mila
+mile
+gaya
+gaye
+dikhao
+dikhaiye
+bataao
+bataiye
+chahiye
+
+# common modifiers
+bahut
+thoda
+zyada
+jyada
+kam
+sabse
+sirf
+bhi
+nahi
+nahin
+haan
+hamara
+hamari
+humne
+hamne
+apna
+apne

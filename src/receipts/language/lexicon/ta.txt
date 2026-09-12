@@ -1,0 +1,100 @@
+# Romanised Tamil (Tanglish) markers. One token per line; `#` starts a comment.
+#
+# These are function words and question words, not content words, and that is
+# deliberate. Real Tanglish in a business setting carries its NOUNS in English --
+# "July-la country-wise captured GMV evlo" is eleven tokens of which eight are
+# English -- so a detector that counted language by majority token would call
+# every one of these sentences English. What marks the sentence as Tamil is the
+# grammar around the English: the question word, the copula, the case suffix.
+#
+# Nothing here is also an English word. `test_no_lexicon_entry_is_english`
+# asserts it, because one such entry would turn an English question into a
+# Tamil one and the failure would look like a detector bug rather than a data
+# bug.
+
+# question words and quantities
+evlo
+evvalavu
+ethana
+ethanai
+enna
+eppadi
+epdi
+eppo
+eppothu
+yaaru
+yaar
+engey
+enga
+enge
+edhu
+edhuvum
+en
+ennaikku
+
+# time
+nethu
+netru
+indru
+innaiku
+innaikku
+naalaikku
+mudhal
+kadaisi
+munnadi
+pinnadi
+varuda
+maasam
+vaaram
+
+# verbs and copulas
+irundhuchu
+irukku
+irundhadhu
+irukkirathu
+aachu
+aagum
+aanadhu
+pannom
+panniyachu
+pannunga
+pannalaam
+seyya
+sollu
+solunga
+paaru
+paarunga
+kudu
+kuduthu
+vangunom
+vaangunom
+vitthom
+vittom
+kedaikum
+kedaichuthu
+mudinjathu
+mudiyum
+
+# common modifiers
+romba
+konjam
+neraya
+kammi
+adhiga
+sari
+seri
+illa
+illai
+aama
+aamaam
+venum
+vendum
+thevai
+matum
+mattum
+ellam
+ellaam
+appuram
+apparam
+anaal
+aanaal

@@ -965,3 +965,41 @@ gap is unknown and will stay unknown until it runs once.
 The residue is now bounded by a test rather than by this note: the one known gap
 is named in `KNOWN_UNCOVERED_ANS`, a second one fails the suite, and a gap that
 closes also fails it, so the list cannot quietly stop meaning what it says.
+
+## M8: `detect` takes its lexicon as an argument, against SDD §9's signature
+
+SDD §3 marks `language/detect.py` as **[P]** — pure, no I/O at all — and SDD §9
+gives stage 1 the signature `detect(text)` with a lexicon held in
+`language/lexicon/*.txt`. Those cannot both hold. Reading a file is I/O however
+small and however cached, and the charter guard said so the moment the two were
+in the same module.
+
+Purity won. The lexicon is loaded by `language/lexicon.py` **[IO]** and passed in
+as data, so the real signatures are `detect(text, lexicons)` and
+`normalize(text, det)` — the second is §9's own. `receipts.language.read(text)`
+is the composed entry point for callers that just have a string, and it is [IO]
+because loading is.
+
+The tempting alternative was to import the loader lazily *inside* `detect`, where
+the charter's syntactic scan would not find a `read_text`. That would have passed
+the guard while doing precisely what the guard exists to prevent, and a guard you
+can walk around is worse than no guard, because it still reads as a guarantee. A
+test now asserts neither pure module touches the filesystem or imports the I/O
+module.
+
+## M8: `hi-Latn` detection is built and has no labelled data
+
+The corpus has 60 `hi` variants in Devanagari and no romanised Hindi at all, in
+any set. So Hinglish detection is implemented, unit-tested on hand-written
+examples, and **unmeasured** — there is no confusion-matrix row for it and the
+95% bar has nothing to apply to.
+
+This is the M8 CUT-LINE ("drop code-mixed Hindi, keep code-mixed Tamil") arriving
+by a different route: the code is there, the evidence is not. The Hindi lexicon
+is deliberately short and excludes every short particle — `se`, `ka`, `ki`, `ko`,
+`hai`, `me` — because two letters is not evidence and a false Hindi reading of an
+English question costs more than a missed Hinglish one. Whether that caution is
+correctly calibrated cannot be known without data.
+
+Tamil is the opposite case and is measured: 40 human-written `ta-Latn` variants
+in the eval set, 100%.
