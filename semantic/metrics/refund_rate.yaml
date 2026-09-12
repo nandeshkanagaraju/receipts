@@ -35,3 +35,4 @@ notes: >-
   orders. For a short window the rate can exceed 100% if a large refund lands in
   a quiet period. That is expected. Both sides are converted to the reporting
   currency before dividing; the ratio itself has no currency.
+dev_questions: [DV-006, DV-047, DV-058]

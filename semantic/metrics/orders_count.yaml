@@ -25,3 +25,4 @@ notes: >-
   Larger than the number of orders that produced revenue, because abandoned and
   cancelled orders count. The paid-order count is the denominator of average
   order value (§2.6), not this.
+dev_questions: [DV-002, DV-027, DV-044]

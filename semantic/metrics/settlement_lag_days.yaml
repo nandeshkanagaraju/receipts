@@ -31,3 +31,4 @@ notes: >-
   August" means payments settled in August. Excluding unsettled captures means
   the average understates the problem when settlement is delayed, so this and
   unsettled_amount (§2.14) must be read together.
+dev_questions: [DV-005, DV-046]

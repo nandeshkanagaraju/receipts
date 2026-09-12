@@ -15,6 +15,7 @@ number returned to somebody.
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from typing import Any
 
@@ -66,18 +67,100 @@ def _as_tuple(value: Any) -> tuple[str, ...]:
     return tuple(str(v) for v in value)
 
 
+# SQL words that look like named predicates and are not. Anything else in
+# SCREAMING_CASE surviving substitution is a predicate nobody defined.
+SQL_WORDS = frozenset(
+    [
+        "AND",
+        "OR",
+        "NOT",
+        "NULL",
+        "TRUE",
+        "FALSE",
+        "IS",
+        "IN",
+        "EXISTS",
+        "SELECT",
+        "FROM",
+        "WHERE",
+        "JOIN",
+        "ON",
+        "AS",
+        "DISTINCT",
+        "CASE",
+        "WHEN",
+        "THEN",
+        "ELSE",
+        "END",
+        "BETWEEN",
+        "LIKE",
+        "ILIKE",
+        "ANY",
+        "ALL",
+        "SOME",
+        "MIN",
+        "MAX",
+        "SUM",
+        "COUNT",
+        "AVG",
+        "CAST",
+        "DATE",
+        "DATE_DIFF",
+        "DATE_TRUNC",
+        "INTERVAL",
+        "CURRENT_DATE",
+        "COALESCE",
+        "NULLIF",
+        "ASC",
+        "DESC",
+        "GROUP",
+        "BY",
+        "ORDER",
+        "HAVING",
+        "LIMIT",
+        "LEFT",
+        "RIGHT",
+        "INNER",
+        "OUTER",
+        "FULL",
+        "UNION",
+        "EXCEPT",
+        "INTERSECT",
+        "WITH",
+    ]
+)
+
+NAMED_PREDICATE_SHAPE = re.compile(r"(?<![\w.'])([A-Z][A-Z0-9_]{2,})(?![\w.'(])")
+
+
 def _check_predicate(where: str, *, named: dict[str, str], where_it_is: str) -> None:
-    """Parseable, and boolean. Named predicates are substituted before parsing."""
+    """Parseable, and boolean. Named predicates are substituted before parsing.
+
+    The unresolved-name check scans the substituted text for anything still in
+    SCREAMING_CASE. The first version looped over the *known* names and asked
+    whether each survived substitution -- which can never fire, because a name
+    that was deleted from `entities.yaml` is not in that dict to be looped over.
+    It was exactly backwards: it could only detect predicates that were defined.
+    """
     text = where
     for name, body in named.items():
         text = text.replace(name, f"({body})")
-    unresolved = [
-        token
-        for token in named
-        if token in text  # a name that survived substitution is a name we do not have
-    ]
+
+    literal_free = re.sub(r"'(?:[^']|'')*'", "''", text)
+    unresolved = sorted(
+        {
+            token
+            for token in NAMED_PREDICATE_SHAPE.findall(literal_free)
+            if token not in SQL_WORDS and token not in COMPILER_TOKENS
+        }
+    )
     if unresolved:
-        raise LoaderError(f"{where_it_is}: unresolved named predicate(s) {unresolved}")
+        known = ", ".join(sorted(named)) or "none"
+        raise LoaderError(
+            f"{where_it_is}: undefined named predicate(s) {unresolved}; "
+            f"define them in entities.yaml (known: {known})"
+        )
+
     try:
         tree = sqlglot.parse_one(f"SELECT 1 WHERE {text}", read="duckdb")
     except Exception as exc:

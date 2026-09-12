@@ -32,3 +32,4 @@ owner: payments-analytics
 notes: >-
   A gross figure. It does not subtract refunds; for that see net_revenue (§2.5).
   Each amount is converted at the daily rate for its own capture business date.
+dev_questions: [DV-003, DV-004, DV-041, DV-042, DV-045, DV-052]

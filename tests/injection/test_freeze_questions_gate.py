@@ -620,3 +620,55 @@ def test_meta_the_probe_finds_nothing_when_the_gate_returns_clean(monkeypatch) -
     monkeypatch.setattr(fq, "gate_window_attachment", lambda *a, **k: [])
     problems = fq.all_gates(run_tests=False)
     assert not any("was here" in p for p in problems)
+
+
+# --------------------------------------------------------------------------- #
+# The document pin is scoped to the rulings, and the scope is not a loophole.
+# --------------------------------------------------------------------------- #
+
+
+def test_the_m2_notes_pin_covers_the_rulings_and_not_the_journal(tmp_path: Path) -> None:
+    """§1-§4 are frozen; §5 is a forward journal that grows every milestone.
+
+    A whole-file digest could not tell those apart, and fired on an appended note
+    about an M6b finding -- which changes no ruling and could not. The two ways
+    out of that were to stop writing the journal or to re-pin on every append,
+    and re-pinning on every append is not a pin.
+    """
+    path = tmp_path / "M2_NOTES.md"
+    rulings = "# Notes\n\n## 1. A ruling\n\nThe answer is 42.\n\n"
+    journal = "## 5. Notes for later modules\n\n### M9 — something\n"
+    path.write_text(rulings + journal, encoding="utf-8")
+    before = fq.frozen_text("docs/M2_NOTES.md", path)
+
+    path.write_text(rulings + journal + "\n### M21 — another note\n", encoding="utf-8")
+    after = fq.frozen_text("docs/M2_NOTES.md", path)
+    assert before == after, "appending to the journal moved the pinned bytes"
+
+    path.write_text(rulings.replace("42", "43") + journal, encoding="utf-8")
+    assert fq.frozen_text("docs/M2_NOTES.md", path) != before, (
+        "a ruling changed and the pin did not"
+    )
+
+
+def test_deleting_the_boundary_heading_pins_the_whole_file(tmp_path: Path) -> None:
+    """The exemption cannot be widened by removing the thing that bounds it.
+
+    With no heading the digest covers everything, so the file fails the gate
+    loudly rather than silently pinning a prefix that is now the whole document.
+    """
+    path = tmp_path / "M2_NOTES.md"
+    body = "# Notes\n\n## 1. A ruling\n\nThe answer is 42.\n\n## 5. Notes for later modules\n\nx\n"
+    path.write_text(body, encoding="utf-8")
+    scoped = fq.frozen_text("docs/M2_NOTES.md", path)
+    path.write_text(body.replace("## 5. Notes for later modules", "## 5. Later"), encoding="utf-8")
+    whole = fq.frozen_text("docs/M2_NOTES.md", path)
+    assert len(whole) > len(scoped)
+    assert b"## 5. Later" in whole
+
+
+def test_the_glossary_is_pinned_whole() -> None:
+    """No boundary for the glossary: every word of it is what answers were written from."""
+    assert "docs/GLOSSARY.md" not in fq.DOC_FREEZE_BOUNDARY
+    path = fq.REPO / "docs" / "GLOSSARY.md"
+    assert fq.frozen_text("docs/GLOSSARY.md", path) == path.read_bytes()

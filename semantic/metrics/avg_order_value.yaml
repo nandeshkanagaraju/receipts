@@ -33,3 +33,4 @@ notes: >-
   Both sides are keyed on capture business date so they describe the same set of
   orders. For orders paid by instalments the order value is the full order value,
   not the instalment amount (§4.9).
+dev_questions: [DV-024]

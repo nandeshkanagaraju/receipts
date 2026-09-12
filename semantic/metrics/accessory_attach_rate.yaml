@@ -33,3 +33,4 @@ notes: >-
   nothing was attached to anything. In Kestrel's data every order carries exactly
   one handset (§1.7a), so the case does not arise; the rule is stated so the
   metric stays well defined if that changes.
+dev_questions: [DV-031]

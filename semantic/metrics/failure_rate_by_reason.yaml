@@ -34,3 +34,4 @@ notes: >-
   figures summing to 100% has been computed against the wrong denominator -- it
   is the share of failures by reason, a different and undefined quantity. A plain
   count of failures by reason is also not this metric.
+dev_questions: [DV-009, DV-040]

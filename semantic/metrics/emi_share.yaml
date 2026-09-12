@@ -32,3 +32,4 @@ notes: >-
   EMI is offered only in India and Malaysia, so an EMI share for the UK or the
   UAE is legitimately zero rather than missing. Both sides converted to the
   reporting currency before dividing.
+dev_questions: [DV-008, DV-025]

@@ -30,3 +30,4 @@ notes: >-
   visible here so the operational problem is not hidden. A store with duplicate
   captures usually also shows an unusual refund pattern, because the duplicates
   are refunded once noticed.
+dev_questions: [DV-022]

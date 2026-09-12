@@ -40,3 +40,4 @@ notes: >-
   attribution (§1.9) -- the denominator is orders that ATTEMPTED on that
   method, the numerator those that succeeded on it -- so per-method rates do not
   sum or reconcile to the overall figure, because their denominators overlap.
+dev_questions: [DV-001, DV-010, DV-043, DV-048, DV-019]

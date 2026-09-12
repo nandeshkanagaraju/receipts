@@ -21,8 +21,9 @@
   "note": "Byte-for-byte hashes of frozen artifacts. Regenerate deliberately.",
   "question_documents": {
     "docs/GLOSSARY.md": "8d61041f908e9a1a895078a944b2a459a2dddb6f3dd3276e6cc1f21ae68fa3f5",
-    "docs/M2_NOTES.md": "d6a5129098a1385d735384b397e4b76df4078c8f94f95c7f5f271621910d66bd"
+    "docs/M2_NOTES.md": "7fd39375cc3b3e1e442bafc6c7b88e19df506759e48907f98fe7a8b4d3f859c6"
   },
+  "question_documents_note": "docs/M2_NOTES.md is pinned over its rulings (everything before '## 5. Notes for later modules'), not the whole file. The rulings prefix is byte-identical to its content at the questions-frozen tag; \u00a75 is a forward journal that grows each milestone and that nothing in the question set depends on.",
   "questions": {
     "eval/questions/dev.jsonl": "e16ca2898c27829d257dc4a6d5ef0b4b8d62f393ec3fc4e8aa3e2b13d072492b",
     "eval/questions/eval.jsonl": "55ebca9dec9b095caaecdd22de3ea8220428a72be80f0dd75ebce3316908d7e1",

@@ -34,3 +34,4 @@ notes: >-
   still unsettled" -- two different questions, and only the snapshot reading is
   this metric. Each amount is converted at the rate for its own capture business
   date, the same convention as gmv_captured, so the two reconcile.
+dev_questions: [DV-026, DV-059]

@@ -599,14 +599,45 @@ def reference_sql_digests(sqldir: Path = SQLDIR) -> dict[str, str]:
     return {f"eval/reference_sql/{p.name}": sha256_file(p) for p in sorted(sqldir.glob("*.sql"))}
 
 
+# `docs/M2_NOTES.md` is pinned for its **rulings** -- §1 to §4, the decisions the
+# frozen answers were written from. §5, "Notes for later modules", is a forward
+# journal: it grows every milestone, by design, and nothing in the question set
+# depends on it.
+#
+# A whole-file digest cannot tell those apart. It fired on an appended note about
+# a finding from M6b, which changes no ruling and could not, and the only ways
+# out of that are to stop writing the journal or to re-pin the file on every
+# append -- and re-pinning on every append is not a pin. So the digest covers the
+# prefix up to the journal heading. What is frozen is what was meant to be
+# frozen: edit a ruling, or delete the heading, and the digest still moves.
+DOC_FREEZE_BOUNDARY = {"docs/M2_NOTES.md": "## 5. Notes for later modules"}
+
+
+def frozen_text(rel: str, path: Path) -> bytes:
+    """The bytes actually pinned for a document: everything before its boundary."""
+    raw = path.read_bytes()
+    boundary = DOC_FREEZE_BOUNDARY.get(rel)
+    if boundary is None:
+        return raw
+    marker = boundary.encode("utf-8")
+    index = raw.find(marker)
+    if index < 0:
+        # The heading is gone. Pin the whole file rather than silently pinning
+        # nothing: a missing boundary must fail loudly, not widen the exemption.
+        return raw
+    return raw[:index]
+
+
 def document_digests(repo: Path = REPO) -> dict[str, str]:
     """Hash the M1 working documents. A missing one is an error, never a skip."""
+    import hashlib
+
     out = {}
     for rel in QUESTION_DOCS:
         p = repo / rel
         if not p.exists():
             raise FileNotFoundError(f"question document missing: {rel}")
-        out[rel] = sha256_file(p)
+        out[rel] = hashlib.sha256(frozen_text(rel, p)).hexdigest()
     return dict(sorted(out.items()))
 
 

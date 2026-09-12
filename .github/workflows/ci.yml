@@ -93,6 +93,11 @@ jobs:
           fi
       - name: pytest (socket guard active, zero network calls)
         run: pytest
+      - name: Semantic layer lints clean (SDD §7.3)
+        # PDD J8: an admin adds a metric in YAML and it is available after
+        # reload with no code change. That promise is only safe if the linter
+        # runs somewhere they cannot skip.
+        run: make semantic-lint
       - name: Reports are byte-identical to the committed ones (D16, SDD §28)
         # In-process determinism is a different claim from "the committed report
         # is what this commit produces". This regenerates both control systems'
