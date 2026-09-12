@@ -9,7 +9,16 @@
 -- what it needs. A role created with defaults inherits PUBLIC's privileges, and
 -- "we never granted INSERT" is not the same sentence as "INSERT is revoked".
 
-CREATE ROLE receipts_ro WITH LOGIN PASSWORD 'receipts_ro';
+-- Idempotent: this script runs from the container's entrypoint on a fresh
+-- volume AND is applied by hand to a CI service container that has no volume
+-- mount. A second run must be a no-op, not an error.
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'receipts_ro') THEN
+        CREATE ROLE receipts_ro WITH LOGIN PASSWORD 'receipts_ro';
+    END IF;
+END
+$$;
 
 -- Start from nothing.
 REVOKE ALL ON SCHEMA public FROM PUBLIC;

@@ -73,12 +73,23 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--days", type=int, default=90)
     ap.add_argument("--dsn", default=DSN)
+    ap.add_argument(
+        "--init",
+        action="store_true",
+        help="apply docker/postgres/init.sql first (CI service containers have no volume mount)",
+    )
     args = ap.parse_args(argv)
 
     settings = load_settings()
     last = settings.data.last_business_date
     first = last - timedelta(days=args.days - 1)
     print(f"overlap: {first} .. {last} ({args.days} business dates)")
+
+    if args.init:
+        role_sql = (REPO / "docker" / "postgres" / "init.sql").read_text(encoding="utf-8")
+        with psycopg.connect(args.dsn, autocommit=True) as conn:
+            conn.execute(role_sql)
+        print("applied init.sql (role, revokes, defaults)")
 
     duck = duckdb.connect(str(REPO / "data" / "kestrel.duckdb"), read_only=True)
     loaded: dict[str, int] = {}

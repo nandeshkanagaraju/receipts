@@ -58,6 +58,25 @@ jobs:
     # The artifact tests fail rather than skip when data/ is missing -- which is
     # correct, and is why this dependency has to exist.
     needs: data
+    services:
+      # `test_adapters_agree` is the only thing standing between "the compiler is
+      # portable" and "the compiler happens to work on DuckDB", and it fails
+      # rather than skips when Postgres is absent. So Postgres has to be here.
+      # It found a real defect on its first run -- ROUND(double, int) does not
+      # exist in Postgres -- which no DuckDB test could have seen.
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: receipts
+          POSTGRES_PASSWORD: receipts
+          POSTGRES_DB: kestrel
+        ports:
+          - 55432:5432
+        options: >-
+          --health-cmd "pg_isready -U receipts -d kestrel"
+          --health-interval 3s
+          --health-timeout 3s
+          --health-retries 20
     steps:
       # Tags, not just the tip: freeze_questions.tag_exists() reads them, and a
       # guard that stops guarding because the clone is shallow is not a guard.
@@ -81,6 +100,12 @@ jobs:
           name: world
       - name: Artifact present
         run: du -sh data truth && ls -la data
+      - name: Load the Postgres overlap (SDD §5.3)
+        # The service container has no volume mount, so the role script is
+        # applied here rather than by the entrypoint.
+        run: python scripts/load_postgres.py --init
+        env:
+          RECEIPTS_POSTGRES_DSN: postgresql://receipts:receipts@localhost:55432/kestrel
       - name: The sealed marker arrived, and nothing else did
         # The sealed gate cannot run here: this job has no seed and no sealed
         # files, and must not have either. What it has is the counts-only line
