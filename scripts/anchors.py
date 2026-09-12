@@ -62,15 +62,17 @@ LATIN: dict[str, tuple[str, ...]] = {
     "cur_sgd": ("sgd",),
     # Tanglish renders windows in Latin, so its forms live here beside the English.
     "w_yesterday": ("yesterday", "nethu"),
-    "w_last_week": ("last week",),
-    "w_last_month": ("last month",),
-    "w_last_quarter": ("last quarter",),
+    "w_last_week": ("last week", "kadandha week", "pona week"),
+    "w_last_month": ("last month", "kadandha month", "pona month"),
+    "w_last_quarter": ("last quarter", "kadandha quarter", "pona quarter"),
+    "w_last_7_days": ("last 7 days", "kadandha 7 days", "past 7 days"),
     "w_this_week": ("this week", "indha week"),
     "w_this_month": ("this month", "indha month"),
     "w_this_quarter": ("this quarter", "indha quarter"),
     "w_next_quarter": ("next quarter", "adutha quarter"),
     "w_this_year": ("this year", "indha year"),
-    "w_last_year": ("last year", "pona year"),
+    "w_last_year": ("last year", "pona year", "kadandha year"),
+    "w_first_half": ("first half",),
     "m_june": ("june",),
     "m_july": ("july",),
     "m_august": ("august",),
@@ -102,6 +104,8 @@ INDIC: dict[str, tuple[str, ...]] = {
     "cur_aed": ("திர்ஹ", "दिरहम"),
     "cur_myr": ("ரிங்கிட", "रिंगिट"),
     "w_yesterday": ("நேற்று", "बीते कल", "कल"),
+    "w_last_7_days": ("கடந்த 7 நாட்க", "पिछले 7 दिन", "बीते 7 दिन"),
+    "w_first_half": ("முதல் பாதி", "पहली छमाही"),
     "w_last_week": ("கடந்த வார", "पिछले हफ़्ते", "पिछले हफ्ते", "गत सप्ताह"),
     "w_last_month": ("கடந்த மாத", "पिछले महीने", "पिछले माह"),
     "w_last_quarter": ("கடந்த காலாண்ட", "पिछली तिमाही"),
@@ -132,8 +136,17 @@ NUMBER_INDIC: dict[str, tuple[str, ...]] = {
 }
 
 
+# Tanglish attaches case with a hyphen: `July-la`, `month-ku`, `year-oda`,
+# `naadugal-ayum`. The right-hand boundary therefore has to admit a hyphen, which
+# `(?![a-z0-9])` already does -- but a *suffix* that continues in letters, as in
+# `monthla` written without the hyphen, would not match. Both spellings appear in
+# hand-written Tanglish, so the optional suffix is explicit.
+TANGLISH_SUFFIX = r"(?:-?(?:la|ku|oda|layum|il|um|kku))?"
+
+
 def _latin_hit(form: str, lowered: str) -> bool:
-    return re.search(rf"(?<![a-z0-9]){re.escape(form)}(?![a-z0-9])", lowered) is not None
+    pattern = rf"(?<![a-z0-9]){re.escape(form)}{TANGLISH_SUFFIX}(?![a-z0-9])"
+    return re.search(pattern, lowered) is not None
 
 
 def extract(text: str) -> set[str]:
@@ -157,18 +170,56 @@ def extract(text: str) -> set[str]:
     return found
 
 
+# Windows that mean "the period we are in". A present-tense English question with
+# no stated window already means these; a translation that says so out loud has
+# added a word, not a fact.
+PRESENT_WINDOWS = frozenset({"w_this_week", "w_this_month", "w_this_quarter", "w_this_year"})
+WINDOW_PREFIXES = ("w_", "m_", "fy", "q1")
+
+# Present tense, no past marker. Deliberately crude: it decides only whether an
+# *added* present-window anchor is forgiven, never whether one is an offence.
+PRESENT_TENSE = re.compile(r"\b(?:is|are|am|do|does|will|shall|can)\b|\bhow are\b|\bhow is\b", re.I)
+PAST_TENSE = re.compile(r"\b(?:was|were|did|had|have|has)\b", re.I)
+
+
+def _is_window(anchor: str) -> bool:
+    return anchor.startswith(WINDOW_PREFIXES)
+
+
+def present_tense_no_window(english: str, anchors_found: set[str]) -> bool:
+    """The English is present tense and states no window of its own.
+
+    "How are our stores doing?" is about now, so a translation that renders it
+    with an explicit "now" or "this month" has not changed the question. Ruled on
+    for the Tanglish of that row: `ipo` is entailed by the present tense.
+    """
+    if any(_is_window(a) for a in anchors_found):
+        return False
+    return bool(PRESENT_TENSE.search(english)) and not PAST_TENSE.search(english)
+
+
 def drift(row: dict) -> dict[str, dict[str, list[str]]]:
     """Per language, the anchors a translation lost or gained against the English.
 
     Empty means every translation names exactly the facts the English names.
+
+    One exception, and only one: where the English is present tense and states no
+    window, an *added* present-tense window is permitted. Everything else -- an
+    added window when the English has one, an added window on a past-tense
+    question, an added place, currency or number -- stays an offence.
     """
-    english = extract(row.get("variants", {}).get("en", ""))
+    english_text = row.get("variants", {}).get("en", "")
+    english = extract(english_text)
+    forgive_present = present_tense_no_window(english_text, english)
     out: dict[str, dict[str, list[str]]] = {}
     for lang, text in (row.get("variants") or {}).items():
         if lang == "en" or not (text or "").strip():
             continue
         got = extract(text)
-        missing, added = sorted(english - got), sorted(got - english)
+        gained = got - english
+        if forgive_present:
+            gained -= PRESENT_WINDOWS
+        missing, added = sorted(english - got), sorted(gained)
         if missing or added:
             out[lang] = {"missing": missing, "added": added}
     return out

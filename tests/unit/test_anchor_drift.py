@@ -191,3 +191,83 @@ def test_reachability_the_gate_calls_this_scan() -> None:
         )
     finally:
         fq.gate_anchor_drift = original
+
+
+# --------------------------------------------------------------------------- #
+# The present-tense permission, and its limits.
+#
+# "How are our stores doing?" is about now, so a translation saying "now" or "this
+# month" out loud has added a word, not a fact. Ruled for the Tanglish of that row:
+# `ipo` is entailed by the present tense.
+#
+# The permission is narrow on purpose, and both directions are asserted: a guard
+# with a forgiving branch and no test on the branch's *edge* forgives everything
+# next time someone widens it.
+# --------------------------------------------------------------------------- #
+
+PRESENT_NO_WINDOW = (
+    "How are our stores doing?",
+    "Which country is performing best?",
+    "What is the UPI success rate in Chennai?",
+)
+PAST_OR_WINDOWED = (
+    "What was our refund rate last week?",
+    "How much did we make in the UK last quarter?",
+    "Captured GMV by country in July, in US dollars.",
+)
+
+
+@pytest.mark.parametrize("english", PRESENT_NO_WINDOW)
+@pytest.mark.parametrize("added", ["indha month", "indha year", "this quarter"])
+def test_an_entailed_present_window_is_permitted(english: str, added: str) -> None:
+    """Present tense, no window stated: saying "now" changes nothing."""
+    row = {"qid": "XX-031", "variants": {"en": english, "ta-Latn": f"{added} {english.lower()}"}}
+    assert not anchors.drift(row), (
+        f"an entailed present window was treated as an addition: {added!r} on {english!r}"
+    )
+
+
+@pytest.mark.parametrize("english", PAST_OR_WINDOWED)
+def test_the_same_addition_is_an_offence_when_the_english_has_a_window(english: str) -> None:
+    """The permission does not extend past its edge.
+
+    If the English states a window, a second window in the translation makes the
+    question ask about two periods. If the English is past tense, a present window
+    moves it.
+    """
+    row = {
+        "qid": "XX-032",
+        "variants": {"en": english, "ta-Latn": f"indha month {english.lower()}"},
+    }
+    found = anchors.drift(row)
+    print(f"\n{english[:40]!r} + 'indha month' -> {found}")
+    assert found, "an added window was permitted on a question that states one"
+
+
+def test_the_permission_never_forgives_a_place_currency_or_number() -> None:
+    """Only present *windows* are forgiven, and only they."""
+    english = "How are our stores doing?"
+    for addition, what in (
+        ("Chennai-la", "place"),
+        ("rupees-la", "currency"),
+        ("top 5", "number"),
+    ):
+        row = {"qid": "XX-033", "variants": {"en": english, "ta-Latn": f"{addition} stores epdi?"}}
+        assert anchors.drift(row), f"an added {what} was forgiven by the present-tense rule"
+
+
+@pytest.mark.parametrize(
+    "tanglish,wanted",
+    [
+        ("kadandha 7 days-ku Chennai-la", "w_last_7_days"),
+        ("pona month-oda same days-oda", "w_last_month"),
+        ("kadandha month refund rate evlo?", "w_last_month"),
+        ("indha year-oda first half-la", "w_first_half"),
+        ("July-la country-wise GMV", "m_july"),
+        ("pona week UK-la", "w_last_week"),
+    ],
+)
+def test_the_tanglish_window_forms_are_recognised(tanglish: str, wanted: str) -> None:
+    """Hand-written Tanglish attaches case with a hyphen; the stems tolerate it."""
+    found = anchors.extract(tanglish)
+    assert wanted in found, f"{wanted} not found in {tanglish!r}; got {sorted(found)}"
