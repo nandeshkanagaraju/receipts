@@ -398,6 +398,25 @@ So: before writing, a session owns the tree or it does not write. If a tree has
 unexplained modifications, the question is *who is editing this right now*, and
 the answer is not *therefore I should commit it*.
 
+### M21 — the milestone-assertion paragraph belongs in the README at G5
+
+`docs/M3_NOTES.md`, "Standing pattern: derive the condition, do not pin the
+state", ends with a paragraph that should be lifted into the public README when
+the project is written up:
+
+> I wrote a seventh instance of the milestone-assertion pattern in the round that
+> fixed the sixth, because at the moment of writing, "the corpus passes today"
+> and "the corpus passes" are the same sentence.
+
+It belongs there rather than only in an internal note because it is the most
+transferable thing this build produced. The table of six instances is evidence; the
+sentence is the finding, and it generalises past this repository to any test suite
+written alongside the thing it tests.
+
+Carry the table with it — a claim about how easy a mistake is to make is worth
+little without the count of how often it was actually made, by someone who had
+just finished writing the rule down.
+
 ### M7 — Tamil synonyms must carry the code-mixed form as well as the formal one
 
 The semantic layer's `synonyms` for each metric and dimension must list **both**

@@ -138,10 +138,22 @@ Six instances in this build, all of them mine:
 | 5 | `test_real_corpus_is_currently_refused` | "the live repo is not freezable while sets are missing" | the blind set landed |
 | 6 | `test_meta_the_real_corpus_now_passes_its_gates` | the live corpus is gate-clean | `gate_ta_latn` landed one round later |
 
-Number 6 is the instructive one: it was written *in the round that fixed number
-5*, by someone who had just written the rule down. Knowing the pattern is not
-the same as noticing it, because at the moment of writing, "the corpus passes
-today" and "the corpus passes" are indistinguishable.
+### The part worth carrying forward
+
+**I wrote a seventh instance of the milestone-assertion pattern in the round that
+fixed the sixth, because at the moment of writing, "the corpus passes today" and
+"the corpus passes" are the same sentence.**
+
+That is the whole difficulty in one line. Knowing the pattern does not stop you
+producing it, because the two readings are indistinguishable *at the keyboard* —
+they differ only in a future the author cannot see. The rule below is not a
+reminder to be careful. It is a substitute for care, which is the only kind of
+rule that survives being known.
+
+(The table numbers six distinct guards. The seventh is number 6 breaking a second
+time, when `gate_ta_latn` landed: same guard, same fault, a new milestone. A
+pattern that recurs in the guard written to record it is the strongest evidence
+available that it is not about attention.)
 
 A near relative is pinning a **count** rather than a state — the blind-file
 injection asserted the literal strings `"29"` and `"30"`, and broke when the
