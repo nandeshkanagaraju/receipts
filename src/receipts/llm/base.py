@@ -42,14 +42,24 @@ class Usage:
 
     input_tokens: int = 0
     output_tokens: int = 0
+    # Part of `input_tokens`, not additional to it: both providers report the
+    # cached prefix inside the prompt total. Carried so metering can price it at
+    # the cached rate and so a run can show whether caching actually worked --
+    # a cache that silently stops hitting looks exactly like a bigger bill.
+    cached_input_tokens: int = 0
 
     def __post_init__(self) -> None:
-        for name in ("input_tokens", "output_tokens"):
+        for name in ("input_tokens", "output_tokens", "cached_input_tokens"):
             value = getattr(self, name)
             if not isinstance(value, int) or isinstance(value, bool):
                 raise TypeError(f"{name} must be int, got {type(value).__name__}")
             if value < 0:
                 raise ValueError(f"{name} is negative: {value}")
+        if self.cached_input_tokens > self.input_tokens:
+            raise ValueError(
+                f"cached_input_tokens={self.cached_input_tokens} exceeds "
+                f"input_tokens={self.input_tokens}"
+            )
 
     @property
     def total(self) -> int:

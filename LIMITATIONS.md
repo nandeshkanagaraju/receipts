@@ -828,3 +828,58 @@ the ten appear. It does affect any dev number, so the dev report must be read
 with the few-shot qids excluded as well as included, and both will be reported.
 Recorded here rather than fixed, because fixing it means either a weaker baseline
 (fewer examples) or examples drawn from outside the dev set, and §25.4 says dev.
+
+## M6b: the provider changed, and so did temperature
+
+No Anthropic key is available, so the project's model is OpenAI
+`gpt-5.5-2026-04-23` — for the baseline **and** for Receipts (ADR-018). The
+switch was made before any system had been scored on any set, which is the only
+moment it costs nothing.
+
+What it costs elsewhere: **temperature is no longer 0.** SDD §16 says temperature
+0 everywhere, and the gpt-5 family returns `400 Unsupported value: 'temperature'
+does not support 0 with this model`. The parameter is omitted and
+`config/settings.yaml` records `temperature: null` rather than a 0 that is not
+true.
+
+So run-to-run determinism no longer comes from the sampler. It comes from
+record/replay: a recorded run replays byte-identically, which is what D16 asks
+for, and the recording is the artifact published with the thesis. What is gone is
+the ability to **re-record** and get the same answers — two recordings of the
+same questions may differ, and neither is more correct than the other. The
+existing guard was rewritten rather than deleted: `temperature` must be 0, or
+`null` with ADR-018 present and an OpenAI primary. A stray 0.7 still fails.
+
+A second consequence: `secondary` is now `none`. A fallback to a different model
+would mean two rows of the same results table were produced by different systems,
+at the moment nobody was watching. `ModelUnavailable` and a re-run is the honest
+failure.
+
+## M6b: three defects the live smoke found that no test could
+
+Each of these was reachable only by calling the real API, which is the argument
+for the three-call smoke existing at all. Together they would have wasted most of
+the recording run.
+
+- **The per-question budget was a per-run budget.** `BudgetedLLM` is built once
+  per run, and nothing reset it between trials, so the counter accumulated across
+  questions and the third trial of 180 died at 48,482 tokens against a 40,000
+  limit. The unit tests all passed: every one of them exercised a single
+  question, which is exactly the case where the bug is invisible.
+- **A caller-supplied system message was shadowed.** The OpenAI client prepended
+  the prompt *file* unconditionally, so the baseline — whose system message is a
+  16k rendered prompt — would have sent the unrendered template, `{{DDL}}` and
+  all, in front of the real one on every call.
+- **`max_tokens` and `temperature=0` are both rejected outright** by this model
+  family, with a 400 on the first call.
+
+## M6b: prompt caching works, but not on a cold cache
+
+93% of the 16k prompt is served from cache once warm (15,104 of 16,152 tokens),
+taking a call from $0.089 to about $0.022 and the run from roughly $20 to $5.
+
+The first calls with a new prefix miss entirely — the smoke run's three calls
+were all 0% cached, and the same prompt minutes later was at 93%. So the saving
+is real but the first trial of each role pays full price, and a run short enough
+to be all cold pays full price throughout. Worth knowing before anyone reads a
+small run's cost as representative.

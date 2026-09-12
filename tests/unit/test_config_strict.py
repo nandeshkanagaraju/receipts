@@ -21,10 +21,28 @@ def _write(tmp_path: Path, data: dict) -> Path:
     return p
 
 
+REPO = Path(__file__).resolve().parents[2]
+
+
 def test_real_settings_load() -> None:
     s = load_settings()
     print(f"\nsettings load OK: as_of={s.as_of}, row_limit={s.row_limit}, llm.mode={s.llm.mode}")
-    assert s.llm.temperature == 0, "SDD §16: temperature 0 everywhere"
+    # SDD §16 says temperature 0 everywhere. It is now `null`, and this guard
+    # was rewritten rather than deleted, because "the charter says 0" and "the
+    # model returns 400 for 0" are both true and the file has to say which one
+    # won. Zero is still accepted; anything *else* non-null still fails, so a
+    # stray 0.7 cannot ride in behind this exception.
+    assert s.llm.temperature in (0, None), (
+        f"SDD §16 allows temperature 0, or null for a model that refuses it; "
+        f"got {s.llm.temperature!r}"
+    )
+    if s.llm.temperature is None:
+        adr = REPO / "docs" / "adr" / "018-openai-primary-same-model-both-sides.md"
+        assert adr.exists(), "temperature is null with no ADR saying why"
+        assert s.llm.primary.provider == "openai", (
+            "temperature is null, which is only justified for the gpt-5 family "
+            f"(ADR-018); primary is {s.llm.primary.provider}"
+        )
 
 
 def test_unknown_key_raises(tmp_path: Path) -> None:

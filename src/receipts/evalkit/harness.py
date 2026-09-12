@@ -79,6 +79,33 @@ SYSTEMS: dict[str, System] = {"oracle": oracle, "null": null}
 SYSTEM_BUILDERS: dict[str, Callable[[], System]] = {}
 
 
+def _provider_client(settings: Any) -> Any:
+    """The configured primary, constructed. Never guessed from the model name.
+
+    Reading the provider from settings rather than hardcoding it is what let the
+    switch to OpenAI (ADR-018) be a config change instead of a code change --
+    and it is why the same function will serve Receipts in M9 unaltered.
+    """
+    provider = settings.llm.primary.provider
+    model = settings.llm.primary.model
+    if provider == "openai":
+        from ..llm.openai import OpenAILLM
+
+        return OpenAILLM(
+            model=model,
+            temperature=settings.llm.temperature,
+            # One cache per prompt id: OpenAI routes same-key calls together, and
+            # the baseline's 16k system prefix is identical within a role, so the
+            # second call onward reads a cached prefix instead of paying for it.
+            cache_key=f"receipts-baseline-{model}",
+        )
+    if provider == "anthropic":
+        from ..llm.anthropic import AnthropicLLM
+
+        return AnthropicLLM(model=model)
+    raise SystemExit(f"no client for provider {provider!r} (ADR-018)")
+
+
 def _build_baseline() -> System:
     """B0 (SDD §25.4), wired to whichever model mode the environment asks for.
 
@@ -102,9 +129,7 @@ def _build_baseline() -> System:
     if mode == "replay":
         llm: Any = ReplayLLM(recordings, provider=provider, model=model)
     elif mode == "record":
-        from ..llm.anthropic import AnthropicLLM
-
-        llm = RecordingLLM(AnthropicLLM(model=model), directory=recordings)
+        llm = RecordingLLM(_provider_client(settings), directory=recordings)
     else:
         raise SystemExit(f"baseline needs mode replay or record, not {mode!r}")
 

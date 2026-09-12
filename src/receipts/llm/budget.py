@@ -8,6 +8,14 @@ between those two.
 The budget is checked **after** each call, on the usage the provider reported,
 because that is the only honest count -- an estimate made before the call is a
 guess about a tokeniser.
+
+It is per **question**, and a question is several calls: a first attempt and at
+most one retry. Nothing in the type says when a question ends, so the caller must
+say, with `new_question()`. The first live smoke run found out what happens
+otherwise -- one `BudgetedLLM` is built per *run*, so the counter accumulated
+across trials and the third question in a 180-question run died at 48,482 tokens
+against a 40,000 budget. A per-question budget that is never reset is a per-run
+budget with a misleading name.
 """
 
 from __future__ import annotations
@@ -42,6 +50,11 @@ class QuestionBudget:
                 f"output tokens {self.spent_out} exceed the per-question budget {self.tokens_out}"
             )
 
+    def reset(self) -> None:
+        """A new question starts from zero. The allowance itself is unchanged."""
+        self.spent_in = 0
+        self.spent_out = 0
+
     @property
     def remaining_in(self) -> int:
         return max(0, self.tokens_in - self.spent_in)
@@ -59,6 +72,18 @@ class BudgetedLLM:
         self.budget = budget or QuestionBudget()
         self.provider = getattr(inner, "provider", "")
         self.model = getattr(inner, "model", "")
+        self.questions = 0
+
+    def new_question(self) -> None:
+        """Start a new question's allowance. Called once per trial, by the caller.
+
+        Explicit rather than inferred. There is no signal inside a call that says
+        "this is a different question", and guessing from the message list would
+        be wrong the first time two questions shared a prefix -- which, for a
+        system whose 16k system prompt is identical across every trial, is always.
+        """
+        self.budget.reset()
+        self.questions += 1
 
     def structured(
         self, *, prompt_id: str, messages: list[Msg], schema: dict[str, Any], max_tokens: int

@@ -69,7 +69,12 @@ class Adapters(Strict):
 
 
 class Provider(Strict):
-    provider: Literal["anthropic", "openai", "gemini"]
+    # "none" is a real choice, not a missing value: it says the fallback chain
+    # has no second opinion and must raise `ModelUnavailable` rather than quietly
+    # answer with a different model. For this project that is the safe setting --
+    # a silent swap mid-run would mean the two arms of the thesis were measured
+    # on different models, which is the one thing the comparison cannot survive.
+    provider: Literal["anthropic", "openai", "gemini", "none"]
     model: str
 
 
@@ -88,7 +93,10 @@ class Budget(Strict):
 
 class LLMSettings(Strict):
     mode: Literal["live", "record", "replay"]
-    temperature: int
+    # `None` means "the provider's default, because the model does not accept
+    # one". The gpt-5 family refuses `temperature=0` outright (ADR-018). Held as
+    # null rather than as 0 so the file states what actually happens.
+    temperature: int | None
     primary: Provider
     secondary: Provider
     max_tokens: MaxTokens

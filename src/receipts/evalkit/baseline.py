@@ -691,6 +691,12 @@ class Baseline:
         return self._prompts[role]
 
     def __call__(self, trial: Trial, reference: Any = None) -> ScorableAnswer:
+        # One trial is one question, and the budget is per question (SDD §16).
+        # Duck-typed: the baseline is handed whatever LLM the run configured, and
+        # a plain client with no budget is a legitimate thing to be handed.
+        new_question = getattr(self.llm, "new_question", None)
+        if callable(new_question):
+            new_question()
         allowlist = allowlist_for(trial.role, self.tables, roles=self.roles)
         scope = scope_for(trial.role, roles=self.roles)
         messages = [

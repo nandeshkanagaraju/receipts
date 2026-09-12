@@ -1,16 +1,37 @@
 # Model prices as integer micro-dollars per million tokens. SDD §23.
 # Cost arithmetic is integer throughout; no float touches a price (D1).
+#
+# `cached_input_micro_usd_per_mtok` is what a cached prompt prefix costs. Both
+# providers discount it heavily and both report the cached count in usage, so
+# pricing all input at the full rate would overstate every bill by roughly the
+# size of the discount -- which for the baseline, whose 16k prompt is identical
+# within a role, is most of the bill.
+#
+# Source: OpenAI published pricing, read 2026-09-12. Anthropic entries predate
+# the provider switch (ADR-018) and are unused while the primary is OpenAI.
 
 models:
   claude-sonnet-5:
     input_micro_usd_per_mtok: 3000000
+    cached_input_micro_usd_per_mtok: 300000
     output_micro_usd_per_mtok: 15000000
   claude-opus-5:
     input_micro_usd_per_mtok: 15000000
+    cached_input_micro_usd_per_mtok: 1500000
     output_micro_usd_per_mtok: 75000000
   claude-haiku-4-5-20251001:
     input_micro_usd_per_mtok: 1000000
+    cached_input_micro_usd_per_mtok: 100000
     output_micro_usd_per_mtok: 5000000
   gpt-5:
     input_micro_usd_per_mtok: 1250000
+    cached_input_micro_usd_per_mtok: 125000
     output_micro_usd_per_mtok: 10000000
+  gpt-5.5-2026-04-23:
+    input_micro_usd_per_mtok: 5000000
+    cached_input_micro_usd_per_mtok: 500000
+    output_micro_usd_per_mtok: 30000000
+  gpt-5.4-2026-03-05:
+    input_micro_usd_per_mtok: 2500000
+    cached_input_micro_usd_per_mtok: 250000
+    output_micro_usd_per_mtok: 15000000

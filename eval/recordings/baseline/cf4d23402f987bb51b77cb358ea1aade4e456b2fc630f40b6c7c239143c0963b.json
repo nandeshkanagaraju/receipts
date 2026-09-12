@@ -1,0 +1,15 @@
+{
+  "kind": "text",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "baseline",
+    "provider": "openai",
+    "sha256": "090de0f66427067263b3bab5362e4ec84053149f3b1f35e46139a141a5121fbd",
+    "version": 1
+  },
+  "text": "```sql\nselect s.name as key,\n       sum(i.qty) as value\nfrom order_items i\njoin orders o on o.order_id = i.order_id\njoin showrooms s on s.showroom_id = o.showroom_id\nwhere not o.is_test\n  and o.status = 'paid'\n  and s.country_code in ('GB')\n  and o.business_date between date '2026-08-01' and date '2026-08-31'\ngroup by s.name\norder by value desc, key asc\nlimit 5\n```",
+  "usage": {
+    "input_tokens": 16156,
+    "output_tokens": 184
+  }
+}

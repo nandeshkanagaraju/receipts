@@ -108,16 +108,16 @@ bench:
 # A repo-local scratch path, not $(TMPDIR): TMPDIR is set on macOS and empty on
 # most Linux CI images, where the copy would have landed in the working tree.
 BASELINE_TMP := .make/baseline_first.json
-# ANTHROPIC_API_KEY must be in the environment. It is never echoed, never
+# OPENAI_API_KEY must be in the environment (ADR-018). It is never echoed, never
 # written to a file, and never passed on a command line.
 
 baseline-smoke:          ## 3 live calls, no report written. Run this first.
-	@test -n "$$ANTHROPIC_API_KEY" || { echo "ANTHROPIC_API_KEY is not set" >&2; exit 1; }
+	@test -n "$$OPENAI_API_KEY" || { echo "OPENAI_API_KEY is not set" >&2; exit 1; }
 	RECEIPTS_LLM_MODE=record $(PY) -m receipts.evalkit.harness \
 	  --system baseline --set dev --limit 3
 
 baseline-record:         ## ~180 live calls, ~$$14. Writes recordings and the report.
-	@test -n "$$ANTHROPIC_API_KEY" || { echo "ANTHROPIC_API_KEY is not set" >&2; exit 1; }
+	@test -n "$$OPENAI_API_KEY" || { echo "OPENAI_API_KEY is not set" >&2; exit 1; }
 	RECEIPTS_LLM_MODE=record $(PY) -m receipts.evalkit.harness --system baseline --set dev
 
 baseline-verify:         ## Replay twice and prove the two reports are byte-identical (D16).

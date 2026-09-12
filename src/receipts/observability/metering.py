@@ -34,9 +34,14 @@ class PricingError(KeyError):
 class ModelPrice:
     input_micro_usd_per_mtok: int
     output_micro_usd_per_mtok: int
+    cached_input_micro_usd_per_mtok: int = 0
 
     def __post_init__(self) -> None:
-        for name in ("input_micro_usd_per_mtok", "output_micro_usd_per_mtok"):
+        for name in (
+            "input_micro_usd_per_mtok",
+            "output_micro_usd_per_mtok",
+            "cached_input_micro_usd_per_mtok",
+        ):
             value = getattr(self, name)
             if not isinstance(value, int) or isinstance(value, bool):
                 raise TypeError(f"{name} must be an integer micro-dollar amount (D1)")
@@ -53,6 +58,7 @@ def load_pricing(path: Path = PRICING) -> dict[str, ModelPrice]:
         out[str(model)] = ModelPrice(
             input_micro_usd_per_mtok=int(price["input_micro_usd_per_mtok"]),
             output_micro_usd_per_mtok=int(price["output_micro_usd_per_mtok"]),
+            cached_input_micro_usd_per_mtok=int(price.get("cached_input_micro_usd_per_mtok", 0)),
         )
     return out
 
@@ -67,9 +73,17 @@ def cost_micro_usd(
     model: str,
     input_tokens: int,
     output_tokens: int,
+    cached_input_tokens: int = 0,
     pricing: dict[str, ModelPrice] | None = None,
 ) -> int:
-    """Exact micro-dollars for one call. Integers in, integer out."""
+    """Exact micro-dollars for one call. Integers in, integer out.
+
+    `input_tokens` is the provider's total prompt count, **cached ones
+    included** -- that is how both providers report it -- so the cached part is
+    subtracted before pricing the remainder at the full rate. Adding the two
+    would bill the cached tokens twice, which is the mistake that makes caching
+    look like it saved nothing.
+    """
     table = load_pricing() if pricing is None else pricing
     if model not in table:
         raise PricingError(
@@ -77,8 +91,15 @@ def cost_micro_usd(
             "than estimating one"
         )
     price = table[model]
-    return _ceil_div(input_tokens * price.input_micro_usd_per_mtok, TOKENS_PER_MILLION) + _ceil_div(
-        output_tokens * price.output_micro_usd_per_mtok, TOKENS_PER_MILLION
+    if cached_input_tokens < 0 or cached_input_tokens > input_tokens:
+        raise ValueError(
+            f"cached_input_tokens={cached_input_tokens} is not within input_tokens={input_tokens}"
+        )
+    fresh = input_tokens - cached_input_tokens
+    return (
+        _ceil_div(fresh * price.input_micro_usd_per_mtok, TOKENS_PER_MILLION)
+        + _ceil_div(cached_input_tokens * price.cached_input_micro_usd_per_mtok, TOKENS_PER_MILLION)
+        + _ceil_div(output_tokens * price.output_micro_usd_per_mtok, TOKENS_PER_MILLION)
     )
 
 

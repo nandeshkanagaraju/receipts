@@ -421,3 +421,225 @@ def test_the_default_prompt_directory_is_resolved_at_call_time() -> None:
     assert from_default.sha256 == prompt_mod.load("toy", directory=prompt_mod.PROMPTS).sha256
     print(f"\ndefault directory {prompt_mod.PROMPTS.name}/ -> toy.v{from_default.version}")
     assert (prompt_mod.PROMPTS / f"toy.v{from_default.version}.md").exists()
+
+
+# --------------------------------------------------------------------------- #
+# 7. The provider switch (ADR-018) and prompt caching.
+# --------------------------------------------------------------------------- #
+
+
+class FakeOpenAIResponse:
+    """Shaped like the SDK's response, including the nested usage details."""
+
+    def __init__(self, content: str, prompt: int, completion: int, cached: int) -> None:
+        self.choices = [type("C", (), {"message": type("M", (), {"content": content})()})()]
+        details = type("D", (), {"cached_tokens": cached})()
+        self.usage = type(
+            "U",
+            (),
+            {
+                "prompt_tokens": prompt,
+                "completion_tokens": completion,
+                "prompt_tokens_details": details,
+            },
+        )()
+
+
+class FakeOpenAISDK:
+    """Records exactly what was sent, so the request shape can be asserted."""
+
+    def __init__(self, cached: int = 0) -> None:
+        self.sent: list[dict] = []
+        self._cached = cached
+        outer = self
+
+        class Completions:
+            def create(self, **kwargs):
+                outer.sent.append(kwargs)
+                return FakeOpenAIResponse("hello", prompt=1000, completion=20, cached=outer._cached)
+
+        self.chat = type("Chat", (), {"completions": Completions()})()
+
+
+def openai_client(monkeypatch, **kwargs):
+    """Construct the real class with the pytest refusal lifted for one line.
+
+    The refusal is the point of `test_real_llm_refuses_under_pytest`, so it is
+    suspended here deliberately and narrowly rather than weakened: these tests
+    drive a fake SDK and make no call.
+    """
+    from receipts.llm import openai as openai_mod
+
+    monkeypatch.setattr(openai_mod, "_refuse_under_pytest", lambda provider: None)
+    return openai_mod.OpenAILLM(**kwargs)
+
+
+def test_the_gpt5_family_gets_max_completion_tokens_not_max_tokens(monkeypatch, prompt_dir) -> None:
+    """`max_tokens` is refused outright with a 400 by every gpt-5 model."""
+    sdk = FakeOpenAISDK()
+    client = openai_client(monkeypatch, model="gpt-5.5-2026-04-23", client=sdk)
+    client.text(prompt_id="toy", messages=[Msg(role="user", content="q")], max_tokens=64)
+    sent = sdk.sent[0]
+    print(f"\nrequest keys: {sorted(sent)}")
+    assert "max_completion_tokens" in sent and sent["max_completion_tokens"] == 64
+    assert "max_tokens" not in sent, "the deprecated parameter is still being sent"
+
+
+def test_temperature_is_omitted_when_it_is_none(monkeypatch, prompt_dir) -> None:
+    """Not sent as 0. The model returns 400 for any explicit value (ADR-018)."""
+    sdk = FakeOpenAISDK()
+    client = openai_client(monkeypatch, model="gpt-5.5-2026-04-23", client=sdk, temperature=None)
+    client.text(prompt_id="toy", messages=[Msg(role="user", content="q")], max_tokens=8)
+    assert "temperature" not in sdk.sent[0], "temperature was sent to a model that refuses it"
+
+
+def test_temperature_is_sent_when_it_is_set(monkeypatch, prompt_dir) -> None:
+    """Guard off: a model that accepts 0 still gets 0, so the omission is
+    conditional rather than a quiet removal of the charter's setting."""
+    sdk = FakeOpenAISDK()
+    client = openai_client(monkeypatch, model="gpt-4.1", client=sdk, temperature=0)
+    client.text(prompt_id="toy", messages=[Msg(role="user", content="q")], max_tokens=8)
+    assert sdk.sent[0]["temperature"] == 0
+
+
+def test_a_caller_supplied_system_message_is_not_shadowed(monkeypatch, prompt_dir) -> None:
+    """The defect that would have wasted the whole paid run.
+
+    `_messages` prepended the prompt *file* unconditionally. The baseline's
+    system message is a 16k rendered prompt, so every call would have carried the
+    unrendered template -- `{{DDL}}`, `{{GLOSSARY}}` and all -- in front of the
+    real one: two system messages, one of them nonsense, on 180 calls.
+    """
+    sdk = FakeOpenAISDK()
+    client = openai_client(monkeypatch, model="gpt-5.5-2026-04-23", client=sdk)
+    client.text(
+        prompt_id="toy",
+        messages=[Msg(role="system", content="RENDERED"), Msg(role="user", content="q")],
+        max_tokens=8,
+    )
+    sent = sdk.sent[0]["messages"]
+    systems = [m for m in sent if m["role"] == "system"]
+    print(f"\n{len(sent)} messages, {len(systems)} system")
+    assert len(systems) == 1, f"{len(systems)} system messages were sent"
+    assert systems[0]["content"] == "RENDERED"
+    assert "{{" not in json.dumps(sent), "an unrendered template reached the request"
+
+
+def test_the_prompt_file_is_still_the_system_message_when_none_is_supplied(
+    monkeypatch, prompt_dir
+) -> None:
+    """Guard off: the fix is conditional, not a removal."""
+    sdk = FakeOpenAISDK()
+    client = openai_client(monkeypatch, model="gpt-5.5-2026-04-23", client=sdk)
+    client.text(prompt_id="toy", messages=[Msg(role="user", content="q")], max_tokens=8)
+    systems = [m for m in sdk.sent[0]["messages"] if m["role"] == "system"]
+    assert len(systems) == 1 and "toy prompt" in systems[0]["content"]
+
+
+def test_a_cache_key_is_sent_so_same_prefix_calls_share_a_cache(monkeypatch, prompt_dir) -> None:
+    sdk = FakeOpenAISDK()
+    client = openai_client(monkeypatch, model="m", client=sdk, cache_key="receipts-baseline-m")
+    client.text(prompt_id="toy", messages=[Msg(role="user", content="q")], max_tokens=8)
+    assert sdk.sent[0]["prompt_cache_key"] == "receipts-baseline-m"
+
+
+def test_cached_tokens_are_read_back_from_usage(monkeypatch, prompt_dir) -> None:
+    """A cache that silently stops hitting looks exactly like a bigger bill."""
+    sdk = FakeOpenAISDK(cached=896)
+    client = openai_client(monkeypatch, model="m", client=sdk)
+    result = client.text(prompt_id="toy", messages=[Msg(role="user", content="q")], max_tokens=8)
+    print(f"\nusage: {result.usage}")
+    assert result.usage.cached_input_tokens == 896
+    assert result.usage.input_tokens == 1000, "cached tokens are part of the prompt total"
+
+
+def test_cached_tokens_cannot_exceed_the_prompt_total() -> None:
+    with pytest.raises(ValueError):
+        Usage(input_tokens=10, output_tokens=1, cached_input_tokens=11)
+
+
+def test_a_cached_prefix_is_priced_at_the_cached_rate() -> None:
+    """The saving is real money and is computed, not assumed."""
+    table = metering.load_pricing()
+    model = "gpt-5.5-2026-04-23"
+    full = metering.cost_micro_usd(
+        model=model, input_tokens=16_000, output_tokens=500, pricing=table
+    )
+    cached = metering.cost_micro_usd(
+        model=model,
+        input_tokens=16_000,
+        output_tokens=500,
+        cached_input_tokens=15_000,
+        pricing=table,
+    )
+    fmt = metering.format_micro_usd
+    print(f"\nuncached {fmt(full)} -> cached {fmt(cached)}")
+    assert cached < full, "caching did not reduce the price"
+    # 1000 fresh @ $5/Mtok + 15000 cached @ $0.50/Mtok + 500 out @ $30/Mtok
+    assert cached == 5_000 + 7_500 + 15_000
+
+
+def test_cached_tokens_are_not_billed_twice() -> None:
+    """They are *part of* the prompt total, not additional to it.
+
+    Adding the two counts would bill the cached tokens at both rates, which is
+    the arithmetic that makes caching look like it saved nothing.
+    """
+    table = metering.load_pricing()
+    all_cached = metering.cost_micro_usd(
+        model="gpt-5", input_tokens=1000, output_tokens=0, cached_input_tokens=1000, pricing=table
+    )
+    assert all_cached == 125, (
+        f"1000 fully-cached tokens at $0.125/Mtok is 125 micro, got {all_cached}"
+    )
+
+
+def test_a_nonsensical_cached_count_raises_rather_than_discounting() -> None:
+    with pytest.raises(ValueError):
+        metering.cost_micro_usd(
+            model="gpt-5", input_tokens=10, output_tokens=0, cached_input_tokens=99
+        )
+
+
+def test_the_configured_primary_and_secondary_agree_with_the_adr() -> None:
+    """Same model on both sides, pinned, with no second opinion (ADR-018)."""
+    from receipts.config import load_settings
+
+    settings = load_settings()
+    assert settings.llm.primary.provider == "openai"
+    assert settings.llm.primary.model == "gpt-5.5-2026-04-23"
+    assert "-" in settings.llm.primary.model.split("gpt-5.5")[-1], (
+        "the primary is a floating alias; a dated snapshot is required so the "
+        "baseline and Receipts cannot be recorded against different models"
+    )
+    assert settings.llm.secondary.provider == "none", (
+        "a fallback to another model would break 'same model on both sides'"
+    )
+
+
+def test_a_budget_is_per_question_and_is_reset_between_them(prompt_dir: Path) -> None:
+    """Found by the first live smoke run, at trial three of a 180-trial run.
+
+    One `BudgetedLLM` is built per run, so without a reset the counter is a
+    *per-run* budget wearing a per-question name, and the run dies partway
+    through on a limit nobody set.
+    """
+    limited = budget_mod.BudgetedLLM(FakeLLM(), budget_mod.QuestionBudget(tokens_in=25))
+    for _ in range(2):
+        limited.structured(
+            prompt_id="toy", messages=[Msg(role="user", content="q")], schema=SCHEMA, max_tokens=8
+        )
+    assert limited.budget.spent_in == 22
+    limited.new_question()
+    assert limited.budget.spent_in == 0, "the budget carried into the next question"
+    assert limited.budget.tokens_in == 25, "resetting changed the allowance itself"
+    assert limited.questions == 1
+    # And it still refuses within one question.
+    for _ in range(2):
+        limited.structured(
+            prompt_id="toy", messages=[Msg(role="user", content="q")], schema=SCHEMA, max_tokens=8
+        )
+    with pytest.raises(BudgetExceeded):
+        limited.structured(
+            prompt_id="toy", messages=[Msg(role="user", content="q")], schema=SCHEMA, max_tokens=8
+        )

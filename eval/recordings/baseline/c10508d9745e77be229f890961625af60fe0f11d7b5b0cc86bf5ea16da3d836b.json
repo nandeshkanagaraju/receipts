@@ -1,0 +1,15 @@
+{
+  "kind": "text",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "baseline",
+    "provider": "openai",
+    "sha256": "090de0f66427067263b3bab5362e4ec84053149f3b1f35e46139a141a5121fbd",
+    "version": 1
+  },
+  "text": "```sql\nselect\n  null as key,\n  cast(sum(s.settled_on - a.business_date) * 1.0 / count(*) as decimal(38,12)) as value\nfrom settlements s\njoin settlement_items si on si.settlement_id = s.settlement_id\njoin payment_attempts a on a.attempt_id = si.attempt_id\nwhere not a.is_test\n  and a.status = 'captured'\n  and s.settled_on between date '2026-08-01' and date '2026-08-31'\norder by value\n```",
+  "usage": {
+    "input_tokens": 16369,
+    "output_tokens": 267
+  }
+}

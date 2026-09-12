@@ -1,0 +1,15 @@
+{
+  "kind": "text",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "baseline",
+    "provider": "openai",
+    "sha256": "090de0f66427067263b3bab5362e4ec84053149f3b1f35e46139a141a5121fbd",
+    "version": 1
+  },
+  "text": "```sql\nselect\n  null as key,\n  count(*) as value\nfrom orders o\njoin showrooms s on s.showroom_id = o.showroom_id\nwhere not o.is_test\n  and s.region_id = 'IN-TN'\n  and o.business_date = date '2026-09-09'\norder by value\n```",
+  "usage": {
+    "input_tokens": 16163,
+    "output_tokens": 154
+  }
+}
