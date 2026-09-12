@@ -158,6 +158,22 @@ def gate(
     """SDD §10. First match wins; the rule number is part of the decision."""
     places = places or {}
 
+    # Judge the plan that will actually RUN, not the draft the model produced.
+    #
+    # The validator canonicalises filter values through the dimension's synonyms
+    # (SDD §9.1 rule 3): a plan saying `country = 'UAE'` becomes
+    # `country = 'United Arab Emirates'`, which is the row the database holds.
+    # Rule 1 compares those values against the places a role may see -- and while
+    # it was handed the draft, it compared `UAE` against a list containing
+    # `United Arab Emirates` and found nothing out of scope. The scope check was
+    # reading a different query from the one that would execute.
+    #
+    # Taken from the `Validated` rather than left to the caller, because "pass
+    # the resolved plan, not the draft" is exactly the kind of instruction that
+    # is followed in three call sites and forgotten in the fourth.
+    if isinstance(validated, Validated):
+        plan = validated.resolved.plan
+
     # ---- Rule 1: scope. Before everything, so a refusal cannot leak. -------- #
     if plan is not None:
         offending = out_of_scope_filter_values(plan, scope, places)

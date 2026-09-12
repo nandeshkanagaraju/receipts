@@ -104,6 +104,12 @@ up:
 bench:
 	$(call NOT_BUILT,bench,M20 — benchmark)
 
+fault-table:             ## Print the F1-F12 fault-injection status table (SDD §12.5).
+	$(PY) scripts/fault_table.py
+
+canary-sweep:            ## F12: sweep every scoped dev trial for a planted canary (T7).
+	$(PY) scripts/canary_sweep.py
+
 semantic-lint:           ## Lint the semantic layer (SDD §7.3) and list the metrics.
 	$(PY) -m receipts.semantic.lint --list
 

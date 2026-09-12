@@ -93,6 +93,11 @@ jobs:
           fi
       - name: pytest (socket guard active, zero network calls)
         run: pytest
+      - name: Canary sweep — zero RBAC leaks (T7, ship-blocking)
+        # T7 has no tolerance, so it runs where nobody can skip it. The sweep
+        # needs the recorded plans and the artifact, both of which are in the
+        # repo, and it makes no model call.
+        run: make canary-sweep
       - name: Semantic layer lints clean (SDD §7.3)
         # PDD J8: an admin adds a metric in YAML and it is available after
         # reload with no code change. That promise is only safe if the linter

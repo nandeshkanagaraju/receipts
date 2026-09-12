@@ -760,3 +760,51 @@ Two supporting facts, both measured on dev in M9 and M10:
 - **Rule 1 runs before everything else**, including CLARIFY. If it did not, the
   clarification question itself would confirm that Dubai exists and has data —
   the refusal would leak the thing it refuses.
+
+### M21 — the five compiler defects, and the shape they shared
+
+For the README at G5, beside the baseline findings. This is the other half of the
+story: the baseline's failures are measured, and these are Receipts' own, found
+before anything was scored.
+
+The M11 dev preview — compile fifteen dev plans, run them on raw DuckDB, compare
+with independently written reference SQL — started at **3 of 15** and finished at
+**11 row-for-row, 1 same-values, 3 planner choices, 0 errors**. Five compiler
+defects lay between those numbers:
+
+1. **FX multiplied by the raw rate column.** `usd_per_unit('USD')` is not 1 in
+   this data; the quoted rates drift between 0.970 and 1.037. Captured GMV was
+   1.6% high. The reference converts via a ratio of two rates.
+2. **Duplicate captures keyed on `gateway_payment_id`**, which is unique here, so
+   the count was 0 where it should have been 40 — and their value was counted
+   into GMV.
+3. **The reporting currency skipped the role's default** and went straight to
+   USD, so every UK question came back in dollars. Right numbers, wrong currency.
+4. **`failure_rate_by_reason` divided each reason by itself**, because the
+   denominator followed the `GROUP BY`. Every reason came out at 1.0 and the
+   eight summed to 800% — the exact arithmetic GLOSSARY §2.10 warns about in
+   those words.
+5. **`unsettled_amount` asked "never settled" instead of "not settled by D"**, so
+   a capture settled in September counted as settled at 31 August. Sevenfold low.
+
+**None of them raised an error.** Every one returned a number that looked
+entirely reasonable — 107,381,818 is a perfectly plausible answer to "how much
+did we collect in the UK", and it is 86,894,100 pounds. **Four of the five were
+caught only by the independent reference query.** The README should say both of
+those plainly: a compiler that runs without error is not a compiler that is
+right, and the thing that separated those two states was a second implementation
+of the same glossary written by hand.
+
+**A separate line, because it is a different class of failure.** The unconditional
+`NOT is_test` predicate was missing from *joined* fact tables — applied to the
+base entity only. The worked example **still agreed with its reference**, because
+a test attempt in this data almost always belongs to a test order, so excluding
+test orders excluded the test attempts as a side effect.
+
+That is not a missing filter that shows up. It is a missing filter hidden by a
+correlation in the data, and it would have kept agreeing with every spot check
+until the first question where the two are independent. It was found by a
+property test asserting the predicate on *every* fact table in *every* generated
+plan, not by comparing an answer — and the README should distinguish the two,
+because "we compared against references and they matched" would not have caught
+it.

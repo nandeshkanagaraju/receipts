@@ -765,18 +765,28 @@ def test_the_gated_match_does_not_fire_on_an_ordinary_question(catalog) -> None:
 
 
 # Dev questions whose gate decision is correct but whose LABEL is less precise
-# than it could be. DV-057 is an injection wrapped around a question naming
-# "UAE", which is not a value in the country index -- the data says United Arab
-# Emirates -- so rule 1 sees no place, validation raises UNKNOWN_FILTER_VALUE,
-# and the gate fails closed with ABSTAIN rather than DENY. No data can leak;
-# the asker is told the question could not be mapped rather than that it is
-# outside their regions. Adding the alias would mean acting on a value absent
-# from the data, which is the substitution the validator exists to refuse.
-KNOWN_LABEL_IMPRECISE = {"DV-057"}
+# than it could be.
+#
+# RESOLVED, and deliberately emptied rather than deleted. DV-057 was here: an
+# injection wrapped around a question naming "UAE", which gate rule 1 did not
+# recognise because the data spells it "United Arab Emirates". Two things had to
+# change before it denied, and only one of them was the word.
+#
+# The first was implementing SDD §9.1 rule 3's synonym matching, which had never
+# been built (M11). The second was that the gate was being handed the model's
+# DRAFT plan rather than the validated one, so rule 1 compared "UAE" against a
+# list containing "United Arab Emirates" and found nothing out of scope -- it was
+# reading a different query from the one that would execute.
+#
+# So this was never a permanent imprecision in the scope check. It was a missing
+# synonym plus a gate reading the wrong object, and both are fixed. The set stays
+# here, empty, because the test around it is worth keeping: a NEW question that
+# should DENY and does not will fail it.
+KNOWN_LABEL_IMPRECISE: set[str] = set()
 
 
-def test_the_label_imprecision_is_bounded_to_one_known_question(catalog) -> None:
-    """A second instance fails here, and so does this one resolving.
+def test_every_out_of_scope_question_is_denied(catalog) -> None:
+    """All four DENY-population dev questions decide DENY. None is exempt.
 
     Walks the recorded dev plans, gates each, and asks which DENY-population
     questions did not decide DENY. Exactly the named set, or the list has stopped
@@ -855,7 +865,10 @@ def test_the_label_imprecision_is_bounded_to_one_known_question(catalog) -> None
         "check has a new hole, or the question names a place absent from the data."
     )
     stale = sorted(KNOWN_LABEL_IMPRECISE - not_denied)
-    assert not stale, f"{stale} now DENY; remove them from KNOWN_LABEL_IMPRECISE"
+    assert not stale, (
+        f"{stale} now DENY; remove them from KNOWN_LABEL_IMPRECISE and say so in "
+        "LIMITATIONS rather than editing the constant quietly"
+    )
 
 
 # The wrong-fix check. Each of these is a plain answerable question with no
@@ -928,3 +941,38 @@ def test_a_superlative_with_a_measure_proceeds(catalog) -> None:
 
 def test_grain_is_reachable_from_the_domain() -> None:
     assert Grain.MONTH.value == "MONTH"
+
+
+def test_the_gate_judges_the_resolved_plan_not_the_draft(catalog) -> None:
+    """Rule 1 must compare the values that will actually reach the database.
+
+    The validator canonicalises filter values through the dimension's synonyms,
+    so a draft saying `country = 'UAE'` becomes `United Arab Emirates`. Handed
+    the draft, rule 1 compared "UAE" against a place list holding the canonical
+    name and found nothing out of scope -- the scope check was reading a
+    different query from the one that would run.
+    """
+    from receipts.semantic import loader as loader_mod
+
+    indexed = loader_mod.load()
+    if not indexed.values_for("country"):
+        pytest.skip("no dimension value index; the database is not built")
+
+    draft = a_plan(filters=(Filter(dimension="country", op="eq", values=("UAE",)),))
+    validated = validate(draft, indexed, tn_scope(), AS_OF)
+    assert isinstance(validated, Validated), validated
+    assert validated.resolved.plan.filters[0].values == ("United Arab Emirates",), (
+        "the synonym did not resolve, so this test proves nothing"
+    )
+
+    decision = gate(
+        question="show me the UAE showrooms' sales",
+        intent=Intent.METRIC,
+        validated=validated,
+        plan=draft,  # the DRAFT is passed, deliberately
+        scope=tn_scope(),
+        catalog=indexed,
+        places=PLACES | {"AE-DU": ("Dubai", "United Arab Emirates", "AE")},
+    )
+    print(f"\nrule {decision.rule}: {decision.decision} -- {decision.reason}")
+    assert decision.decision == "DENY" and decision.rule == 1

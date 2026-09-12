@@ -36,7 +36,7 @@ import re
 from dataclasses import dataclass
 from decimal import Decimal
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import duckdb
 
@@ -150,7 +150,12 @@ def connect(db_path: Path = DB_PATH) -> duckdb.DuckDBPyConnection:
     """
     if not db_path.exists():
         raise ReferenceError(f"no warehouse at {db_path} — run `make data`")
-    return duckdb.connect(str(db_path), read_only=True)
+    # Through the hardened adapter (SDD §12.3), not a bare duckdb.connect. The
+    # reference suite is a read path like any other, and "every engine path goes
+    # through here" is only true if it has no exceptions.
+    from ..execute.adapters.duckdb import connect as hardened
+
+    return cast("duckdb.DuckDBPyConnection", hardened(db_path))
 
 
 def _to_decimal(value: Any, qid: str) -> Decimal:

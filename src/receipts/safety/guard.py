@@ -242,6 +242,14 @@ def guard(
     row_limit: int = 500,
 ) -> GuardResult:
     """SDD §12.1. Returns a typed result; never raises on bad SQL."""
+    from .layers import enabled
+
+    if not enabled("guard"):
+        # D8 requires each read-only layer to be tested with the other two off.
+        # This is that switch, and `safety/layers.py` refuses to move it outside
+        # pytest -- so "the guard is disabled" is a statement about a test run and
+        # can never be a statement about production.
+        return GuardResult(ok=True, sql=sql, tables=())
     if not sql or not sql.strip():
         return GuardResult(ok=False, reason="unparseable", detail="empty statement")
 
@@ -347,3 +355,23 @@ def guard_or_raise(sql: str, dialect: str = "duckdb", allowlist: Any = None, **k
     if not result.ok:
         raise GuardError(f"{result.reason}: {result.detail}")
     return result.sql
+
+
+def allowlist_for_role(role: str, catalog: Any, roles: dict[str, Any]) -> frozenset[str]:
+    """Tables this role may reference at all (SDD §12.1 item 3, §11.2).
+
+    Built from the catalogue's own entities and the role's capabilities, so a
+    table added to the layer is covered without anybody updating a list here.
+    `customers` is absent because it is not an entity -- SDD §5.2 keeps it out of
+    the semantic layer entirely, which is why the allowlist cannot accidentally
+    include it.
+    """
+    spec = roles.get(role)
+    if spec is None:
+        raise GuardError(f"unknown role {role!r}")
+    held = set(spec.get("capabilities") or [])
+    return frozenset(
+        entity.name
+        for entity in catalog.entities
+        if entity.required_capability is None or entity.required_capability in held
+    )
