@@ -757,6 +757,29 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  {problem}", file=sys.stderr)
         return 1
 
+    # The manifest was just written. If it is not committed, the tag would point
+    # at a commit whose manifest does not contain the hashes the tag certifies --
+    # which is exactly what happened on the first attempt at gen-frozen, and
+    # again here. Record, commit, push, *then* tag.
+    dirty = subprocess.run(
+        ["git", "status", "--porcelain", "--", str(MANIFEST.relative_to(REPO))],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        check=False,
+    ).stdout.strip()
+    if dirty:
+        print(
+            f"REFUSING to create the {TAG} tag: {MANIFEST.relative_to(REPO)} has "
+            "uncommitted changes.\n"
+            "  The manifest records the hashes this tag certifies, so the tag has "
+            "to point at a commit that contains them.\n"
+            "  Commit it, push, wait for CI, then run this again -- it will "
+            "rewrite the same bytes and tag.",
+            file=sys.stderr,
+        )
+        return 1
+
     print(f"\ntagged {TAG} at {create_tag()}")
     return 0
 
