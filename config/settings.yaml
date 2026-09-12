@@ -5,6 +5,14 @@
 # D2: the world's "today" is injected, never read from a clock.
 as_of: 2026-09-10
 
+# The business dates the warehouse actually holds (SDD §5.1). A window that
+# reaches past either end is CLAMPED and the clamp is recorded in
+# `defaults_applied`, because "no rows in August 2024" and "we do not have
+# August 2024" are different answers and only one of them is honest.
+data:
+  first_business_date: 2025-03-01
+  last_business_date: 2026-09-09
+
 paths:
   data_dir: data
   duckdb: data/kestrel.duckdb

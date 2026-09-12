@@ -110,6 +110,11 @@ class LLMSettings(Strict):
     baseline_budget_per_question: Budget
 
 
+class DataRange(Strict):
+    first_business_date: date
+    last_business_date: date
+
+
 class Freeform(Strict):
     enabled: bool
 
@@ -155,6 +160,7 @@ class TestingSettings(Strict):
 
 class Settings(Strict):
     as_of: date
+    data: DataRange
     paths: Paths
     adapters: Adapters
     llm: LLMSettings

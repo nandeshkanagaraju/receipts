@@ -725,3 +725,38 @@ vocabulary and asking why a system that cannot flag had thirty flagged answers �
 not by a test, because the tests asserted the same half-rule. The README should
 say so plainly; it is the strongest available evidence that the numbers in it
 were checked rather than accepted.
+
+### M21 — Receipts' scope boundary is language-independent, and that is the argument
+
+For the README at G5, beside the four M6b findings. This one is the *answer* to
+the second of them and should be printed next to it.
+
+The baseline leaks out-of-scope data on **25% of English** DENY questions and
+**75% of Tamil and Hindi** ones (M6b, commit `552a7ff`). Its scope is a paragraph
+of English prose in a prompt, and a question in another language walks past the
+paragraph.
+
+Receipts cannot have that failure mode, and the reason is structural rather than
+careful. The gate reads a **resolved plan** — a metric name, a list of dimension
+names, filter values already matched against the catalogue's value index, two
+absolute dates. By the time rule 1 runs there is no prose left to misread. The
+question could have arrived in Tamil, Hindi, Tanglish or emoji; the plan it
+became is the same object either way, and the scope check never sees the
+language at all.
+
+That is worth stating carefully in the README, because it is easy to overclaim.
+What is guaranteed is that the **boundary** does not depend on the language. What
+is not guaranteed is that the planner understood the question — a Tamil question
+misunderstood into a plan about the wrong city is still wrong, and the gate will
+happily pass it. The claim is about where the boundary sits, not about
+comprehension.
+
+Two supporting facts, both measured on dev in M9 and M10:
+
+- **The planner produced a valid plan for 3 of 4 DENY questions.** Correct by
+  design: the planner has no scope (D7). The DENY arm is won entirely by gate
+  rule 1 and the compiler's scope injection, and the planner contributes nothing
+  to it and cannot.
+- **Rule 1 runs before everything else**, including CLARIFY. If it did not, the
+  clarification question itself would confirm that Dubai exists and has data —
+  the refusal would leak the thing it refuses.
