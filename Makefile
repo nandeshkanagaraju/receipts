@@ -104,6 +104,9 @@ up:
 bench:
 	$(call NOT_BUILT,bench,M20 — benchmark)
 
+semantic-lint:           ## Lint the semantic layer (SDD §7.3) and list the metrics.
+	$(PY) -m receipts.semantic.lint --list
+
 # --- Baseline B0 (SDD §25.4). The only targets that spend money. ----------- #
 # A repo-local scratch path, not $(TMPDIR): TMPDIR is set on macOS and empty on
 # most Linux CI images, where the copy would have landed in the working tree.

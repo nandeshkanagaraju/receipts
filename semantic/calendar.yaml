@@ -1,0 +1,35 @@
+# Calendar conventions. GLOSSARY §1.5, §1.6, §1.7. SDD §7.2.
+#
+# Kestrel's fiscal year starts 1 April, which is why the bare word "quarter"
+# cannot be answered without asking (§6.2): Q2 means Apr–Jun to finance and
+# Jul–Sep on the calendar, and the two are different sets of days. The words that
+# force that clarification are listed per language, because "காலாண்டு" and
+# "तिमाही" carry exactly the same ambiguity and the clarify path has to fire on
+# all three.
+
+fiscal_year_start_month: 4
+fiscal_year_start_day: 1
+week_starts_on: monday          # GLOSSARY §1.6: weeks are Monday–Sunday
+default_year_basis: calendar    # §1.5: "so far this year" is calendar unless asked
+
+# Quarter words that must be clarified rather than guessed (§6.2).
+ambiguous_quarter_words:
+  en: [quarter, q1, q2, q3, q4, quarterly]
+  ta: [காலாண்டு, quarter]
+  hi: [तिमाही, quarter]
+
+# The distinction §5.4 insists on: "last week" is a complete Monday–Sunday week,
+# "last 7 days" is a rolling window ending yesterday. They are different sets and
+# a system that treats them as synonyms answers a question nobody asked.
+relative_windows:
+  today:        {anchor: as_of,      length_days: 1,  complete_periods_back: 0}
+  yesterday:    {anchor: as_of_minus_1, length_days: 1, complete_periods_back: 0}
+  last_7_days:  {anchor: as_of_minus_1, length_days: 7, complete_periods_back: 0}
+  this_week:    {anchor: week,       complete_periods_back: 0}
+  last_week:    {anchor: week,       complete_periods_back: 1}
+  this_month:   {anchor: month,      complete_periods_back: 0}
+  last_month:   {anchor: month,      complete_periods_back: 1}
+  this_quarter: {anchor: quarter,    complete_periods_back: 0}
+  last_quarter: {anchor: quarter,    complete_periods_back: 1}
+  this_year:    {anchor: year,       complete_periods_back: 0}
+  last_year:    {anchor: year,       complete_periods_back: 1}

@@ -1,0 +1,30 @@
+name: refunded_amount
+label: {en: Refunded amount, ta: திருப்பியளித்த தொகை, hi: रिफंड की गई राशि}
+glossary_ref: GLOSSARY.md#24-refunded-amount
+definition: >-
+  The total value of refunds processed in the window. Refunds still pending, or
+  that failed, are not counted. Partial refunds count for the amount actually
+  refunded, not the value of the original order.
+type: sum
+entity: refunds
+aggregate:
+  agg: sum
+  expr: refunds.amount_minor
+  where: "refunds.status = 'processed'"
+time_dimension: refunds.business_date
+money: true
+currency_column: refunds.currency
+fx_date_column: refunds.business_date
+unit: money
+allowed_dimensions: [country, region, city, showroom, model, channel, refund_reason]
+default_for:
+  en: [refunded amount, how much did we refund, refunds, money given back]
+  ta: [திருப்பியளித்த தொகை, எவ்வளவு திருப்பி அளித்தோம்]
+  hi: [रिफंड की गई राशि, कितना रिफंड किया]
+siblings: [refund_rate, net_revenue]
+excludes: [test transactions, pending refunds, failed refunds]
+required_capability: null
+owner: payments-analytics
+notes: >-
+  Keyed on the refund business date -- the local date the refund was processed --
+  not the date of the order being refunded.

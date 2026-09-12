@@ -1,0 +1,34 @@
+name: emi_share
+label: {en: EMI share, ta: EMI பங்கு, hi: EMI हिस्सा}
+glossary_ref: GLOSSARY.md#211-emi-share
+definition: >-
+  The share of captured value that was paid by instalments. Numerator: captured
+  GMV in the window from orders paid by EMI. Denominator: total captured GMV in
+  the window.
+type: ratio
+entity: payment_attempts
+numerator:
+  agg: sum
+  expr: payment_attempts.amount_minor
+  where: "payment_attempts.status = 'captured' AND IS_FIRST_CAPTURE AND payment_attempts.method = 'emi'"
+denominator:
+  agg: sum
+  expr: payment_attempts.amount_minor
+  where: "payment_attempts.status = 'captured' AND IS_FIRST_CAPTURE"
+time_dimension: payment_attempts.business_date
+money: false
+unit: ratio
+allowed_dimensions: [country, region, city, showroom, model, channel, emi_tenure_months]
+default_for:
+  en: [emi share, how much on emi, instalments, easy payments]
+  ta: [EMI பங்கு, தவணை]
+  hi: [EMI हिस्सा, किस्त, आसान भुगतान]
+siblings: [gmv_captured]
+excludes: [test transactions]
+required_capability: null
+owner: payments-analytics
+notes: >-
+  The value counted is the FULL order value, not the monthly instalment (§4.9).
+  EMI is offered only in India and Malaysia, so an EMI share for the UK or the
+  UAE is legitimately zero rather than missing. Both sides converted to the
+  reporting currency before dividing.

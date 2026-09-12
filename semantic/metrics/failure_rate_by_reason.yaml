@@ -1,0 +1,36 @@
+name: failure_rate_by_reason
+label: {en: Failure rate by reason, ta: காரணவாரியான தோல்வி விகிதம், hi: कारण के अनुसार विफलता दर}
+glossary_ref: GLOSSARY.md#210-failure-rate-by-reason
+definition: >-
+  For each failure reason, the share of payment attempts in the window that
+  failed with that reason. The denominator is ALL payment attempts in the window,
+  of any outcome -- captured, authorised and failed alike. It is not the number
+  of failed attempts.
+type: ratio
+entity: payment_attempts
+numerator:
+  agg: count
+  expr: payment_attempts.attempt_id
+  where: "payment_attempts.status = 'failed'"
+denominator:
+  agg: count
+  expr: payment_attempts.attempt_id
+time_dimension: payment_attempts.business_date
+money: false
+unit: ratio
+allowed_dimensions: [failure_reason, country, region, city, showroom, payment_method, issuing_bank, card_network]
+required_dimensions: [failure_reason]
+default_for:
+  en: [failure rate by reason, what is failing, why are payments declining, failure reasons]
+  ta: [தோல்விக்கான காரணங்கள், காரணவாரியான தோல்வி விகிதம்]
+  hi: [विफलता के कारण, कारण के अनुसार विफलता दर]
+siblings: [payment_success_rate_attempt]
+excludes: [test attempts]
+required_capability: null
+owner: payments-analytics
+notes: >-
+  The rates across reasons sum to the overall attempt failure rate, NOT to 100%.
+  If 8% of attempts failed, the per-reason rates sum to 8%. A set of per-reason
+  figures summing to 100% has been computed against the wrong denominator -- it
+  is the share of failures by reason, a different and undefined quantity. A plain
+  count of failures by reason is also not this metric.

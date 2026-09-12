@@ -1,0 +1,27 @@
+name: orders_count
+label: {en: Orders count, ta: ஆர்டர்கள் எண்ணிக்கை, hi: ऑर्डर की संख्या}
+glossary_ref: GLOSSARY.md#21-orders-count
+definition: >-
+  The number of orders created in the window. All three order statuses count:
+  paid, abandoned and cancelled alike. "How many orders did we take" is this
+  metric; "how many orders did we get paid for" is a different number and is not
+  this metric.
+type: count_distinct
+entity: orders
+aggregate: {agg: count_distinct, expr: orders.order_id}
+time_dimension: orders.business_date
+money: false
+unit: count
+allowed_dimensions: [country, region, city, showroom, model, channel, order_status]
+default_for:
+  en: [orders count, how many orders, orders taken, number of orders]
+  ta: [ஆர்டர்கள் எண்ணிக்கை, எத்தனை ஆர்டர்கள்]
+  hi: [ऑर्डर की संख्या, कितने ऑर्डर]
+siblings: [units_sold, avg_order_value]
+excludes: [test orders]
+required_capability: null
+owner: commerce-analytics
+notes: >-
+  Larger than the number of orders that produced revenue, because abandoned and
+  cancelled orders count. The paid-order count is the denominator of average
+  order value (§2.6), not this.

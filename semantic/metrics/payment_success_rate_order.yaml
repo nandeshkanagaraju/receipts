@@ -1,0 +1,42 @@
+name: payment_success_rate_order
+label:
+  en: Payment success rate (order-level)
+  ta: பணம் செலுத்தும் வெற்றி விகிதம் (ஆர்டர் அளவில்)
+  hi: भुगतान सफलता दर (ऑर्डर स्तर)
+glossary_ref: GLOSSARY.md#28-payment-success-rate-order-level
+definition: >-
+  The share of orders that were eventually paid. Numerator: distinct orders in
+  the window that reached paid status, meaning at least one payment attempt was
+  captured. Denominator: distinct orders in the window that had at least one
+  payment attempt. Orders where the customer never attempted payment are in
+  neither.
+type: ratio
+entity: orders
+numerator:
+  agg: count_distinct
+  expr: orders.order_id
+  where: "EXISTS_CAPTURE"
+denominator:
+  agg: count_distinct
+  expr: orders.order_id
+  where: "EXISTS_ATTEMPT"
+time_dimension: orders.business_date
+money: false
+unit: ratio
+attribution: tried
+allowed_dimensions: [country, region, city, showroom, payment_method, issuing_bank, card_network, model, channel]
+default_for:
+  en: [success rate, payment success, did payments work, are payments going through]
+  ta: [வெற்றி விகிதம், பணம் செலுத்தும் வெற்றி விகிதம்]
+  hi: [सफलता दर, भुगतान सफलता दर]
+siblings: [payment_success_rate_attempt]
+excludes: [test orders, test attempts]
+required_capability: null
+owner: payments-analytics
+notes: >-
+  This is what "success rate" means at Kestrel, unqualified. Customers retry: a
+  customer whose first UPI attempt fails and whose second succeeds has had one
+  successful purchase. Broken down by bank, method or network this uses "tried"
+  attribution (§1.9) -- the denominator is orders that ATTEMPTED on that
+  method, the numerator those that succeeded on it -- so per-method rates do not
+  sum or reconcile to the overall figure, because their denominators overlap.

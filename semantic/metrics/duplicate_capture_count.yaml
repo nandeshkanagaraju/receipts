@@ -1,0 +1,32 @@
+name: duplicate_capture_count
+label: {en: Duplicate capture count, ta: இரட்டைக் கழிவு எண்ணிக்கை, hi: डुप्लिकेट कैप्चर संख्या}
+glossary_ref: GLOSSARY.md#215-duplicate-capture-count
+definition: >-
+  The number of captured payments that are duplicates of another capture on the
+  same order -- the same money taken twice. For a pair the count is one: one
+  capture is legitimate and one is the duplicate. Three captures of the same
+  amount count as two duplicates.
+type: count
+entity: payment_attempts
+aggregate:
+  agg: count
+  expr: payment_attempts.attempt_id
+  where: "payment_attempts.status = 'captured' AND IS_DUPLICATE_CAPTURE"
+time_dimension: payment_attempts.business_date
+money: false
+unit: count
+allowed_dimensions: [country, region, city, showroom, payment_method, issuing_bank, acquiring_bank, card_network]
+default_for:
+  en: [duplicate captures, double charges, charged twice, duplicates]
+  ta: [இரட்டைக் கழிவு, இருமுறை கட்டணம்]
+  hi: [डुप्लिकेट कैप्चर, दो बार चार्ज]
+siblings: [gmv_captured, refunded_amount]
+excludes: [test transactions]
+required_capability: null
+owner: payments-analytics
+notes: >-
+  Keyed on the capture business date of the DUPLICATE capture. Duplicates are
+  counted once in gmv_captured (§2.3) so revenue is not overstated, and they stay
+  visible here so the operational problem is not hidden. A store with duplicate
+  captures usually also shows an unusual refund pattern, because the duplicates
+  are refunded once noticed.

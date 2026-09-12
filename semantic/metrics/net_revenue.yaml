@@ -1,0 +1,30 @@
+name: net_revenue
+label: {en: Net revenue, ta: நிகர வருவாய், hi: शुद्ध राजस्व}
+glossary_ref: GLOSSARY.md#25-net-revenue
+definition: >-
+  Captured GMV in the window minus refunds processed in the same window. The
+  refunds subtracted are the ones processed in the window, not the refunds that
+  eventually attach to the orders captured in it.
+type: derived
+entity: payment_attempts
+derived_from: {minus: [gmv_captured, refunded_amount]}
+time_dimension: payment_attempts.business_date
+money: true
+unit: money
+allowed_dimensions: [country, region, city, showroom, model, channel]
+default_for:
+  en: [net revenue, revenue after refunds, net of returns, what did we make after refunds]
+  ta: [நிகர வருவாய், திருப்பிய பிறகு வருவாய்]
+  hi: [शुद्ध राजस्व, रिफंड के बाद राजस्व]
+siblings: [gmv_captured, refunded_amount]
+excludes:
+  - test transactions
+  - pending and failed refunds
+  - the duplicate side of a duplicate capture
+required_capability: null
+owner: finance-analytics
+notes: >-
+  Can be negative for a narrow window, a single showroom or a single model, if
+  refunds processed there exceed captures. That is a real result, not an error.
+  Each side is converted at its own date, then subtracted in the reporting
+  currency.

@@ -1,0 +1,37 @@
+name: refund_rate
+label: {en: Refund rate, ta: பணத்திரும்ப விகிதம், hi: रिफंड दर}
+glossary_ref: GLOSSARY.md#27-refund-rate
+definition: >-
+  Refunded amount in the window divided by captured GMV in the same window. This
+  is a value-based rate. A count-based version -- what share of orders were
+  refunded -- is a different number and is not what "refund rate" means at
+  Kestrel.
+type: ratio
+entity: payment_attempts
+numerator:
+  agg: sum
+  expr: refunds.amount_minor
+  where: "refunds.status = 'processed'"
+  time_dimension: refunds.business_date
+denominator:
+  agg: sum
+  expr: payment_attempts.amount_minor
+  where: "payment_attempts.status = 'captured' AND IS_FIRST_CAPTURE"
+  time_dimension: payment_attempts.business_date
+time_dimension: payment_attempts.business_date
+money: false
+unit: ratio
+allowed_dimensions: [country, region, city, showroom, model, channel]
+default_for:
+  en: [refund rate, what share was refunded, refund percentage]
+  ta: [பணத்திரும்ப விகிதம்]
+  hi: [रिफंड दर, रिफंड प्रतिशत]
+siblings: [refunded_amount, gmv_captured]
+excludes: [test transactions, pending and failed refunds]
+required_capability: null
+owner: payments-analytics
+notes: >-
+  Each side is keyed on its own date, so the two sides do not describe the same
+  orders. For a short window the rate can exceed 100% if a large refund lands in
+  a quiet period. That is expected. Both sides are converted to the reporting
+  currency before dividing; the ratio itself has no currency.

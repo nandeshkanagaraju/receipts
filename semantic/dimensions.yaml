@@ -1,0 +1,167 @@
+# Dimensions: the things a metric can be broken down by. SDD §7.2.
+#
+# Tamil and Hindi synonyms carry the **code-mixed** form as well as the formal
+# one (M2_NOTES, "M7 — Tamil synonyms must carry the code-mixed form"). People
+# writing Tamil in a business context say "showroom" and "bank" in English inside
+# a Tamil sentence far more often than they say the formal Tamil word, and a
+# synonym list holding only the dictionary form matches the questions nobody
+# asks.
+#
+# No dimension may expose a column of `customers` (SDD §7.3). There is no entity
+# for one to reach through, and the lint asserts it anyway, because the guarantee
+# is worth more than the argument that it cannot be violated.
+
+dimensions:
+  - name: country
+    entity: showrooms
+    expr: countries.name
+    join_via: ["countries.country_code = showrooms.country_code"]
+    type: string
+    label: {en: Country, ta: நாடு, hi: देश}
+    synonyms:
+      en: [country, market, nation]
+      ta: [நாடு, country]
+      hi: [देश, country, मुल्क]
+
+  - name: region
+    entity: showrooms
+    expr: regions.name
+    join_via: ["regions.region_id = showrooms.region_id"]
+    type: string
+    label: {en: Region, ta: மாநிலம், hi: क्षेत्र}
+    synonyms:
+      en: [region, state, territory]
+      ta: [மாநிலம், region, state]
+      hi: [क्षेत्र, राज्य, region, state]
+
+  - name: city
+    entity: showrooms
+    expr: cities.name
+    join_via: ["cities.city_id = showrooms.city_id"]
+    type: string
+    label: {en: City, ta: நகரம், hi: शहर}
+    synonyms:
+      en: [city, town, location]
+      ta: [நகரம், ஊர், city]
+      hi: [शहर, नगर, city]
+
+  - name: showroom
+    entity: showrooms
+    expr: showrooms.name
+    join_via: []
+    type: string
+    label: {en: Showroom, ta: ஷோரூம், hi: शोरूम}
+    synonyms:
+      en: [showroom, store, shop, branch, outlet]
+      ta: [ஷோரூம், கடை, showroom, store]
+      hi: [शोरूम, स्टोर, दुकान, showroom, store]
+
+  - name: payment_method
+    entity: payment_attempts
+    expr: payment_attempts.method
+    join_via: []
+    type: string
+    label: {en: Payment method, ta: பணம் செலுத்தும் முறை, hi: भुगतान का तरीका}
+    synonyms:
+      en: [method, payment method, payment type, how they paid]
+      ta: [முறை, payment method, method]
+      hi: [तरीका, भुगतान का तरीका, method, payment method]
+
+  - name: issuing_bank
+    entity: payment_attempts
+    expr: payment_attempts.issuing_bank
+    join_via: []
+    type: string
+    label: {en: Issuing bank, ta: வங்கி, hi: जारीकर्ता बैंक}
+    synonyms:
+      en: [bank, issuer, issuing bank, customer bank]
+      ta: [வங்கி, bank]
+      hi: [बैंक, जारीकर्ता, bank]
+
+  - name: acquiring_bank
+    entity: payment_attempts
+    expr: payment_attempts.acquiring_bank
+    join_via: []
+    type: string
+    label: {en: Acquiring bank, ta: பெறுநர் வங்கி, hi: अधिग्रहणकर्ता बैंक}
+    synonyms:
+      en: [acquirer, acquiring bank, our bank]
+      ta: [பெறுநர் வங்கி, acquiring bank]
+      hi: [अधिग्रहणकर्ता बैंक, acquiring bank]
+
+  - name: card_network
+    entity: payment_attempts
+    expr: payment_attempts.card_network
+    join_via: []
+    type: string
+    label: {en: Card network, ta: கார்டு நெட்வொர்க், hi: कार्ड नेटवर्क}
+    synonyms:
+      en: [network, card network, scheme]
+      ta: [நெட்வொர்க், card network, network]
+      hi: [नेटवर्क, card network, network]
+
+  - name: failure_reason
+    entity: payment_attempts
+    expr: payment_attempts.failure_reason
+    join_via: []
+    type: string
+    label: {en: Failure reason, ta: தோல்விக்கான காரணம், hi: विफलता का कारण}
+    synonyms:
+      en: [reason, failure reason, decline reason, why it failed]
+      ta: [காரணம், failure reason, reason]
+      hi: [कारण, विफलता का कारण, reason]
+
+  - name: model
+    entity: order_items
+    expr: products.model_name
+    join_via: ["products.sku = order_items.sku"]
+    type: string
+    label: {en: Phone model, ta: மாடல், hi: मॉडल}
+    synonyms:
+      en: [model, phone model, handset, device]
+      ta: [மாடல், போன், model, phone]
+      hi: [मॉडल, फोन, model, phone, हैंडसेट]
+
+  - name: channel
+    entity: orders
+    expr: orders.channel
+    join_via: []
+    type: string
+    label: {en: Channel, ta: சேனல், hi: चैनल}
+    synonyms:
+      en: [channel, online or in store, sales channel]
+      ta: [சேனல், channel]
+      hi: [चैनल, channel]
+
+  - name: order_status
+    entity: orders
+    expr: orders.status
+    join_via: []
+    type: string
+    label: {en: Order status, ta: ஆர்டர் நிலை, hi: ऑर्डर की स्थिति}
+    synonyms:
+      en: [status, order status]
+      ta: [நிலை, status, order status]
+      hi: [स्थिति, status, order status]
+
+  - name: emi_tenure_months
+    entity: payment_attempts
+    expr: payment_attempts.emi_tenure_months
+    join_via: []
+    type: string
+    label: {en: EMI tenure (months), ta: EMI கால அளவு, hi: EMI अवधि}
+    synonyms:
+      en: [tenure, emi tenure, instalment months]
+      ta: [கால அளவு, tenure, emi tenure]
+      hi: [अवधि, tenure, emi tenure, किस्त]
+
+  - name: refund_reason
+    entity: refunds
+    expr: refunds.reason
+    join_via: []
+    type: string
+    label: {en: Refund reason, ta: பணத்திரும்பக் காரணம், hi: रिफंड का कारण}
+    synonyms:
+      en: [refund reason, why refunded, return reason]
+      ta: [பணத்திரும்பக் காரணம், refund reason]
+      hi: [रिफंड का कारण, refund reason]

@@ -1,0 +1,160 @@
+# Queryable tables. SDD §7.2.
+#
+# `scope_path` is the join chain from this entity to `showrooms`, which is the
+# only table that carries a region. The compiler walks it to add the role's scope
+# predicate (§11.3), so an entity with no scope_path is either reference data --
+# unscoped by nature, the same for every role -- or a bug.
+#
+# `customers` is absent, and that is not an oversight: SDD §5.2 says it is never
+# in the semantic layer or any allowlist. The lint asserts no dimension reaches
+# it, and there is no entity here for one to reach through.
+
+named_predicates:
+  # Named once so fifteen metrics cannot spell them fifteen ways. Parsed by
+  # sqlglot at load; an unparseable or non-boolean predicate fails the load.
+  EXISTS_ATTEMPT: >-
+    EXISTS (SELECT 1 FROM payment_attempts pa
+            WHERE pa.order_id = orders.order_id AND pa.is_test = FALSE)
+  EXISTS_CAPTURE: >-
+    EXISTS (SELECT 1 FROM payment_attempts pa
+            WHERE pa.order_id = orders.order_id AND pa.status = 'captured'
+              AND pa.is_test = FALSE)
+  IS_FIRST_CAPTURE: >-
+    payment_attempts.attempt_id = (
+      SELECT MIN(d.attempt_id) FROM payment_attempts d
+      WHERE d.gateway_payment_id = payment_attempts.gateway_payment_id
+        AND d.status = 'captured')
+  IS_DUPLICATE_CAPTURE: >-
+    payment_attempts.attempt_id <> (
+      SELECT MIN(d.attempt_id) FROM payment_attempts d
+      WHERE d.gateway_payment_id = payment_attempts.gateway_payment_id
+        AND d.status = 'captured')
+  HAS_PHONE_LINE: >-
+    EXISTS (SELECT 1 FROM order_items oi JOIN products p ON p.sku = oi.sku
+            WHERE oi.order_id = orders.order_id AND p.is_accessory = FALSE)
+  HAS_ACCESSORY_LINE: >-
+    EXISTS (SELECT 1 FROM order_items oi JOIN products p ON p.sku = oi.sku
+            WHERE oi.order_id = orders.order_id AND p.is_accessory = TRUE)
+  CAPTURED_METHOD_IS_EMI: >-
+    EXISTS (SELECT 1 FROM payment_attempts pa
+            WHERE pa.order_id = orders.order_id AND pa.status = 'captured'
+              AND pa.method = 'emi' AND pa.is_test = FALSE)
+  NOT_SETTLED: >-
+    NOT EXISTS (SELECT 1 FROM settlement_items si
+                WHERE si.attempt_id = payment_attempts.attempt_id)
+
+entities:
+  - name: orders
+    sources: [duckdb, postgres]
+    primary_key: order_id
+    scope_path: ["showrooms.showroom_id = orders.showroom_id"]
+    test_flag: is_test
+    time_column: business_date
+    reference: false
+
+  - name: order_items
+    sources: [duckdb, postgres]
+    primary_key: [order_id, line_no]
+    scope_path:
+      - "orders.order_id = order_items.order_id"
+      - "showrooms.showroom_id = orders.showroom_id"
+    test_flag: null            # inherited from the order it belongs to
+    time_column: null
+    reference: false
+
+  - name: payment_attempts
+    sources: [duckdb, postgres]
+    primary_key: attempt_id
+    scope_path:
+      - "orders.order_id = payment_attempts.order_id"
+      - "showrooms.showroom_id = orders.showroom_id"
+    test_flag: is_test
+    time_column: business_date
+    reference: false
+
+  - name: refunds
+    sources: [duckdb, postgres]
+    primary_key: refund_id
+    scope_path:
+      - "orders.order_id = refunds.order_id"
+      - "showrooms.showroom_id = orders.showroom_id"
+    test_flag: null            # inherited from the order being refunded
+    time_column: business_date
+    reference: false
+
+  - name: settlements
+    sources: [duckdb]
+    primary_key: settlement_id
+    # A settlement is a bank payout, not a shop event: it reaches a showroom only
+    # through the attempts it settles. Scoping it any other way would either
+    # leak another region's payout or drop a legitimate one.
+    scope_path:
+      - "settlement_items.settlement_id = settlements.settlement_id"
+      - "payment_attempts.attempt_id = settlement_items.attempt_id"
+      - "orders.order_id = payment_attempts.order_id"
+      - "showrooms.showroom_id = orders.showroom_id"
+    test_flag: null
+    time_column: settled_on
+    reference: false
+    required_capability: finance
+
+  - name: settlement_items
+    sources: [duckdb]
+    primary_key: [settlement_id, attempt_id]
+    scope_path:
+      - "payment_attempts.attempt_id = settlement_items.attempt_id"
+      - "orders.order_id = payment_attempts.order_id"
+      - "showrooms.showroom_id = orders.showroom_id"
+    test_flag: null
+    time_column: null
+    reference: false
+    required_capability: finance
+
+  # --- reference data: unscoped, identical for every role --------------------
+  - name: showrooms
+    sources: [duckdb, postgres]
+    primary_key: showroom_id
+    scope_path: []
+    test_flag: null
+    time_column: null
+    reference: true
+
+  - name: cities
+    sources: [duckdb, postgres]
+    primary_key: city_id
+    scope_path: []
+    test_flag: null
+    time_column: null
+    reference: true
+
+  - name: regions
+    sources: [duckdb, postgres]
+    primary_key: region_id
+    scope_path: []
+    test_flag: null
+    time_column: null
+    reference: true
+
+  - name: countries
+    sources: [duckdb, postgres]
+    primary_key: country_code
+    scope_path: []
+    test_flag: null
+    time_column: null
+    reference: true
+
+  - name: products
+    sources: [duckdb, postgres]
+    primary_key: sku
+    scope_path: []
+    test_flag: null
+    time_column: null
+    reference: true
+
+  - name: fx_rates
+    sources: [duckdb, postgres]
+    primary_key: [rate_date, currency]
+    scope_path: []
+    test_flag: null
+    time_column: rate_date
+    reference: true

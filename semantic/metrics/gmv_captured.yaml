@@ -1,0 +1,34 @@
+name: gmv_captured
+label: {en: Captured GMV, ta: பெறப்பட்ட GMV, hi: कैप्चर किया गया GMV}
+glossary_ref: GLOSSARY.md#23-captured-gmv
+definition: >-
+  The total value of money actually captured from customers in the window. An
+  authorised payment is not captured money: authorisation reserves funds,
+  capture takes them. Money captured twice by mistake is counted once.
+type: sum
+entity: payment_attempts
+aggregate:
+  agg: sum
+  expr: payment_attempts.amount_minor
+  where: "payment_attempts.status = 'captured' AND IS_FIRST_CAPTURE"
+time_dimension: payment_attempts.business_date
+money: true
+currency_column: payment_attempts.currency
+fx_date_column: payment_attempts.business_date
+unit: money
+allowed_dimensions: [country, region, city, showroom, payment_method, issuing_bank, card_network, model, channel]
+default_for:
+  en: [captured gmv, gmv, how much did we take, how much did we collect, sales, turnover]
+  ta: [பெறப்பட்ட GMV, எவ்வளவு வசூலித்தோம், விற்பனை]
+  hi: [कैप्चर किया गया GMV, कितना कमाया, कितना लिया, बिक्री]
+siblings: [net_revenue, unsettled_amount, avg_order_value]
+excludes:
+  - test payment attempts
+  - authorised-but-not-captured attempts
+  - failed attempts
+  - the duplicate side of a duplicate capture
+required_capability: null
+owner: payments-analytics
+notes: >-
+  A gross figure. It does not subtract refunds; for that see net_revenue (§2.5).
+  Each amount is converted at the daily rate for its own capture business date.

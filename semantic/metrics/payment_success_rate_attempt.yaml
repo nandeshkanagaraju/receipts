@@ -1,0 +1,37 @@
+name: payment_success_rate_attempt
+label:
+  en: Payment success rate (attempt-level)
+  ta: பணம் செலுத்தும் வெற்றி விகிதம் (முயற்சி அளவில்)
+  hi: भुगतान सफलता दर (प्रयास स्तर)
+glossary_ref: GLOSSARY.md#29-payment-success-rate-attempt-level
+definition: >-
+  The share of individual payment attempts that were captured. Numerator:
+  attempts in the window that reached captured status. Denominator: attempts in
+  the window, of any outcome.
+type: ratio
+entity: payment_attempts
+numerator:
+  agg: count
+  expr: payment_attempts.attempt_id
+  where: "payment_attempts.status = 'captured'"
+denominator:
+  agg: count
+  expr: payment_attempts.attempt_id
+time_dimension: payment_attempts.business_date
+money: false
+unit: ratio
+attribution: attempt
+allowed_dimensions: [country, region, city, showroom, payment_method, issuing_bank, acquiring_bank, card_network, channel]
+default_for:
+  en: [per-try success, per-attempt success, attempt success rate, attempt-level success rate]
+  ta: [ஒரு முயற்சிக்கான வெற்றி விகிதம்]
+  hi: [प्रति प्रयास सफलता दर]
+siblings: [payment_success_rate_order, failure_rate_by_reason]
+excludes: [test attempts]
+required_capability: null
+owner: payments-analytics
+notes: >-
+  The payment-operations number: how well a method, bank or gateway performs per
+  try, and the right metric when diagnosing a technical problem. Always lower
+  than the order-level rate wherever customers retry, and the two must never be
+  compared as though they were the same measure.

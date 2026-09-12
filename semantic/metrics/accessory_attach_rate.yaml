@@ -1,0 +1,35 @@
+name: accessory_attach_rate
+label: {en: Accessory attach rate, ta: துணைப்பொருள் இணைப்பு விகிதம், hi: एक्सेसरी अटैच दर}
+glossary_ref: GLOSSARY.md#212-accessory-attach-rate
+definition: >-
+  The share of phone purchases that also bought an accessory. Numerator: paid
+  orders in the window containing at least one phone line AND at least one
+  accessory line. Denominator: paid orders in the window containing at least one
+  phone line.
+type: ratio
+entity: orders
+numerator:
+  agg: count_distinct
+  expr: orders.order_id
+  where: "orders.status = 'paid' AND HAS_PHONE_LINE AND HAS_ACCESSORY_LINE"
+denominator:
+  agg: count_distinct
+  expr: orders.order_id
+  where: "orders.status = 'paid' AND HAS_PHONE_LINE"
+time_dimension: orders.business_date
+money: false
+unit: ratio
+allowed_dimensions: [country, region, city, showroom, model, channel]
+default_for:
+  en: [accessory attach rate, attach rate, are people buying accessories with phones]
+  ta: [துணைப்பொருள் இணைப்பு விகிதம்]
+  hi: [एक्सेसरी अटैच दर]
+siblings: [units_sold]
+excludes: [test orders, abandoned and cancelled orders]
+required_capability: null
+owner: commerce-analytics
+notes: >-
+  Accessory-only orders are in neither the numerator nor the denominator --
+  nothing was attached to anything. In Kestrel's data every order carries exactly
+  one handset (§1.7a), so the case does not arise; the rule is stated so the
+  metric stays well defined if that changes.

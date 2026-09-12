@@ -1,0 +1,33 @@
+name: settlement_lag_days
+label: {en: Settlement lag (days), ta: தீர்வு தாமதம் (நாட்கள்), hi: निपटान विलंब (दिन)}
+glossary_ref: GLOSSARY.md#213-settlement-lag
+definition: >-
+  The average number of days between money being captured from the customer and
+  the acquiring bank settling it to Kestrel. The denominator is the number of
+  captured payments in the window that have been settled; captures not yet
+  settled have no lag to measure and are excluded.
+type: ratio
+entity: settlement_items
+numerator:
+  agg: sum
+  expr: "DATE_DIFF('day', payment_attempts.business_date, settlements.settled_on)"
+denominator:
+  agg: count
+  expr: settlement_items.attempt_id
+time_dimension: settlements.settled_on
+money: false
+unit: days
+allowed_dimensions: [country, region, city, showroom, acquiring_bank, payment_method, card_network]
+default_for:
+  en: [settlement lag, how long does settlement take, days to settle]
+  ta: [தீர்வு தாமதம்]
+  hi: [निपटान विलंब, निपटान में कितने दिन]
+siblings: [unsettled_amount]
+excludes: [test transactions, captures not yet settled]
+required_capability: finance
+owner: finance-analytics
+notes: >-
+  The window is keyed on SETTLEMENT date, not capture date: "settlement lag in
+  August" means payments settled in August. Excluding unsettled captures means
+  the average understates the problem when settlement is delayed, so this and
+  unsettled_amount (§2.14) must be read together.

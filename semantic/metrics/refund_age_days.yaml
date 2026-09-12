@@ -1,0 +1,31 @@
+name: refund_age_days
+label: {en: Refund age (days), ta: பணத்திரும்ப வயது (நாட்கள்), hi: रिफंड की आयु (दिन)}
+glossary_ref: GLOSSARY.md#24a-refund-age
+definition: >-
+  How long a refund has been outstanding, in whole days: the reporting date minus
+  the refund's CREATION business date. A refund created on 2026-09-01, read on
+  the reporting date 2026-09-10, is 9 days old.
+type: derived
+entity: refunds
+aggregate:
+  agg: max
+  expr: "DATE_DIFF('day', refunds.business_date, AS_OF)"
+time_dimension: refunds.business_date
+money: false
+unit: days
+row_level: true
+allowed_dimensions: [country, region, city, showroom, refund_reason]
+default_for:
+  en: [refund age, how old is the refund, days outstanding]
+  ta: [பணத்திரும்ப வயது]
+  hi: [रिफंड की आयु]
+siblings: [refunded_amount]
+excludes: [test transactions]
+required_capability: null
+owner: payments-analytics
+notes: >-
+  Keys on the date the refund was CREATED, not the date it was processed. An
+  unprocessed refund has no processed date, and age is precisely the question one
+  asks about refunds that have not completed. Age is a property of each refund
+  record, not an aggregate -- it is used when listing refunds still pending at
+  the gateway (§6.3).

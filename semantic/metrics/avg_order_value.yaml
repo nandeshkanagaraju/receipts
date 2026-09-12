@@ -1,0 +1,35 @@
+name: avg_order_value
+label: {en: Average order value, ta: சராசரி ஆர்டர் மதிப்பு, hi: औसत ऑर्डर मूल्य}
+glossary_ref: GLOSSARY.md#26-average-order-value
+definition: >-
+  Captured GMV divided by the number of distinct paid orders that produced it --
+  orders with at least one captured payment. Abandoned and cancelled orders are
+  not in the denominator, because they contributed nothing to the numerator.
+type: ratio
+entity: payment_attempts
+numerator:
+  agg: sum
+  expr: payment_attempts.amount_minor
+  where: "payment_attempts.status = 'captured' AND IS_FIRST_CAPTURE"
+denominator:
+  agg: count_distinct
+  expr: payment_attempts.order_id
+  where: "payment_attempts.status = 'captured'"
+time_dimension: payment_attempts.business_date
+money: true
+currency_column: payment_attempts.currency
+fx_date_column: payment_attempts.business_date
+unit: money
+allowed_dimensions: [country, region, city, showroom, payment_method, issuing_bank, card_network, model, channel]
+default_for:
+  en: [average order value, basket size, ticket size, average spend, average order]
+  ta: [சராசரி ஆர்டர் மதிப்பு, சராசரி செலவு]
+  hi: [औसत ऑर्डर मूल्य, औसत खर्च]
+siblings: [gmv_captured, orders_count]
+excludes: [test transactions]
+required_capability: null
+owner: commerce-analytics
+notes: >-
+  Both sides are keyed on capture business date so they describe the same set of
+  orders. For orders paid by instalments the order value is the full order value,
+  not the instalment amount (§4.9).

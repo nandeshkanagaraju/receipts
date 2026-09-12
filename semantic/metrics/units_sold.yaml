@@ -1,0 +1,27 @@
+name: units_sold
+label: {en: Units sold, ta: விற்பனையான யூனிட்டுகள், hi: बेची गई इकाइयाँ}
+glossary_ref: GLOSSARY.md#22-units-sold
+definition: >-
+  The total quantity of items across the lines of paid orders in the window. Two
+  of the same phone on one order counts as two units. Accessories are included: a
+  unit is any item on an order line, phone or case or charger. "Phones",
+  "handsets" and "devices" mean handsets only and are this metric filtered to
+  non-accessory SKUs, not a separate metric.
+type: sum
+entity: order_items
+aggregate: {agg: sum, expr: order_items.qty, where: "orders.status = 'paid'"}
+time_dimension: orders.business_date
+money: false
+unit: count
+allowed_dimensions: [country, region, city, showroom, model, channel]
+default_for:
+  en: [units sold, how many did we sell, volume, units]
+  ta: [விற்பனையான யூனிட்டுகள், எத்தனை விற்றோம்]
+  hi: [बेची गई इकाइयाँ, कितने बेचे, यूनिट]
+siblings: [orders_count, accessory_attach_rate]
+excludes: [test orders, lines of abandoned or cancelled orders]
+required_capability: null
+owner: commerce-analytics
+notes: >-
+  Always larger than phones sold. A showroom with a strong accessory business
+  ranks higher on units than on handsets.

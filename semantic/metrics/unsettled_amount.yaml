@@ -1,0 +1,36 @@
+name: unsettled_amount
+label: {en: Unsettled amount, ta: தீர்க்கப்படாத தொகை, hi: बकाया निपटान राशि}
+glossary_ref: GLOSSARY.md#214-unsettled-amount
+definition: >-
+  The total value of money captured from customers that the acquiring bank has
+  not yet settled to Kestrel, as at the end of the window. A snapshot, not a
+  flow: payments captured on or before D that had not settled by D.
+type: sum
+entity: payment_attempts
+aggregate:
+  agg: sum
+  expr: payment_attempts.amount_minor
+  where: "payment_attempts.status = 'captured' AND IS_FIRST_CAPTURE AND NOT_SETTLED"
+snapshot: true
+snapshot_boundary: end_of_window
+time_dimension: payment_attempts.business_date
+money: true
+currency_column: payment_attempts.currency
+fx_date_column: payment_attempts.business_date
+unit: money
+allowed_dimensions: [country, region, city, showroom, acquiring_bank, payment_method, card_network]
+default_for:
+  en: [unsettled amount, how much are we owed, waiting on, yet to receive]
+  ta: [தீர்க்கப்படாத தொகை, எவ்வளவு வர வேண்டும்]
+  hi: [बकाया निपटान राशि, कितना बाकी है]
+siblings: [settlement_lag_days, gmv_captured]
+excludes: [test transactions]
+required_capability: finance
+owner: finance-analytics
+notes: >-
+  There is no lower bound: a payment captured four months before D and still
+  unsettled is included, because unsettled cash does not age out. "Unsettled
+  amount in August" means as at 31 August, NOT "captures during August that are
+  still unsettled" -- two different questions, and only the snapshot reading is
+  this metric. Each amount is converted at the rate for its own capture business
+  date, the same convention as gmv_captured, so the two reconcile.
