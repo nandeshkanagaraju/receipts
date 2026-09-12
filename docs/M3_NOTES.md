@@ -111,6 +111,69 @@ Pooling would let 54 author-written questions average away the behaviour of the
 
 ---
 
+## Standing pattern: derive the condition, do not pin the state
+
+**A guard that asserts on the current milestone goes quiet the moment the
+milestone passes.**
+
+The shape is always the same. Something is not true yet — a set is unwritten, a
+tag does not exist, a corpus is incomplete — and a test is written to assert the
+consequence of that absence. It passes, and it reads like a guard. Then the
+absence ends, and the test does one of two things: it fails while nothing is
+wrong, or it keeps passing while guarding nothing. The first is loud and merely
+expensive. The second is the one that matters.
+
+The cost is concentrated at exactly the wrong moment. A milestone passing is when
+the guard's subject is *most* in flux and when a red suite is most likely to be
+read as "the milestone broke something" and worked around.
+
+Six instances in this build, all of them mine:
+
+| # | Guard | Pinned | Broke when |
+|---|---|---|---|
+| 1 | `test_injection_a_missing_sealed_gate_is_refused` | "today the sealed questions do not exist" | the sealed questions were generated |
+| 2 | `test_freeze_gen_refuses_while_the_gate_fails` | "the gate is a precondition, so today it must refuse" | the gate started passing |
+| 3 | `test_meta_without_the_injection_the_same_check_passes` | `--check` exits 0 *here* | run in CI, where `eval/sealed/` cannot exist |
+| 4 | `test_gate_holds_once_the_generator_is_frozen` | `all_gates()`, including the half CI cannot evaluate | the tag was pushed and the guard woke up in CI |
+| 5 | `test_real_corpus_is_currently_refused` | "the live repo is not freezable while sets are missing" | the blind set landed |
+| 6 | `test_meta_the_real_corpus_now_passes_its_gates` | the live corpus is gate-clean | `gate_ta_latn` landed one round later |
+
+Number 6 is the instructive one: it was written *in the round that fixed number
+5*, by someone who had just written the rule down. Knowing the pattern is not
+the same as noticing it, because at the moment of writing, "the corpus passes
+today" and "the corpus passes" are indistinguishable.
+
+A near relative is pinning a **count** rather than a state — the blind-file
+injection asserted the literal strings `"29"` and `"30"`, and broke when the
+target moved to 32. Same failure, smaller blast radius.
+
+### The rule
+
+**Derive the condition; do not pin the state.**
+
+- **Provoke the failure rather than waiting for it.** If a guard should refuse
+  when X is absent, make X absent — a temp directory, a monkeypatched constant,
+  a hidden file — and assert the refusal. The test then means the same thing
+  before and after the milestone.
+- **Assert the difference the injection makes, not the state around it.** Not
+  "the corpus is clean" but "the corpus does not complain about *this*". A meta
+  pinned to the total goes stale every time any unrelated gate changes, which is
+  how number 6 happened.
+- **Derive every number from the constant it comes from.** `f"{n} of {total}"`,
+  never `"29 of 30"`.
+- **Where a guard genuinely cannot run in an environment, make it fail there
+  rather than skip.** If the evidence cannot travel, send the proof: the sealed
+  gate writes a counts-only marker in the job that holds the seed, and the job
+  that does not requires it (HANDOFF §4.9).
+- **Tag-conditioned guards are rehearsed before the tag** (HANDOFF §4.3), because
+  they are dormant until the tag exists and their first live run is otherwise in
+  CI, just after the tag is pushed.
+
+The smell test: read the assertion and ask *when does this stop being true?* If
+the answer is "when the project makes progress", it is pinned to the state.
+
+---
+
 ## Recorded in M3, closed in M3
 
 - **Ruling 3 stands at ten rows.** `scalar` + `compare` is the same defect as

@@ -119,26 +119,28 @@ def test_injection_an_incomplete_corpus_is_refused(monkeypatch) -> None:
     print(f"\nincomplete corpus: {len(problems)} problem(s) blocking {fq.TAG}")
     for p in problems:
         print(f"  {p[:80]}")
-    assert problems, "an incomplete corpus was freezable"
-    assert any("missing" in p for p in problems), (
-        "the refusal came from somewhere other than the absent blind set"
+    assert any(fq.BLIND in p for p in problems), (
+        "hiding the blind set produced no complaint about the blind set"
     )
 
 
-def test_meta_the_real_corpus_now_passes_its_gates() -> None:
-    """Guard off: the live corpus is gate-clean, so the refusal above is injected.
+def test_meta_without_the_injection_the_blind_set_is_not_complained_about() -> None:
+    """Guard off: the same gates say nothing about the blind set when it is there.
 
-    Being gate-clean is not permission to tag. `questions-frozen` waits on the
-    reviewer's `ta-Latn`, which is a translations concern and deliberately not
-    something these gates measure.
+    The earlier version of this asserted the *whole* live corpus was gate-clean,
+    which was true for about a day: `gate_ta_latn` then landed and the corpus
+    stopped being clean for a reason that has nothing to do with the blind set.
+    A meta pinned to the total state goes stale every time any gate changes.
+
+    So it asserts the difference the injection makes, not the state around it.
     """
     problems = fq.all_gates(run_tests=False)
     print(f"\nreal corpus: {len(problems)} problem(s)")
     for p in problems:
         print(f"  {p[:80]}")
-    assert not problems, (
-        "the real corpus fails its own gates, so the injection above proves "
-        "nothing:\n  " + "\n  ".join(problems)
+    assert not any(fq.BLIND in p for p in problems), (
+        "the blind set is present and still complained about, so the injection "
+        "above is not what produced the complaint"
     )
     assert not fq.tag_exists(), f"{fq.TAG} must not exist yet"
 
@@ -585,6 +587,7 @@ GATES = [
     "gate_window_attachment",
     "gate_clarify_terms",
     "gate_readme_population",
+    "gate_ta_latn",
 ]
 
 

@@ -36,6 +36,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 import os
 import subprocess
 import sys
@@ -301,6 +302,163 @@ def gate_readme_population(qdir: Path = QDIR) -> list[str]:
     return []
 
 
+# --------------------------------------------------------------------------- #
+# ta-Latn coverage
+#
+# The reviewer hand-writes the Tanglish. Until enough of it exists, freezing the
+# questions means re-freezing them, and until this gate existed the only thing
+# stopping that was a line in a handoff and a sentence in a conversation. Every
+# other rule in this repository has something that fails; this one had a promise.
+# --------------------------------------------------------------------------- #
+
+TA_LATN = "ta-Latn"
+TA_LATN_FLOOR = 0.20  # of each gated set
+
+# `holdout_blind.jsonl` is NOT in this list, and its absence is the point rather
+# than an oversight: ta-Latn is permanently `pending` for the blind arm, because
+# hand-writing Tanglish for those rows means reading them, and the reviewer is
+# the person the blind set exists to keep out. ADR-017 and LIMITATIONS.md carry
+# the reasoning. Naming the exemption here -- rather than leaving it to fall out
+# of a filter somewhere -- is what stops a later reader "fixing" the omission.
+TA_LATN_GATED_SETS = ("eval", "holdout")
+TA_LATN_EXEMPT_SETS = ("dev", "holdout_blind")
+
+
+def ta_latn_coverage(qdir: Path = QDIR, name: str = "eval") -> tuple[int, int]:
+    """(rows carrying human-written ta-Latn, rows in the set)."""
+    rows_in_set = rows_of(qdir / f"{name}.jsonl")
+    human = sum(
+        1
+        for row in rows_in_set
+        if (row.get("variants", {}).get(TA_LATN) or "").strip()
+        and row.get("translation_provenance", {}).get(TA_LATN) == "human"
+    )
+    return human, len(rows_in_set)
+
+
+def gate_ta_latn(qdir: Path = QDIR, floor: float = TA_LATN_FLOOR) -> list[str]:
+    """At least `floor` of each gated set carries human-written ta-Latn.
+
+    Counted on the hand-written holdout (the 54), never on the blind arm.
+    """
+    problems: list[str] = []
+    for name in TA_LATN_GATED_SETS:
+        path = qdir / f"{name}.jsonl"
+        if not path.exists():
+            problems.append(f"{name}.jsonl is missing; ta-Latn coverage is unmeasurable")
+            continue
+        human, total = ta_latn_coverage(qdir, name)
+        if not total:
+            problems.append(f"{name}.jsonl is empty; ta-Latn coverage is unmeasurable")
+            continue
+        needed = math.ceil(floor * total)
+        if human < needed:
+            problems.append(
+                f"{name}.jsonl: {human} of {total} rows carry human-written {TA_LATN} "
+                f"({human / total:.0%}); {needed} needed ({floor:.0%}). Short by "
+                f"{needed - human}. The blind arm is exempt by design and is not "
+                f"counted here (LIMITATIONS.md)."
+            )
+    return problems
+
+
+# --------------------------------------------------------------------------- #
+# The holdout reference set
+#
+# The M3 ruling: freezing the questions with an incomplete reference set records
+# a manifest that does not describe the holdout, and the tag is the thing that
+# makes the manifest worth having. That rule lived in a document. This is the
+# part that fails.
+#
+# Only HO_MANIFEST.json is read -- counts, hashes and booleans. The SQL itself is
+# refused here by the deny rules and the PreToolUse hook, and must stay refused:
+# the manifest is the channel out of the isolated run precisely so that nothing
+# else has to be.
+# --------------------------------------------------------------------------- #
+
+HO_MANIFEST = "eval/reference_sql/HO_MANIFEST.json"
+
+# One holdout reference is correctly empty: the question states a volume floor
+# that no group in the world reaches. Both implementations agree, and it was
+# ruled an expected-empty answer rather than a defect. It is a named constant
+# rather than a tolerance so that a *second* silent empty result fails here.
+EXPECTED_EMPTY_REFERENCES = 1
+
+# Two references were flagged implausible by the isolated run and both were ruled
+# on: one is the expected-empty row above, one is a near-zero value that is
+# ordinary in payments data and was double-computed. A third flag is not covered
+# by those rulings and must stop the freeze.
+RESOLVED_FLAGS = 2
+
+
+def gate_holdout_references(repo: Path = REPO) -> list[str]:
+    """The holdout reference set is complete, agreed, and matches the corpus."""
+    path = repo / HO_MANIFEST
+    if not path.exists():
+        return [
+            f"{HO_MANIFEST} is missing. The holdout reference set has not been "
+            "written (docs/ISOLATED_REFERENCE_RUN.md), so a freeze here would "
+            "record a manifest that does not describe the holdout."
+        ]
+    try:
+        counts = json.loads(path.read_text(encoding="utf-8"))["counts"]
+    except (json.JSONDecodeError, KeyError) as exc:
+        return [f"{HO_MANIFEST} has no readable counts block: {exc}"]
+
+    problems: list[str] = []
+
+    def need(key: str) -> int | None:
+        if key not in counts:
+            problems.append(f"{HO_MANIFEST}: counts has no {key!r}")
+            return None
+        return int(counts[key])
+
+    sql_files = need("sql_files")
+    ans_live = need("questions_ans_live")
+    double_computed = need("double_computed")
+    returned_rows = need("returned_at_least_one_row")
+    flagged = need("flagged_implausible")
+    blind_read = need("blind_questions_read")
+    blind_sql = need("blind_sql_files")
+    blind_ans = need("blind_classified_ans")
+    if problems:
+        return problems
+
+    if sql_files != ans_live:
+        problems.append(
+            f"{HO_MANIFEST}: {sql_files} reference files for {ans_live} ANS/LIVE "
+            "holdout questions; every one needs a file"
+        )
+    if double_computed != sql_files:
+        problems.append(
+            f"{HO_MANIFEST}: {double_computed} of {sql_files} references were "
+            "double-computed; the second calculation is not optional"
+        )
+    if returned_rows != sql_files - EXPECTED_EMPTY_REFERENCES:
+        problems.append(
+            f"{HO_MANIFEST}: {returned_rows} of {sql_files} references returned "
+            f"rows, expected {sql_files - EXPECTED_EMPTY_REFERENCES} "
+            f"({EXPECTED_EMPTY_REFERENCES} is correctly empty and ruled on). An "
+            "unexpected empty result is a silent wrong answer."
+        )
+    if flagged > RESOLVED_FLAGS:
+        problems.append(
+            f"{HO_MANIFEST}: {flagged} references flagged implausible, "
+            f"{RESOLVED_FLAGS} ruled on. The rest need a ruling before the freeze."
+        )
+    if blind_read != HOLDOUT_BLIND_TARGET:
+        problems.append(
+            f"{HO_MANIFEST}: {blind_read} blind questions read, but "
+            f"HOLDOUT_BLIND_TARGET is {HOLDOUT_BLIND_TARGET}. The manifest and "
+            "the corpus disagree about how many questions exist."
+        )
+    if blind_sql != blind_ans:
+        problems.append(
+            f"{HO_MANIFEST}: {blind_sql} blind reference files for {blind_ans} blind ANS questions"
+        )
+    return problems
+
+
 def all_gates(
     qdir: Path = QDIR,
     minimum: int = TRAP_MIN,
@@ -316,6 +474,8 @@ def all_gates(
         + gate_window_attachment(qdir)
         + gate_clarify_terms(qdir)
         + gate_readme_population(qdir)
+        + gate_ta_latn(qdir)
+        + gate_holdout_references()
     )
     if run_tests:
         problems += gate_tests()
