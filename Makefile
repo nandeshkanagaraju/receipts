@@ -103,3 +103,34 @@ up:
 
 bench:
 	$(call NOT_BUILT,bench,M20 — benchmark)
+
+# --- Baseline B0 (SDD §25.4). The only targets that spend money. ----------- #
+# A repo-local scratch path, not $(TMPDIR): TMPDIR is set on macOS and empty on
+# most Linux CI images, where the copy would have landed in the working tree.
+BASELINE_TMP := .make/baseline_first.json
+# ANTHROPIC_API_KEY must be in the environment. It is never echoed, never
+# written to a file, and never passed on a command line.
+
+baseline-smoke:          ## 3 live calls, no report written. Run this first.
+	@test -n "$$ANTHROPIC_API_KEY" || { echo "ANTHROPIC_API_KEY is not set" >&2; exit 1; }
+	RECEIPTS_LLM_MODE=record $(PY) -m receipts.evalkit.harness \
+	  --system baseline --set dev --limit 3
+
+baseline-record:         ## ~180 live calls, ~$$14. Writes recordings and the report.
+	@test -n "$$ANTHROPIC_API_KEY" || { echo "ANTHROPIC_API_KEY is not set" >&2; exit 1; }
+	RECEIPTS_LLM_MODE=record $(PY) -m receipts.evalkit.harness --system baseline --set dev
+
+baseline-verify:         ## Replay twice and prove the two reports are byte-identical (D16).
+	@mkdir -p .make
+	@RECEIPTS_LLM_MODE=replay $(PY) -m receipts.evalkit.harness --system baseline --set dev \
+	  > /dev/null
+	@cp eval/results/dev/baseline/report.json $(BASELINE_TMP)
+	@RECEIPTS_LLM_MODE=replay $(PY) -m receipts.evalkit.harness --system baseline --set dev \
+	  > /dev/null
+	@cmp -s $(BASELINE_TMP) eval/results/dev/baseline/report.json \
+	  && echo "two replays are byte-identical" \
+	  || { echo "two replays of the same recordings differ (D16)" >&2; \
+	       set -o pipefail; \
+	       diff $(BASELINE_TMP) eval/results/dev/baseline/report.json | head -20; \
+	       rm -f $(BASELINE_TMP); exit 1; }
+	@rm -f $(BASELINE_TMP)

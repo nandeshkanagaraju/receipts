@@ -381,10 +381,31 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--system", default="oracle", choices=list(ALL_SYSTEMS))
     ap.add_argument("--set", dest="set_name", default="dev", choices=sorted(questions.SET_FILES))
+    ap.add_argument(
+        "--limit",
+        type=int,
+        default=0,
+        help=(
+            "run only the first N trials and do NOT write a report. For smoke-testing "
+            "an expensive path before paying for all of it."
+        ),
+    )
     args = ap.parse_args(argv)
 
     if args.set_name == "holdout":
+        if args.limit:
+            # A partial holdout run is still the holdout being run (D17), and it
+            # would burn the one attempt on a sample. Refused before the lock, so
+            # the refusal cannot be mistaken for the lock having been taken.
+            raise SystemExit("--limit is not allowed on the holdout; it runs once, in full (D17)")
         holdout_lock(confirm=os.environ.get("CONFIRM_HOLDOUT"))
+
+    if args.limit:
+        sample = questions.trials(args.set_name)[: args.limit]
+        print(f"smoke run: {len(sample)} trial(s), no report written")
+        built = run(args.system, args.set_name, write=False, trials=sample)
+        print(built["headline"])
+        return 0
 
     built = run(args.system, args.set_name)
     print(built["headline"])
