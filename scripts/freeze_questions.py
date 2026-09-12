@@ -459,6 +459,44 @@ def gate_holdout_references(repo: Path = REPO) -> list[str]:
     return problems
 
 
+# --------------------------------------------------------------------------- #
+# Anchor drift: a translation must name the same places, currencies, numbers and
+# time windows as its English.
+#
+# A freeze gate rather than an always-on test, because it is an unfinished-work
+# check: dev and eval are clean, the holdout arms are not yet. Standing rule 9.
+# --------------------------------------------------------------------------- #
+
+
+def gate_anchor_drift(qdir: Path = QDIR) -> list[str]:
+    """No translation loses or gains a place, currency, number or window.
+
+    dev and eval are named; the holdout arms are counted. The count is enough to
+    stop a freeze, and which rows drift is for the context allowed to see them.
+    """
+    sys.path.insert(0, str(REPO / "scripts"))
+    import anchors
+
+    problems: list[str] = []
+    for name in SETS + (BLIND.removesuffix(".jsonl"),):
+        path = qdir / f"{name}.jsonl"
+        if not path.exists():
+            continue
+        offenders = [row for row in rows_of(path) if anchors.drift(row)]
+        if not offenders:
+            continue
+        if name in ("dev", "eval"):
+            named = ", ".join(sorted(row["qid"] for row in offenders))
+            problems.append(f"{name}.jsonl: {len(offenders)} row(s) drift: {named}")
+        else:
+            problems.append(
+                f"{name}.jsonl: {len(offenders)} row(s) whose translation names "
+                "different places, currencies, numbers or windows from the English "
+                "(qids not printed)"
+            )
+    return problems
+
+
 def all_gates(
     qdir: Path = QDIR,
     minimum: int = TRAP_MIN,
@@ -476,6 +514,7 @@ def all_gates(
         + gate_readme_population(qdir)
         + gate_ta_latn(qdir)
         + gate_holdout_references()
+        + gate_anchor_drift(qdir)
     )
     if run_tests:
         problems += gate_tests()

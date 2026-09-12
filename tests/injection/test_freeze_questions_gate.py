@@ -119,8 +119,8 @@ def test_injection_an_incomplete_corpus_is_refused(monkeypatch) -> None:
     print(f"\nincomplete corpus: {len(problems)} problem(s) blocking {fq.TAG}")
     for p in problems:
         print(f"  {p[:80]}")
-    assert any(fq.BLIND in p for p in problems), (
-        "hiding the blind set produced no complaint about the blind set"
+    assert any("missing" in p and fq.BLIND in p for p in problems), (
+        "hiding the blind set produced no missing-file complaint about it"
     )
 
 
@@ -134,14 +134,20 @@ def test_meta_without_the_injection_the_blind_set_is_not_complained_about() -> N
 
     So it asserts the difference the injection makes, not the state around it.
     """
-    problems = fq.all_gates(run_tests=False)
-    print(f"\nreal corpus: {len(problems)} problem(s)")
+    problems = fq.gate_blind(allow_missing=False)
+    print(f"\nblind gate on the real corpus: {len(problems)} problem(s)")
     for p in problems:
         print(f"  {p[:80]}")
-    assert not any(fq.BLIND in p for p in problems), (
-        "the blind set is present and still complained about, so the injection "
-        "above is not what produced the complaint"
+    assert not problems, (
+        "the blind set is present and the blind gate still complains, so the "
+        "injection above is not what produced the complaint:\n  " + "\n  ".join(problems)
     )
+
+    # Asserted on `gate_blind` rather than on the whole composite. The earlier
+    # version checked that no problem *mentioned* the blind filename, which broke
+    # the moment a second gate had an opinion about that file -- `gate_anchor_drift`
+    # reports on it too, for an unrelated and correct reason. A meta keyed to a
+    # filename appearing anywhere in the output is keyed to the wrong thing.
     assert not fq.tag_exists(), f"{fq.TAG} must not exist yet"
 
 
