@@ -672,3 +672,69 @@ def test_the_glossary_is_pinned_whole() -> None:
     assert "docs/GLOSSARY.md" not in fq.DOC_FREEZE_BOUNDARY
     path = fq.REPO / "docs" / "GLOSSARY.md"
     assert fq.frozen_text("docs/GLOSSARY.md", path) == path.read_bytes()
+
+
+# The rulings prefix of docs/M2_NOTES.md as it stood at `questions-frozen`.
+# Written down rather than recomputed from the tag, so the assertion still means
+# something in a clone with no tags: a constant cannot be quietly re-derived from
+# whatever the file happens to say today.
+TAG_RULINGS_SHA256 = "7fd39375cc3b3e1e442bafc6c7b88e19df506759e48907f98fe7a8b4d3f859c6"
+
+
+def test_the_boundary_heading_exists_and_the_rulings_are_unchanged() -> None:
+    """The precondition the scoped pin rests on, asserted rather than assumed.
+
+    `frozen_text` falls back to pinning the WHOLE file when the boundary heading
+    is missing. That fallback is the right failure mode -- it cannot silently
+    widen the exemption -- but on its own it is quiet: the digest simply stops
+    matching and the gate reports a document that changed, which is true and
+    unhelpful. Someone would go looking for an edited ruling that is not there.
+
+    So this asserts both halves separately and says which one broke:
+
+    1. the heading is present, so the pin is scoped at all; and
+    2. the bytes it scopes still hash to what they hashed at `questions-frozen`.
+
+    The second is the real guarantee. It says the frozen answers were written
+    from exactly these rulings, and it keeps saying so however much §5 grows.
+    """
+    import hashlib
+
+    path = fq.REPO / "docs" / "M2_NOTES.md"
+    raw = path.read_bytes()
+    boundary = fq.DOC_FREEZE_BOUNDARY["docs/M2_NOTES.md"]
+
+    assert boundary.encode("utf-8") in raw, (
+        f"the boundary heading {boundary!r} is gone from docs/M2_NOTES.md. The pin has "
+        "fallen back to the whole file, so the freeze gate will now fail on any "
+        "journal entry. Restore the heading rather than re-pinning the document."
+    )
+
+    rulings = fq.frozen_text("docs/M2_NOTES.md", path)
+    digest = hashlib.sha256(rulings).hexdigest()
+    print(f"\nrulings prefix: {len(rulings)} bytes -> {digest[:16]}")
+    assert digest == TAG_RULINGS_SHA256, (
+        f"the pinned rulings of docs/M2_NOTES.md have changed: {digest[:16]} != "
+        f"{TAG_RULINGS_SHA256[:16]}. §1-§4 are what the frozen answers were written "
+        "from and must not move; only §5 may grow."
+    )
+
+
+def test_meta_the_digest_assertion_is_what_catches_an_edited_ruling(tmp_path: Path) -> None:
+    """Guard off: with the heading present but a ruling edited, the digest moves.
+
+    Proves the two assertions above are independent. The heading check alone
+    would pass on a file whose rulings had been rewritten.
+    """
+    import hashlib
+
+    path = tmp_path / "M2_NOTES.md"
+    boundary = fq.DOC_FREEZE_BOUNDARY["docs/M2_NOTES.md"]
+    original = (fq.REPO / "docs" / "M2_NOTES.md").read_bytes()
+    edited = original.replace(b"holdout", b"holdback", 1)
+    assert edited != original, "the fixture edit changed nothing; it proves nothing"
+    path.write_bytes(edited)
+
+    assert boundary.encode("utf-8") in edited, "the fixture removed the heading instead"
+    digest = hashlib.sha256(fq.frozen_text("docs/M2_NOTES.md", path)).hexdigest()
+    assert digest != TAG_RULINGS_SHA256, "a ruling was edited and the digest did not move"

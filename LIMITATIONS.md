@@ -928,3 +928,40 @@ than inventing a number. What cannot be fixed is the measurement that has alread
 happened. The irony is exact: the round's instruction was to implement caching
 and test it *before* the run rather than after, and caching was in fact tested
 before the run — it was the *recording* of what caching did that went untested.
+
+## M7: one answerable question the glossary covers and the layer does not
+
+Checked mechanically across all 60 dev questions: 36 map to a metric, 24 do not,
+and of those 24 exactly one is an `ANS` row flagged `glossary_covered: true`.
+
+| unmapped | n | why that is fine |
+|---|---:|---|
+| AMB | 7 | nothing should answer an ambiguous question |
+| UNA | 6 | nothing should answer an unanswerable one |
+| DENY | 4 | nothing should answer an out-of-scope one |
+| ANS, `glossary_covered: false` | 6 | answerable from the tables, undefined by the glossary — free-form by design (PDD §5 wants ≥20% outside the layer) |
+| ANS, `glossary_covered: true` | **1** | **a gap** |
+
+The gap is **DV-023**, which asks for a plain count of payment attempts.
+
+The glossary defines the quantity without publishing it as a metric. It is §2.9's
+denominator — "the number of payment attempts in the window, of any outcome" —
+and §1.1 supplies the trap the question is testing, which is excluding test
+attempts. So the question's `glossary_covered: true` is defensible. But there is
+no §2.x section for an attempts count, and SDD §7.4's v1 metric list has none, so
+the layer has nothing to answer it with.
+
+**Not closed, deliberately.** Adding an `attempts_count` metric would need a
+glossary section that does not exist, and writing one now — after the questions
+were frozen, in response to a question — is fitting the layer to the test, which
+is precisely what §7.1's two-way coverage check exists to prevent. The honest
+cost is recorded here instead.
+
+**What it costs.** Receipts will fall to free-form on DV-023 and answer
+`UNVERIFIED` where the asker could reasonably have expected a verified answer. On
+the dev set that is one question of sixty. Whether the holdout carries the same
+gap is unknown and will stay unknown until it runs once.
+
+The residue is now bounded by a test rather than by this note: the one known gap
+is named in `KNOWN_UNCOVERED_ANS`, a second one fails the suite, and a gap that
+closes also fails it, so the list cannot quietly stop meaning what it says.

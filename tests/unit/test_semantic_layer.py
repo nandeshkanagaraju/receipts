@@ -491,3 +491,115 @@ def test_every_dimension_carries_a_code_mixed_synonym(catalog: Catalog) -> None:
     for line in missing:
         print(f"  {line}")
     assert not missing, f"dimensions with no code-mixed synonym: {len(missing)}"
+
+
+# --------------------------------------------------------------------------- #
+# The gap between the glossary and the layer, bounded and named.
+# --------------------------------------------------------------------------- #
+
+# An answerable dev question, marked as covered by the glossary, that no metric
+# answers. Each one is a place Receipts will fall to free-form where the asker
+# had a right to expect a verified answer, so the set is enumerated here rather
+# than counted: a new one must be a deliberate edit, not a drift.
+#
+# DV-023 asks for a plain count of payment attempts. The glossary defines the
+# quantity -- it is §2.9's denominator, "the number of payment attempts in the
+# window, of any outcome" -- and §1.1 supplies the trap, which is excluding test
+# attempts. But it publishes no metric for it, and SDD §7.4's v1 list has none
+# either, so the layer correctly does not invent one. Adding an `attempts_count`
+# metric would need a glossary section that does not exist, and writing one now
+# would be fitting the layer to the test, which §7.1 exists to prevent.
+KNOWN_UNCOVERED_ANS = {"DV-023"}
+
+
+def test_no_answerable_glossary_covered_question_is_unreachable(catalog: Catalog) -> None:
+    """Every ANS question the glossary covers should have a metric behind it.
+
+    This is the check that says whether the layer is a faithful implementation of
+    the glossary or merely a plausible one. A question marked `glossary_covered`
+    asserts that the definitions answer it; a metric is how the definitions
+    become an answer. A gap between the two is not discovered by running the
+    eval -- it shows up there as a free-form fallback, which is a *designed*
+    outcome and therefore looks fine.
+
+    Unmapped AMB, UNA and DENY rows are expected and are not checked: nothing
+    should answer a question whose right response is to clarify, abstain or
+    refuse.
+    """
+    import json
+
+    rows = [
+        json.loads(line)
+        for line in (REPO / "eval" / "questions" / "dev.jsonl")
+        .read_text(encoding="utf-8")
+        .splitlines()
+        if line.strip()
+    ]
+    mapped = {qid for metric in catalog.metrics for qid in metric.dev_questions}
+    gaps = {
+        row["qid"]
+        for row in rows
+        if row["population"] == "ANS"
+        and row.get("glossary_covered") is True
+        and row["qid"] not in mapped
+    }
+    unmapped_total = sum(1 for row in rows if row["qid"] not in mapped)
+    print(
+        f"\n{len(rows)} dev questions, {len(mapped)} mapped, {unmapped_total} unmapped; "
+        f"ANS+glossary_covered gaps: {sorted(gaps) or 'none'}"
+    )
+
+    new = sorted(gaps - KNOWN_UNCOVERED_ANS)
+    assert not new, (
+        f"{new} are answerable questions the glossary covers and no metric answers. "
+        "Either the layer is missing a metric the glossary defines, or the question's "
+        "glossary_covered flag is wrong. Do not add a metric with no glossary section "
+        "to close this."
+    )
+
+    stale = sorted(KNOWN_UNCOVERED_ANS - gaps)
+    assert not stale, (
+        f"{stale} are listed as known gaps and are no longer gaps. Remove them from "
+        "KNOWN_UNCOVERED_ANS so the list keeps meaning what it says."
+    )
+
+
+def test_the_unmapped_questions_are_otherwise_out_of_scope_by_design(catalog: Catalog) -> None:
+    """Every other unmapped question is one nothing should answer.
+
+    Counts only. An unmapped question is fine when it is ambiguous, unanswerable,
+    out of scope, or answerable from the tables but undefined by the glossary --
+    PDD §5 requires at least 20% of the set to fall outside the layer on purpose.
+    It is not fine when it is none of those, and this asserts the residue is
+    empty.
+    """
+    import json
+    from collections import Counter
+
+    rows = [
+        json.loads(line)
+        for line in (REPO / "eval" / "questions" / "dev.jsonl")
+        .read_text(encoding="utf-8")
+        .splitlines()
+        if line.strip()
+    ]
+    mapped = {qid for metric in catalog.metrics for qid in metric.dev_questions}
+    unmapped = [row for row in rows if row["qid"] not in mapped]
+
+    tally: Counter[str] = Counter()
+    unexplained = []
+    for row in unmapped:
+        if row["population"] != "ANS":
+            tally[f"{row['population']} (nothing should answer)"] += 1
+        elif row.get("glossary_covered") is False:
+            tally["ANS, glossary_covered:false (free-form by design)"] += 1
+        elif row["qid"] in KNOWN_UNCOVERED_ANS:
+            tally["ANS, known gap"] += 1
+        else:
+            unexplained.append(row["qid"])
+
+    print(f"\n{len(unmapped)} unmapped dev questions:")
+    for reason, count in sorted(tally.items()):
+        print(f"  {count:>3}  {reason}")
+    assert sum(tally.values()) == len(unmapped) - len(unexplained)
+    assert not unexplained, f"unmapped for no stated reason: {unexplained}"
