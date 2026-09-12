@@ -601,3 +601,159 @@ def test_reachability_the_authorisation_scan_sees_the_real_corpus() -> None:
     ]
     print(f"\nrows mentioning authorisation, seen by the scan: {sorted(authorisation_rows)}")
     assert authorisation_rows, "the scan saw no authorisation questions at all"
+
+
+# ---------------------------------------------------------------------------
+# A translation preserves its question's population.
+#
+# An AMB question is ambiguous because it does not name a metric. If a
+# translation names one, that variant is answerable and the others are not --
+# the same qid is then two different questions depending on the language it is
+# asked in, and the AMB arm silently measures the clarify path in one language
+# and the answer path in another.
+#
+# The reverse is equally broken and not mechanically checkable: an ANS question
+# whose translation drops the metric becomes ambiguous. `eval/questions/README.md`
+# carries the rule for both directions; this scan covers the half a machine can
+# see.
+# ---------------------------------------------------------------------------
+
+# Metric-naming phrases. Every one of these picks a metric out of GLOSSARY §2,
+# which is exactly what an AMB question must not do. House style leaves metric
+# names in English inside Tamil and Hindi sentences, so matching the English
+# phrase works across all four variants.
+METRIC_PHRASES = (
+    "captured gmv",
+    "refund rate",
+    "refunded amount",
+    "payment success rate",
+    "success rate",
+    "failure rate",
+    "attach rate",
+    "emi share",
+    "settlement lag",
+    "average order value",
+    "order count",
+    "units sold",
+    "unsettled",
+    "duplicate captures",
+    "gmv",
+)
+
+
+def metrics_named(text: str) -> set[str]:
+    lowered = (text or "").casefold()
+    return {p for p in METRIC_PHRASES if p in lowered}
+
+
+def resolving_metrics(row: dict) -> dict[str, set[str]]:
+    """Per language, metrics a translation names that the English does not."""
+    english = metrics_named(row.get("variants", {}).get("en", ""))
+    out: dict[str, set[str]] = {}
+    for lang, text in (row.get("variants") or {}).items():
+        if lang == "en" or not (text or "").strip():
+            continue
+        added = metrics_named(text) - english
+        if added:
+            out[lang] = added
+    return out
+
+
+def test_no_amb_translation_resolves_its_ambiguity() -> None:
+    """dev + eval, quoted: an AMB row must stay ambiguous in every language."""
+    checked = 0
+    offenders: list[str] = []
+    for name in OPEN_SETS:
+        for row in rows(name):
+            if row["population"] != "AMB":
+                continue
+            checked += 1
+            added = resolving_metrics(row)
+            if added:
+                offenders.append(f"{row['qid']}: {ored(added)}")
+    print(f"\nAMB rows checked for metric-resolving translations: {checked}")
+    assert checked > 0, "no AMB rows were checked, so this scan proved nothing"
+    assert not offenders, (
+        "these AMB questions name a metric in a translation that their English "
+        "does not, so the row asks a different question in different languages:\n  "
+        + "\n  ".join(offenders)
+    )
+
+
+def ored(added: dict[str, set[str]]) -> str:
+    return "; ".join(f"{lang} adds {sorted(metrics)}" for lang, metrics in sorted(added.items()))
+
+
+def test_no_holdout_amb_translation_resolves_its_ambiguity() -> None:
+    """The same scan over the holdout, as a count."""
+    read = checked = offending = 0
+    for row in holdout_corpus():
+        read += 1
+        if row["population"] != "AMB":
+            continue
+        checked += 1
+        offending += bool(resolving_metrics(row))
+    print(f"holdout rows read: {read}; AMB checked: {checked}; resolved: {offending}")
+    assert read >= holdout_floor(), f"read {read} rows, below the floor of {holdout_floor()}"
+    assert checked > 0, "no AMB rows were checked, so this scan proved nothing"
+    assert offending == 0, f"{offending} holdout AMB row(s) resolve their ambiguity in translation"
+
+
+@pytest.mark.parametrize(
+    "variants,wanted",
+    [
+        (
+            {
+                "en": "How did we do this quarter?",
+                "ta": "இந்த காலாண்டில் captured GMV எவ்வளவு?",
+            },
+            "captured gmv",
+        ),
+        (
+            {
+                "en": "Which country is performing best?",
+                "ta-Latn": "endha country-la success rate best?",
+            },
+            "success rate",
+        ),
+        (
+            {
+                "en": "How are our stores doing?",
+                "hi": "हमारे stores का refund rate क्या है?",
+            },
+            "refund rate",
+        ),
+    ],
+)
+def test_injection_a_translation_that_names_a_metric_is_caught(variants: dict, wanted: str) -> None:
+    """INJECTION: the ambiguity resolved in one language and not the others."""
+    added = resolving_metrics({"qid": "XX-020", "variants": variants})
+    print(f"\ninjection {list(variants)[1]} -> {added}")
+    assert any(wanted in metrics for metrics in added.values()), f"missed {wanted}"
+
+
+def test_meta_a_metric_in_both_languages_is_not_flagged() -> None:
+    """META: the rule is about *adding* a metric, not about naming one.
+
+    An ANS question names its metric in every language, and must not trip this.
+    """
+    row = {
+        "qid": "XX-021",
+        "variants": {
+            "en": "Refund rate by country in August.",
+            "ta": "ஆகஸ்ட் மாதத்தில் நாடு வாரியாக refund rate.",
+            "ta-Latn": "August-la country-wise refund rate evlo?",
+        },
+    }
+    added = resolving_metrics(row)
+    print(f"meta (metric in all languages) -> {added or 'clean'}")
+    assert not added, f"a metric present in the English was reported as added: {added}"
+
+
+def test_reachability_the_scan_sees_the_amb_rows_that_exist() -> None:
+    """The scan runs over real AMB rows, including the ones with ta-Latn."""
+    amb = [row for name in OPEN_SETS for row in rows(name) if row["population"] == "AMB"]
+    with_latn = [r for r in amb if (r["variants"].get("ta-Latn") or "").strip()]
+    print(f"\nAMB rows: {len(amb)}, of which {len(with_latn)} have ta-Latn")
+    assert amb, "there are no AMB rows to scan"
+    assert with_latn, "no AMB row carries ta-Latn, so that variant is unscanned"

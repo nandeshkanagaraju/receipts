@@ -329,6 +329,21 @@ manifest, the hand-back message.
   `eval/reference_sql/HO-*` belong to this session only, and their output does
   not leave it.
 
+**No holdout text in a gist. Ever.** A secret gist is not a private one: it is an
+unlisted URL, readable by anyone who has it, forwarded as easily as any other
+link, and outside the deny rules and the hook entirely — those guard this
+repository, and a gist is not in it.
+
+This rule is written here because it was broken. A ta-Latn worksheet carrying
+fifteen holdout questions in English and Tamil was published as a secret gist,
+and an audit of the account then found five older gists carrying holdout qids —
+two of them with question-shaped text on the same line. Reports go in gists;
+holdout content does not, which means a report that would need holdout content is
+a report that gets written as counts instead.
+
+Where holdout text has to be written down for a human, it goes **outside the
+repository** — `~/receipts-blind/` — and is deleted when it has been used.
+
 **Assertions are the trap.** `assert got == expected, f"expected {expected}"`
 puts the answer in the terminal precisely when someone is watching. Print
 pass/fail and counts; never a value. `tests/charter/test_sealed_values_never_printed.py`

@@ -148,6 +148,28 @@ accuracy number.
 8. **English variants are written first.** Tamil and Hindi are left empty with
    provenance `pending` until a human writes or verifies them. Machine
    translation is never labelled `human`.
+9. **A translation must preserve its question's population.** A row is one
+   question in four languages, not four questions sharing a qid.
+
+   An **AMB** question is ambiguous because it does not name a metric. A
+   translation that names one — "captured GMV" where the English said "revenue",
+   "success rate" where it said "doing well" — makes that variant answerable
+   while the others stay ambiguous, and the AMB arm then measures the clarify
+   path in one language and the answer path in another. An **ANS** question whose
+   translation drops the metric is broken the same way, in the other direction.
+
+   The AMB half is mechanical and enforced:
+   `test_no_amb_translation_resolves_its_ambiguity` fails when any translation of
+   an AMB row names a metric its English does not, in dev and eval by qid and in
+   the holdout by count. The ANS half is not mechanically checkable — a metric
+   can be dropped without leaving a word behind — so it is a reading rule, and
+   the reference SQL is where it usually surfaces.
+
+   Two rows show what *correct* looks like: EV-033 leaves "revenue" in English
+   inside its Tamil and Tanglish, and EV-083 leaves "make". Both are undefined at
+   Kestrel (GLOSSARY §6.2), and keeping them untranslated is what keeps the
+   question ambiguous in every language.
+
 10. **No two questions share variant text**, within or across sets.
 11. **A ranking by a rate must not run over cells with small denominators.**
     A top-k over a ratio is decided by whichever cell has three orders and one
