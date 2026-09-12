@@ -907,3 +907,24 @@ has to.
 
 Corrected figure: **30 of 108 answerable trials silently wrong, 27.78%.** That is
 the number Receipts must at least halve.
+
+## M6b: the run's true cost is unknown, between about $3 and $15.78
+
+`RecordingLLM` wrote `input_tokens` and `output_tokens` and dropped
+`cached_input_tokens`, which had been added to `Usage` in the same round. So all
+162 committed recordings report zero cached tokens, and the cost computed from
+them — **$15.78** — is the price of the run *as if nothing had been cached*.
+
+That is an upper bound, not the bill. An independent measurement through the same
+client, with the same prompt and cache key, shows **93% of the 16k prompt served
+from cache** and a per-call cost of $0.0173 against $0.089 uncached. If the run
+cached at that rate throughout, it cost closer to $3. The true figure is
+somewhere between, and cannot be narrowed: the OpenAI costs endpoint returns 403
+for a project key, and the recordings no longer hold the answer.
+
+The serialisation is fixed and tested in both directions — a new recording
+carries the count, and the 162 existing ones still replay, reporting zero rather
+than inventing a number. What cannot be fixed is the measurement that has already
+happened. The irony is exact: the round's instruction was to implement caching
+and test it *before* the run rather than after, and caching was in fact tested
+before the run — it was the *recording* of what caching did that went untested.

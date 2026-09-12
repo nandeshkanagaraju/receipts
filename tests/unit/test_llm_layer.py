@@ -643,3 +643,60 @@ def test_a_budget_is_per_question_and_is_reset_between_them(prompt_dir: Path) ->
         limited.structured(
             prompt_id="toy", messages=[Msg(role="user", content="q")], schema=SCHEMA, max_tokens=8
         )
+
+
+def test_a_recording_preserves_the_cached_token_count(tmp_path: Path, prompt_dir: Path) -> None:
+    """It cannot be recovered afterwards, so it has to be written down.
+
+    The first 180-call run recorded only the two totals. Afterwards there was no
+    way to tell a fully-cached run from an uncached one, and the cost of the run
+    could only be reported as an upper bound — for a run whose whole point was
+    that caching had been implemented and measured first.
+    """
+
+    class CachingLLM(FakeLLM):
+        def text(self, *, prompt_id, messages, max_tokens):
+            result = super().text(prompt_id=prompt_id, messages=messages, max_tokens=max_tokens)
+            return TextResult(
+                text=result.text,
+                usage=Usage(input_tokens=16_158, output_tokens=172, cached_input_tokens=15_104),
+                provenance=result.provenance,
+            )
+
+    recordings = tmp_path / "rec"
+    recorder = replay_mod.RecordingLLM(CachingLLM(), directory=recordings)
+    messages = [Msg(role="user", content="q")]
+    recorded = recorder.text(prompt_id="toy", messages=messages, max_tokens=64)
+    assert recorded.usage.cached_input_tokens == 15_104
+
+    body = json.loads(next(recordings.glob("*.json")).read_text(encoding="utf-8"))
+    print(f"\nserialised usage: {body['usage']}")
+    assert body["usage"]["cached_input_tokens"] == 15_104, "the cached count was not written"
+
+    replayed = replay_mod.ReplayLLM(recordings, provider="fake", model="fake-1").text(
+        prompt_id="toy", messages=messages, max_tokens=64
+    )
+    assert replayed.usage == recorded.usage, "usage did not survive the round trip"
+
+
+def test_an_old_recording_without_the_field_still_replays(tmp_path: Path, prompt_dir: Path) -> None:
+    """Honestly zero rather than a guess, and never a crash.
+
+    The 162 recordings already committed predate the field. They must keep
+    replaying, and they must not start claiming a cache hit they never measured.
+    """
+    recordings = tmp_path / "rec"
+    recorder = replay_mod.RecordingLLM(FakeLLM(), directory=recordings)
+    messages = [Msg(role="user", content="q")]
+    recorder.text(prompt_id="toy", messages=messages, max_tokens=64)
+
+    path = next(recordings.glob("*.json"))
+    body = json.loads(path.read_text(encoding="utf-8"))
+    body["usage"].pop("cached_input_tokens", None)
+    path.write_text(json.dumps(body), encoding="utf-8")
+
+    replayed = replay_mod.ReplayLLM(recordings, provider="fake", model="fake-1").text(
+        prompt_id="toy", messages=messages, max_tokens=64
+    )
+    assert replayed.usage.cached_input_tokens == 0
+    assert replayed.usage.input_tokens > 0, "the rest of the usage was lost too"

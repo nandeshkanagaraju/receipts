@@ -108,6 +108,11 @@ class RecordingLLM:
                 "usage": {
                     "input_tokens": result.usage.input_tokens,
                     "output_tokens": result.usage.output_tokens,
+                    # Recorded, because it cannot be recovered later. The first
+                    # 180-call run wrote only the two totals, so afterwards there
+                    # was no way to tell a fully-cached run from an uncached one
+                    # and the cost could only be reported as an upper bound.
+                    "cached_input_tokens": result.usage.cached_input_tokens,
                 },
                 "provenance": {
                     "prompt_id": result.provenance.prompt_id,
@@ -140,6 +145,11 @@ class RecordingLLM:
                 "usage": {
                     "input_tokens": result.usage.input_tokens,
                     "output_tokens": result.usage.output_tokens,
+                    # Recorded, because it cannot be recovered later. The first
+                    # 180-call run wrote only the two totals, so afterwards there
+                    # was no way to tell a fully-cached run from an uncached one
+                    # and the cost could only be reported as an upper bound.
+                    "cached_input_tokens": result.usage.cached_input_tokens,
                 },
                 "provenance": {
                     "prompt_id": result.provenance.prompt_id,
@@ -204,9 +214,12 @@ class ReplayLLM:
 
     def _usage(self, body: dict[str, Any]) -> Usage:
         raw = body.get("usage", {})
+        # `.get` with a default: recordings written before the field existed are
+        # still replayable, and they honestly report zero rather than guessing.
         return Usage(
             input_tokens=int(raw.get("input_tokens", 0)),
             output_tokens=int(raw.get("output_tokens", 0)),
+            cached_input_tokens=int(raw.get("cached_input_tokens", 0)),
         )
 
     def structured(
