@@ -87,6 +87,48 @@ SYSTEMS: dict[str, System] = {"oracle": oracle, "null": null}
 SYSTEM_BUILDERS: dict[str, Callable[[], System]] = {}
 
 
+def _fallback_counts(system: Any) -> dict[str, int] | None:
+    """How many calls each provider served, if the system has a fallback chain.
+
+    Walks the wrappers rather than asking the system, because the chain sits
+    under a budget wrapper under a recorder and none of them forwards attributes.
+    `None` when there is no chain at all, which is different from a chain that
+    served zero secondary calls.
+    """
+    # Depth-bounded rather than cycle-detected: `id()` as an identity is refused
+    # by D3, and correctly -- it is not stable across runs. The wrapper stack is
+    # three deep at most (budget, recorder, chain), so eight is slack, and a
+    # stack deeper than that is a bug worth returning None for.
+    node = getattr(system, "llm", None)
+    for _ in range(8):
+        if node is None:
+            break
+        if hasattr(node, "primary_attempts") and hasattr(node, "secondary_attempts"):
+            return {
+                "primary": int(node.primary_attempts),
+                "secondary": int(node.secondary_attempts),
+            }
+        node = getattr(node, "inner", None)
+    return None
+
+
+def _one_client(provider: str, model: str, settings: Any, *, cache_key: str = "") -> Any:
+    """One provider, constructed. Never guessed from the model name."""
+    if provider == "openai":
+        from ..llm.openai import OpenAILLM
+
+        return OpenAILLM(
+            model=model,
+            temperature=settings.llm.temperature,
+            cache_key=cache_key or None,
+        )
+    if provider == "anthropic":
+        from ..llm.anthropic import AnthropicLLM
+
+        return AnthropicLLM(model=model)
+    raise SystemExit(f"no client for provider {provider!r} (ADR-018)")
+
+
 def _provider_client(settings: Any) -> Any:
     """The configured primary, constructed. Never guessed from the model name.
 
@@ -94,24 +136,28 @@ def _provider_client(settings: Any) -> Any:
     switch to OpenAI (ADR-018) be a config change instead of a code change --
     and it is why the same function will serve Receipts in M9 unaltered.
     """
-    provider = settings.llm.primary.provider
-    model = settings.llm.primary.model
-    if provider == "openai":
-        from ..llm.openai import OpenAILLM
+    from ..llm.fallback import FallbackLLM
 
-        return OpenAILLM(
-            model=model,
-            temperature=settings.llm.temperature,
-            # One cache per prompt id: OpenAI routes same-key calls together, and
-            # the baseline's 16k system prefix is identical within a role, so the
-            # second call onward reads a cached prefix instead of paying for it.
-            cache_key=f"receipts-baseline-{model}",
-        )
-    if provider == "anthropic":
-        from ..llm.anthropic import AnthropicLLM
-
-        return AnthropicLLM(model=model)
-    raise SystemExit(f"no client for provider {provider!r} (ADR-018)")
+    primary_spec = settings.llm.primary
+    secondary_spec = settings.llm.secondary
+    # One cache per prompt id: OpenAI routes same-key calls together, and the
+    # baseline's 16k system prefix is identical within a role, so the second call
+    # onward reads a cached prefix instead of paying for it.
+    primary = _one_client(
+        primary_spec.provider,
+        primary_spec.model,
+        settings,
+        cache_key=f"receipts-baseline-{primary_spec.model}",
+    )
+    if secondary_spec.provider == "none":
+        return primary
+    secondary = _one_client(
+        secondary_spec.provider,
+        secondary_spec.model,
+        settings,
+        cache_key=f"receipts-baseline-{secondary_spec.model}",
+    )
+    return FallbackLLM(primary, secondary)
 
 
 def _build_baseline() -> System:
@@ -369,6 +415,18 @@ def run(
     extraction = getattr(system, "extraction_counts", None)
     if isinstance(extraction, dict):
         built["extraction"] = dict(sorted(extraction.items()))
+
+    # PDD J7 gives the chain a second opinion; the thesis needs the same model on
+    # both sides. Both hold only if a fallback that fires is *visible*. A run that
+    # touched the secondary has rows produced by a different model sitting among
+    # rows that were not, and nothing else in the report would say so.
+    served = _fallback_counts(system)
+    if served is not None:
+        built["model_calls"] = served
+        if served["secondary"]:
+            built["provenance"] = dict(
+                sorted({**built["provenance"], "mixed_models": True}.items())
+            )
 
     if write:
         target = RESULTS / set_name / system_name

@@ -612,9 +612,14 @@ def test_the_configured_primary_and_secondary_agree_with_the_adr() -> None:
         "the primary is a floating alias; a dated snapshot is required so the "
         "baseline and Receipts cannot be recorded against different models"
     )
-    assert settings.llm.secondary.provider == "none", (
-        "a fallback to another model would break 'same model on both sides'"
-    )
+    # Superseded. This asserted `secondary == "none"`, on the argument that a
+    # fallback to another model breaks "same model on both sides". PDD J7 needs
+    # an outage to be survivable, so the secondary is back -- and the argument is
+    # answered by making a fallback *visible* (`model_calls` in the report, and
+    # `mixed_models` in provenance) rather than by removing it. The pinning
+    # requirement is unchanged and is asserted in
+    # `test_the_configured_secondary_is_a_different_dated_model`.
+    assert settings.llm.secondary.provider != "none", "PDD J7 needs a second opinion"
 
 
 def test_a_budget_is_per_question_and_is_reset_between_them(prompt_dir: Path) -> None:
@@ -700,3 +705,92 @@ def test_an_old_recording_without_the_field_still_replays(tmp_path: Path, prompt
     )
     assert replayed.usage.cached_input_tokens == 0
     assert replayed.usage.input_tokens > 0, "the rest of the usage was lost too"
+
+
+def test_a_primary_outage_reaches_the_secondary(prompt_dir: Path) -> None:
+    """PDD J7. The chain exists so that a provider outage is survivable.
+
+    Asserted end to end rather than on the counters alone: the answer comes back,
+    and it comes back from the secondary, which is the property J7 actually
+    needs.
+    """
+    primary = FakeLLM(provider="primary", model="gpt-5.5-2026-04-23", raises=99)
+    secondary = FakeLLM(provider="secondary", model="gpt-5.4-2026-03-05")
+    chain = fallback_mod.FallbackLLM(primary, secondary)
+
+    result = chain.text(prompt_id="toy", messages=[Msg(role="user", content="q")], max_tokens=8)
+    print(f"\nserved by {result.provenance.provider}/{result.provenance.model}")
+    assert result.text, "the outage produced no answer at all"
+    assert result.provenance.provider == "secondary"
+    assert chain.primary_attempts == 2, f"{chain.primary_attempts} primary attempts, expected 1+1"
+    assert chain.secondary_attempts == 1
+
+
+def test_the_configured_secondary_is_a_different_dated_model() -> None:
+    """A second opinion must exist (PDD J7) and must be pinnable (ADR-018).
+
+    Both halves: `none` fails the first, and a floating alias fails the second --
+    a fallback that silently changed model between two recordings would be the
+    same defect the primary's pinning exists to prevent, arriving through the
+    back door.
+    """
+    import re
+
+    from receipts.config import load_settings
+
+    settings = load_settings()
+    secondary = settings.llm.secondary
+    assert secondary.provider != "none", "PDD J7 needs a second opinion to exist"
+    assert secondary.model != settings.llm.primary.model, (
+        "a fallback to the same model is not a fallback"
+    )
+    assert re.search(r"-\d{4}-\d{2}-\d{2}$", secondary.model), (
+        f"the secondary {secondary.model!r} is a floating alias, not a dated snapshot"
+    )
+
+
+def test_a_run_that_used_the_secondary_says_so(tmp_path: Path, prompt_dir: Path) -> None:
+    """The visibility that makes J7 and "same model on both sides" both true.
+
+    A fallback that fires puts rows from a different model among rows that are
+    not, and nothing else in a report would say so.
+    """
+    from receipts.evalkit import harness
+
+    class WithChain:
+        def __init__(self, chain: object) -> None:
+            self.llm = chain
+
+    chain = fallback_mod.FallbackLLM(
+        FakeLLM(provider="primary", raises=99), FakeLLM(provider="secondary")
+    )
+    chain.text(prompt_id="toy", messages=[Msg(role="user", content="q")], max_tokens=8)
+    counts = harness._fallback_counts(WithChain(chain))
+    print(f"\nmodel_calls: {counts}")
+    assert counts == {"primary": 2, "secondary": 1}
+
+    # And a system with no chain reports None, which is not the same claim as zero.
+    assert harness._fallback_counts(WithChain(FakeLLM())) is None
+
+
+def test_the_chain_is_found_through_the_budget_and_recorder_wrappers(
+    tmp_path: Path, prompt_dir: Path
+) -> None:
+    """The chain sits under two wrappers and neither forwards attributes.
+
+    Asserted because the obvious implementation -- `getattr(system.llm,
+    "secondary_attempts", 0)` -- returns 0 for every real run, which reads as
+    "the secondary was never used" rather than "nobody looked".
+    """
+    from receipts.evalkit import harness
+
+    chain = fallback_mod.FallbackLLM(
+        FakeLLM(provider="primary", raises=99), FakeLLM(provider="secondary")
+    )
+    chain.text(prompt_id="toy", messages=[Msg(role="user", content="q")], max_tokens=8)
+    wrapped = budget_mod.BudgetedLLM(
+        replay_mod.RecordingLLM(chain, directory=tmp_path / "rec"),
+        budget_mod.QuestionBudget(tokens_in=10_000, tokens_out=10_000),
+    )
+    system = type("S", (), {"llm": wrapped})()
+    assert harness._fallback_counts(system) == {"primary": 2, "secondary": 1}

@@ -36,9 +36,16 @@ llm:
   # recording and Receipts' own, the comparison would silently be across two
   # models.
   primary:   {provider: openai, model: gpt-5.5-2026-04-23}
-  # No second opinion, deliberately. A fallback to a different model would
-  # violate "same model on both sides" at exactly the moment nobody is looking.
-  secondary: {provider: none, model: none}
+  # PDD J7 (provider outage) needs a second opinion to exist. A different model,
+  # and a dated snapshot for the same reason the primary is one: an alias that
+  # moves is a different experiment with the same name.
+  #
+  # The tension with "same model on both sides" is real and is handled by making
+  # the fallback *visible* rather than by removing it: `FallbackLLM` counts
+  # secondary calls, the harness records the count in the report's provenance,
+  # and a measurement run that touched the secondary says so on its face instead
+  # of hiding a row produced by a different model among rows that were not.
+  secondary: {provider: openai, model: gpt-5.4-2026-03-05}
   max_tokens:
     intent: 512
     planner: 2048

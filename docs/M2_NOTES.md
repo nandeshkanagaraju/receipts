@@ -669,3 +669,59 @@ before it is built.
 
 The question itself was replaced (EV-039 now asks about warranty claims, which
 genuinely do not exist in the schema), so the eval is not relying on the gap.
+
+### M21 — the four baseline findings belong in the README at G5
+
+Measured in M6b, commit `552a7ff`: the baseline B0 on the dev set, 180 trials,
+`openai/gpt-5.5-2026-04-23`, recorded once and replayed byte-identically. These
+are the first real results this project has produced, and all four belong in the
+README when it is written at G5. Recorded here so they are not reconstructed
+from memory later.
+
+**1. A strong baseline is silently wrong on 27.8% of answerable dev questions.**
+108 answerable trials, 77 correct, 30 silently wrong. "Strong" is the word that
+matters: it had the entire glossary, full DDL with a comment on every column, the
+literal values of every enum, ten worked examples with reasoning, its scope in
+words, and one retry. This is not a strawman's failure rate. Excluding the ten
+few-shot questions it is 33.3%.
+
+**2. Scope leaks 25% in English and 75% in Tamil and Hindi, because prompt prose
+is not a boundary.** 7 of 12 out-of-scope questions returned out-of-scope data.
+This is the headline architectural argument — it is precisely what the scope
+rewrite (SDD §12.2) exists to replace, and it says the difference is not
+theoretical.
+
+**It was not predicted.** The leak check was extended from DENY to every
+population on general principle, and the language split fell out of it. Worth
+saying in the README, because a finding that was looked for and a finding that
+turned up are different kinds of evidence, and this project's credibility rests
+on not blurring them.
+
+**3. The traps split cleanly, with no middle, and few-shot exposure does not
+predict which group.** `partial_refunds`, `authorised_vs_captured`, `emi` and
+`multi_currency` lose 46–50% to silent wrongness; `local_time`,
+`fiscal_calendar`, `duplicate_captures` and `test_transactions` lose none at all.
+Nothing sits between. And exposure explains none of it: `emi` was never
+demonstrated and loses half, `test_transactions` was never demonstrated and loses
+nothing, `multi_currency` *was* demonstrated and still loses half.
+
+The hypothesis — and the README must call it a hypothesis until the holdout says
+otherwise — is that the expensive four all require *excluding or re-deriving*
+something the obvious SQL includes, while the free four are satisfied by a column
+that is already there: `business_date`, `is_test`, `gateway_payment_id`.
+
+**4. The silent-wrong clause was half-implemented, reported 0.0%, and every test
+passed.** SDD §25.3 defines Silent-wrong as "wrong, `VERIFIED`, **or any wrong
+baseline answer**". Only the first clause existed. The baseline marks every
+answer `UNVERIFIED` because nothing verified it, so all thirty wrong answers were
+filed as *flagged* — by a system with no way to flag anything — and the metric
+the whole thesis turns on read zero for the arm it was measuring.
+
+This one belongs in the README for a reason the other three do not share: **it is
+the measurement bug that would have flattered Receipts.** A thesis that claims to
+halve a rate reported as 0.0% has nothing to claim, and the error ran in the
+direction that makes the project look good. It was caught by reading the outcome
+vocabulary and asking why a system that cannot flag had thirty flagged answers —
+not by a test, because the tests asserted the same half-rule. The README should
+say so plainly; it is the strongest available evidence that the numbers in it
+were checked rather than accepted.
