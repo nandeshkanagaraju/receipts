@@ -1,0 +1,9 @@
+{
+  "intent": "OUT_OF_SCOPE",
+  "is_followup": false,
+  "language": "en",
+  "missing_concept": "store footfall",
+  "outcome": "no_fit (empty slice, no model call)",
+  "qid": "DV-054",
+  "slice": []
+}

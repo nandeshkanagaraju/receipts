@@ -1,0 +1,23 @@
+{
+  "data": {
+    "result": {
+      "data_exists": true,
+      "no_fit": true,
+      "reason": "The question asks for refunds that are still pending at the gateway, but the offered refund metric only counts refunds that have been processed successfully; pending refunds are explicitly not counted. There is also no offered metric for listing refund records by gateway status."
+    }
+  },
+  "kind": "structured",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "planner",
+    "provider": "openai",
+    "sha256": "f26d0464d9d7a63b5259ff1fc4dd68184fafdf7c2ee51de0032d8d5bc454321d",
+    "version": 1
+  },
+  "raw": "{\"result\":{\"no_fit\":true,\"reason\":\"The question asks for refunds that are still pending at the gateway, but the offered refund metric only counts refunds that have been processed successfully; pending refunds are explicitly not counted. There is also no offered metric for listing refund records by gateway status.\",\"data_exists\":true}}",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 2279,
+    "output_tokens": 155
+  }
+}

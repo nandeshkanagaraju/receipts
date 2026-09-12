@@ -1,0 +1,50 @@
+{
+  "intent": "BREAKDOWN",
+  "is_followup": false,
+  "language": "en",
+  "missing_concept": "",
+  "outcome": "plan",
+  "plan": {
+    "ambiguities": [],
+    "compare_to": null,
+    "dimensions": [
+      "failure_reason"
+    ],
+    "filters": [
+      {
+        "dimension": "city",
+        "op": "eq",
+        "values": [
+          "Chennai"
+        ]
+      }
+    ],
+    "grain": "NONE",
+    "kind": "metric",
+    "limit": null,
+    "name": "failure_rate_by_reason",
+    "order": null,
+    "reporting_currency": null,
+    "window": {
+      "calendar": "unspecified",
+      "end": null,
+      "kind": "relative",
+      "quarter": null,
+      "relative": "last_7_days",
+      "start": null,
+      "year": null
+    }
+  },
+  "qid": "DV-009",
+  "slice": [
+    "failure_rate_by_reason",
+    "payment_success_rate_order",
+    "payment_success_rate_attempt",
+    "refund_age_days",
+    "accessory_attach_rate",
+    "refund_rate",
+    "units_sold",
+    "refunded_amount",
+    "gmv_captured"
+  ]
+}

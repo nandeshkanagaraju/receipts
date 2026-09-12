@@ -1,0 +1,41 @@
+{
+  "data": {
+    "result": {
+      "ambiguities": [],
+      "compare_to": null,
+      "dimensions": [
+        "country"
+      ],
+      "filters": [],
+      "grain": "NONE",
+      "kind": "metric",
+      "limit": null,
+      "name": "net_revenue",
+      "order": null,
+      "reporting_currency": "USD",
+      "window": {
+        "calendar": "unspecified",
+        "end": "2026-08-31",
+        "kind": "absolute",
+        "quarter": null,
+        "relative": null,
+        "start": "2026-08-01",
+        "year": null
+      }
+    }
+  },
+  "kind": "structured",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "planner",
+    "provider": "openai",
+    "sha256": "f26d0464d9d7a63b5259ff1fc4dd68184fafdf7c2ee51de0032d8d5bc454321d",
+    "version": 1
+  },
+  "raw": "{\"result\":{\"kind\":\"metric\",\"name\":\"net_revenue\",\"dimensions\":[\"country\"],\"filters\":[],\"window\":{\"kind\":\"absolute\",\"relative\":null,\"start\":\"2026-08-01\",\"end\":\"2026-08-31\",\"quarter\":null,\"year\":null,\"calendar\":\"unspecified\"},\"grain\":\"NONE\",\"compare_to\":null,\"order\":null,\"limit\":null,\"reporting_currency\":\"USD\",\"ambiguities\":[]}}",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 1738,
+    "output_tokens": 427
+  }
+}

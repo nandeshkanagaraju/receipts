@@ -1,0 +1,41 @@
+{
+  "intent": "COMPARE",
+  "is_followup": false,
+  "language": "en",
+  "missing_concept": "",
+  "outcome": "plan",
+  "plan": {
+    "ambiguities": [],
+    "compare_to": "previous_period",
+    "dimensions": [],
+    "filters": [],
+    "grain": "NONE",
+    "kind": "metric",
+    "limit": null,
+    "name": "gmv_captured",
+    "order": null,
+    "reporting_currency": null,
+    "window": {
+      "calendar": "unspecified",
+      "end": null,
+      "kind": "relative",
+      "quarter": null,
+      "relative": "this_month",
+      "start": null,
+      "year": null
+    }
+  },
+  "qid": "DV-041",
+  "slice": [
+    "gmv_captured",
+    "accessory_attach_rate",
+    "emi_share",
+    "refund_age_days",
+    "orders_count",
+    "units_sold",
+    "refunded_amount",
+    "net_revenue",
+    "avg_order_value",
+    "refund_rate"
+  ]
+}

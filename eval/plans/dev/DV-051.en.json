@@ -1,0 +1,23 @@
+{
+  "intent": "METRIC",
+  "is_followup": false,
+  "language": "en",
+  "missing_concept": "",
+  "no_fit": {
+    "data_exists": true,
+    "reason": "The question asks for median order value, but the offered metrics include average order value only, not median order value."
+  },
+  "outcome": "no_fit",
+  "qid": "DV-051",
+  "slice": [
+    "avg_order_value",
+    "refund_rate",
+    "payment_success_rate_order",
+    "net_revenue",
+    "failure_rate_by_reason",
+    "gmv_captured",
+    "orders_count",
+    "payment_success_rate_attempt",
+    "refunded_amount"
+  ]
+}

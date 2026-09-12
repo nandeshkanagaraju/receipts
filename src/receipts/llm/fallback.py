@@ -27,6 +27,22 @@ class FallbackLLM:
     def __init__(self, primary: LLM, secondary: LLM | None = None) -> None:
         self.primary = primary
         self.secondary = secondary
+        # The chain's identity, for anything that keys on it, is its PRIMARY.
+        #
+        # Without these two lines the chain had no `provider` or `model` at all,
+        # so `RecordingLLM` wrapped around it keyed every recording with empty
+        # strings. The recordings wrote fine and replayed never: 120 planner
+        # calls, all present on disk, none findable. On the holdout -- which runs
+        # once (D17) -- that is not a wasted afternoon, it is a wasted holdout.
+        #
+        # Keying by the primary rather than by whoever actually served the call
+        # is deliberate. A transient 529 that pushed one call to the secondary
+        # would otherwise change that call's key, and the recording would become
+        # unreplayable for a reason that has nothing to do with the question. The
+        # substitution stays visible instead through `secondary_attempts` and the
+        # report's `mixed_models` flag.
+        self.provider = getattr(primary, "provider", "")
+        self.model = getattr(primary, "model", "")
         # Observable for tests and for the report: how the last call was served.
         self.primary_attempts = 0
         self.secondary_attempts = 0

@@ -1,0 +1,66 @@
+{
+  "data": {
+    "result": {
+      "ambiguities": [
+        {
+          "chosen": "Use attempt-level failure_rate_by_reason as the diagnostic for why UPI success dropped",
+          "kind": "metric_choice",
+          "readings": [
+            "Payment success rate could mean order-level success rate",
+            "Payment success rate could mean attempt-level success rate; failure reasons are attempt-level diagnostics"
+          ],
+          "term": "success"
+        }
+      ],
+      "compare_to": "previous_period",
+      "dimensions": [
+        "failure_reason"
+      ],
+      "filters": [
+        {
+          "dimension": "payment_method",
+          "op": "eq",
+          "values": [
+            "UPI"
+          ]
+        },
+        {
+          "dimension": "city",
+          "op": "eq",
+          "values": [
+            "Chennai"
+          ]
+        }
+      ],
+      "grain": "NONE",
+      "kind": "metric",
+      "limit": null,
+      "name": "failure_rate_by_reason",
+      "order": "value_desc",
+      "reporting_currency": null,
+      "window": {
+        "calendar": "unspecified",
+        "end": null,
+        "kind": "relative",
+        "quarter": null,
+        "relative": "last_week",
+        "start": null,
+        "year": null
+      }
+    }
+  },
+  "kind": "structured",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "planner",
+    "provider": "openai",
+    "sha256": "f26d0464d9d7a63b5259ff1fc4dd68184fafdf7c2ee51de0032d8d5bc454321d",
+    "version": 1
+  },
+  "raw": "{\"result\":{\"kind\":\"metric\",\"name\":\"failure_rate_by_reason\",\"dimensions\":[\"failure_reason\"],\"filters\":[{\"dimension\":\"payment_method\",\"op\":\"eq\",\"values\":[\"UPI\"]},{\"dimension\":\"city\",\"op\":\"eq\",\"values\":[\"Chennai\"]}],\"window\":{\"kind\":\"relative\",\"relative\":\"last_week\",\"start\":null,\"end\":null,\"quarter\":null,\"year\":null,\"calendar\":\"unspecified\"},\"grain\":\"NONE\",\"compare_to\":\"previous_period\",\"order\":\"value_desc\",\"limit\":null,\"reporting_currency\":null,\"ambiguities\":[{\"term\":\"success\",\"kind\":\"metric_choice\",\"readings\":[\"Payment success rate could mean order-level success rate\",\"Payment success rate could mean attempt-level success rate; failure reasons are attempt-level diagnostics\"],\"chosen\":\"Use attempt-level failure_rate_by_reason as the diagnostic for why UPI success dropped\"}]}}",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 2444,
+    "output_tokens": 700
+  }
+}

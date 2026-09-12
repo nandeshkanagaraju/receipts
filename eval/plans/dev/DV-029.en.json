@@ -1,0 +1,36 @@
+{
+  "intent": "BREAKDOWN",
+  "is_followup": false,
+  "language": "en",
+  "missing_concept": "",
+  "outcome": "plan",
+  "plan": {
+    "ambiguities": [],
+    "compare_to": null,
+    "dimensions": [
+      "model"
+    ],
+    "filters": [],
+    "grain": "NONE",
+    "kind": "metric",
+    "limit": 10,
+    "name": "units_sold",
+    "order": "value_desc",
+    "reporting_currency": null,
+    "window": {
+      "calendar": "unspecified",
+      "end": null,
+      "kind": "relative",
+      "quarter": null,
+      "relative": "last_month",
+      "start": null,
+      "year": null
+    }
+  },
+  "qid": "DV-029",
+  "slice": [
+    "units_sold",
+    "orders_count",
+    "accessory_attach_rate"
+  ]
+}

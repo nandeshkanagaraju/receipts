@@ -1,0 +1,23 @@
+{
+  "data": {
+    "result": {
+      "data_exists": false,
+      "no_fit": true,
+      "reason": "The question asks for staff working/headcount, but the available metrics cover orders, payments, refunds, and related sales dimensions only."
+    }
+  },
+  "kind": "structured",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "planner",
+    "provider": "openai",
+    "sha256": "f26d0464d9d7a63b5259ff1fc4dd68184fafdf7c2ee51de0032d8d5bc454321d",
+    "version": 1
+  },
+  "raw": "{\"result\":{\"no_fit\":true,\"reason\":\"The question asks for staff working/headcount, but the available metrics cover orders, payments, refunds, and related sales dimensions only.\",\"data_exists\":false}}",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 2334,
+    "output_tokens": 80
+  }
+}

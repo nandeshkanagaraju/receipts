@@ -1,0 +1,23 @@
+{
+  "data": {
+    "result": {
+      "data_exists": true,
+      "no_fit": true,
+      "reason": "No offered metric measures authorised payment value that was never captured. The available captured-money metrics only count money actually captured, and unsettled_amount is captured money not yet settled, not authorised-but-uncaptured money."
+    }
+  },
+  "kind": "structured",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "planner",
+    "provider": "openai",
+    "sha256": "f26d0464d9d7a63b5259ff1fc4dd68184fafdf7c2ee51de0032d8d5bc454321d",
+    "version": 1
+  },
+  "raw": "{\"result\":{\"no_fit\":true,\"reason\":\"No offered metric measures authorised payment value that was never captured. The available captured-money metrics only count money actually captured, and unsettled_amount is captured money not yet settled, not authorised-but-uncaptured money.\",\"data_exists\":true}}",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 2676,
+    "output_tokens": 229
+  }
+}

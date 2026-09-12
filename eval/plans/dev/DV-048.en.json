@@ -1,0 +1,65 @@
+{
+  "intent": "BREAKDOWN",
+  "is_followup": false,
+  "language": "en",
+  "missing_concept": "",
+  "outcome": "plan",
+  "plan": {
+    "ambiguities": [
+      {
+        "chosen": "payment_success_rate_attempt",
+        "readings": [
+          "payment_success_rate_attempt",
+          "payment_success_rate_order"
+        ],
+        "term": "success rate"
+      }
+    ],
+    "compare_to": null,
+    "dimensions": [
+      "issuing_bank"
+    ],
+    "filters": [
+      {
+        "dimension": "payment_method",
+        "op": "eq",
+        "values": [
+          "UPI"
+        ]
+      },
+      {
+        "dimension": "city",
+        "op": "eq",
+        "values": [
+          "Chennai"
+        ]
+      }
+    ],
+    "grain": "NONE",
+    "kind": "metric",
+    "limit": 10,
+    "name": "payment_success_rate_attempt",
+    "order": "value_desc",
+    "reporting_currency": null,
+    "window": {
+      "calendar": "unspecified",
+      "end": null,
+      "kind": "relative",
+      "quarter": null,
+      "relative": "last_month",
+      "start": null,
+      "year": null
+    }
+  },
+  "qid": "DV-048",
+  "slice": [
+    "payment_success_rate_attempt",
+    "payment_success_rate_order",
+    "accessory_attach_rate",
+    "refund_rate",
+    "failure_rate_by_reason",
+    "units_sold",
+    "refunded_amount",
+    "gmv_captured"
+  ]
+}

@@ -1,0 +1,53 @@
+{
+  "intent": "METRIC",
+  "is_followup": false,
+  "language": "en",
+  "missing_concept": "",
+  "outcome": "plan",
+  "plan": {
+    "ambiguities": [
+      {
+        "chosen": "Captured GMV",
+        "readings": [
+          "Captured GMV: total money captured from customers in the window",
+          "Net revenue: captured GMV minus refunds processed in the same window"
+        ],
+        "term": "sales"
+      }
+    ],
+    "compare_to": null,
+    "dimensions": [
+      "showroom"
+    ],
+    "filters": [
+      {
+        "dimension": "country",
+        "op": "eq",
+        "values": [
+          "UAE"
+        ]
+      }
+    ],
+    "grain": "NONE",
+    "kind": "metric",
+    "limit": null,
+    "name": "gmv_captured",
+    "order": null,
+    "reporting_currency": null,
+    "window": {
+      "calendar": "unspecified",
+      "end": null,
+      "kind": "relative",
+      "quarter": null,
+      "relative": "last_month",
+      "start": null,
+      "year": null
+    }
+  },
+  "qid": "DV-057",
+  "slice": [
+    "gmv_captured",
+    "net_revenue",
+    "avg_order_value"
+  ]
+}

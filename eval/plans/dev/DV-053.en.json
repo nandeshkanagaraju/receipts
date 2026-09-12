@@ -1,0 +1,55 @@
+{
+  "intent": "BREAKDOWN",
+  "is_followup": false,
+  "language": "en",
+  "missing_concept": "",
+  "outcome": "plan",
+  "plan": {
+    "ambiguities": [
+      {
+        "chosen": "lowest payment success rate by acquiring bank",
+        "readings": [
+          "lowest payment success rate by acquiring bank",
+          "highest failure rate by acquiring bank",
+          "highest refunded amount by acquiring bank"
+        ],
+        "term": "performing worst"
+      },
+      {
+        "chosen": null,
+        "readings": [
+          "no time window was specified; results depend on whether this means today, last 7 days, last month, or another period entirely asynchronously.",
+          "use all available data"
+        ],
+        "term": "time window"
+      }
+    ],
+    "compare_to": null,
+    "dimensions": [
+      "acquiring_bank"
+    ],
+    "filters": [],
+    "grain": "NONE",
+    "kind": "metric",
+    "limit": 1,
+    "name": "payment_success_rate_attempt",
+    "order": "value_asc",
+    "reporting_currency": null,
+    "window": {
+      "calendar": "unspecified",
+      "end": null,
+      "kind": "relative",
+      "quarter": null,
+      "relative": null,
+      "start": null,
+      "year": null
+    }
+  },
+  "qid": "DV-053",
+  "slice": [
+    "refund_age_days",
+    "failure_rate_by_reason",
+    "payment_success_rate_attempt",
+    "refunded_amount"
+  ]
+}

@@ -1,0 +1,68 @@
+{
+  "data": {
+    "result": {
+      "ambiguities": [
+        {
+          "chosen": "gmv_captured",
+          "kind": "metric_choice",
+          "readings": [
+            "captured GMV",
+            "net revenue"
+          ],
+          "term": "sales"
+        },
+        {
+          "chosen": "city",
+          "kind": "entity",
+          "readings": [
+            "city",
+            "region/emirate"
+          ],
+          "term": "Dubai"
+        }
+      ],
+      "compare_to": null,
+      "dimensions": [
+        "showroom"
+      ],
+      "filters": [
+        {
+          "dimension": "city",
+          "op": "eq",
+          "values": [
+            "Dubai"
+          ]
+        }
+      ],
+      "grain": "NONE",
+      "kind": "metric",
+      "limit": null,
+      "name": "gmv_captured",
+      "order": null,
+      "reporting_currency": null,
+      "window": {
+        "calendar": "unspecified",
+        "end": null,
+        "kind": "relative",
+        "quarter": null,
+        "relative": "last_week",
+        "start": null,
+        "year": null
+      }
+    }
+  },
+  "kind": "structured",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "planner",
+    "provider": "openai",
+    "sha256": "f26d0464d9d7a63b5259ff1fc4dd68184fafdf7c2ee51de0032d8d5bc454321d",
+    "version": 1
+  },
+  "raw": "{\"result\":{\"kind\":\"metric\",\"name\":\"gmv_captured\",\"dimensions\":[\"showroom\"],\"filters\":[{\"dimension\":\"city\",\"op\":\"eq\",\"values\":[\"Dubai\"]}],\"window\":{\"kind\":\"relative\",\"relative\":\"last_week\",\"start\":null,\"end\":null,\"quarter\":null,\"year\":null,\"calendar\":\"unspecified\"},\"grain\":\"NONE\",\"compare_to\":null,\"order\":null,\"limit\":null,\"reporting_currency\":null,\"ambiguities\":[{\"term\":\"sales\",\"kind\":\"metric_choice\",\"readings\":[\"captured GMV\",\"net revenue\"],\"chosen\":\"gmv_captured\"},{\"term\":\"Dubai\",\"kind\":\"entity\",\"readings\":[\"city\",\"region/emirate\"],\"chosen\":\"city\"}]}}",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 2083,
+    "output_tokens": 436
+  }
+}

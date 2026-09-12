@@ -1,0 +1,50 @@
+{
+  "intent": "METRIC",
+  "is_followup": false,
+  "language": "en",
+  "missing_concept": "",
+  "outcome": "plan",
+  "plan": {
+    "ambiguities": [],
+    "compare_to": null,
+    "dimensions": [],
+    "filters": [
+      {
+        "dimension": "region",
+        "op": "eq",
+        "values": [
+          "Tamil Nadu"
+        ]
+      }
+    ],
+    "grain": "NONE",
+    "kind": "metric",
+    "limit": null,
+    "name": "duplicate_capture_count",
+    "order": null,
+    "reporting_currency": null,
+    "window": {
+      "calendar": "unspecified",
+      "end": null,
+      "kind": "relative",
+      "quarter": null,
+      "relative": "last_month",
+      "start": null,
+      "year": null
+    }
+  },
+  "qid": "DV-022",
+  "slice": [
+    "duplicate_capture_count",
+    "orders_count",
+    "units_sold",
+    "gmv_captured",
+    "emi_share",
+    "refund_age_days",
+    "refunded_amount",
+    "net_revenue",
+    "avg_order_value",
+    "refund_rate",
+    "accessory_attach_rate"
+  ]
+}

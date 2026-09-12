@@ -1,0 +1,49 @@
+{
+  "intent": "METRIC",
+  "is_followup": false,
+  "language": "en",
+  "missing_concept": "",
+  "outcome": "plan",
+  "plan": {
+    "ambiguities": [],
+    "compare_to": null,
+    "dimensions": [],
+    "filters": [
+      {
+        "dimension": "country",
+        "op": "eq",
+        "values": [
+          "India"
+        ]
+      }
+    ],
+    "grain": "NONE",
+    "kind": "metric",
+    "limit": null,
+    "name": "emi_share",
+    "order": null,
+    "reporting_currency": null,
+    "window": {
+      "calendar": "unspecified",
+      "end": null,
+      "kind": "relative",
+      "quarter": null,
+      "relative": "last_month",
+      "start": null,
+      "year": null
+    }
+  },
+  "qid": "DV-008",
+  "slice": [
+    "emi_share",
+    "refund_rate",
+    "avg_order_value",
+    "gmv_captured",
+    "net_revenue",
+    "failure_rate_by_reason",
+    "orders_count",
+    "payment_success_rate_attempt",
+    "unsettled_amount",
+    "refunded_amount"
+  ]
+}

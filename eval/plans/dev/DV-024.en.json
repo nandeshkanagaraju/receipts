@@ -1,0 +1,48 @@
+{
+  "intent": "METRIC",
+  "is_followup": false,
+  "language": "en",
+  "missing_concept": "",
+  "outcome": "plan",
+  "plan": {
+    "ambiguities": [],
+    "compare_to": null,
+    "dimensions": [],
+    "filters": [
+      {
+        "dimension": "country",
+        "op": "eq",
+        "values": [
+          "UK"
+        ]
+      }
+    ],
+    "grain": "NONE",
+    "kind": "metric",
+    "limit": null,
+    "name": "avg_order_value",
+    "order": null,
+    "reporting_currency": null,
+    "window": {
+      "calendar": "unspecified",
+      "end": null,
+      "kind": "relative",
+      "quarter": null,
+      "relative": "last_month",
+      "start": null,
+      "year": null
+    }
+  },
+  "qid": "DV-024",
+  "slice": [
+    "avg_order_value",
+    "refund_rate",
+    "payment_success_rate_order",
+    "net_revenue",
+    "failure_rate_by_reason",
+    "gmv_captured",
+    "orders_count",
+    "payment_success_rate_attempt",
+    "refunded_amount"
+  ]
+}

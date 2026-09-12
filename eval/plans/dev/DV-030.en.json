@@ -1,0 +1,49 @@
+{
+  "intent": "METRIC",
+  "is_followup": false,
+  "language": "en",
+  "missing_concept": "",
+  "outcome": "plan",
+  "plan": {
+    "ambiguities": [],
+    "compare_to": null,
+    "dimensions": [],
+    "filters": [
+      {
+        "dimension": "country",
+        "op": "eq",
+        "values": [
+          "UK"
+        ]
+      }
+    ],
+    "grain": "NONE",
+    "kind": "metric",
+    "limit": null,
+    "name": "refunded_amount",
+    "order": null,
+    "reporting_currency": null,
+    "window": {
+      "calendar": "unspecified",
+      "end": null,
+      "kind": "relative",
+      "quarter": null,
+      "relative": "last_month",
+      "start": null,
+      "year": null
+    }
+  },
+  "qid": "DV-030",
+  "slice": [
+    "refunded_amount",
+    "gmv_captured",
+    "refund_age_days",
+    "refund_rate",
+    "emi_share",
+    "units_sold",
+    "net_revenue",
+    "orders_count",
+    "avg_order_value",
+    "accessory_attach_rate"
+  ]
+}

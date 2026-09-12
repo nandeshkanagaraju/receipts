@@ -1,0 +1,51 @@
+{
+  "intent": "METRIC",
+  "is_followup": false,
+  "language": "en",
+  "missing_concept": "",
+  "outcome": "plan",
+  "plan": {
+    "ambiguities": [],
+    "compare_to": null,
+    "dimensions": [
+      "showroom"
+    ],
+    "filters": [
+      {
+        "dimension": "city",
+        "op": "eq",
+        "values": [
+          "Chennai"
+        ]
+      }
+    ],
+    "grain": "NONE",
+    "kind": "metric",
+    "limit": null,
+    "name": "refund_rate",
+    "order": null,
+    "reporting_currency": null,
+    "window": {
+      "calendar": "unspecified",
+      "end": null,
+      "kind": "relative",
+      "quarter": null,
+      "relative": "last_month",
+      "start": null,
+      "year": null
+    }
+  },
+  "qid": "DV-039",
+  "slice": [
+    "refund_rate",
+    "refund_age_days",
+    "accessory_attach_rate",
+    "payment_success_rate_attempt",
+    "failure_rate_by_reason",
+    "payment_success_rate_order",
+    "refunded_amount",
+    "units_sold",
+    "gmv_captured",
+    "net_revenue"
+  ]
+}

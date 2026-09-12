@@ -1,0 +1,49 @@
+{
+  "data": {
+    "result": {
+      "ambiguities": [
+        {
+          "chosen": "August 2026, the most recent August before today",
+          "kind": "window",
+          "readings": [
+            "August 2026, the most recent August before today",
+            "August in another year"
+          ],
+          "term": "August"
+        }
+      ],
+      "compare_to": null,
+      "dimensions": [],
+      "filters": [],
+      "grain": "NONE",
+      "kind": "metric",
+      "limit": null,
+      "name": "settlement_lag_days",
+      "order": null,
+      "reporting_currency": null,
+      "window": {
+        "calendar": "unspecified",
+        "end": "2026-08-31",
+        "kind": "absolute",
+        "quarter": null,
+        "relative": null,
+        "start": "2026-08-01",
+        "year": null
+      }
+    }
+  },
+  "kind": "structured",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "planner",
+    "provider": "openai",
+    "sha256": "f26d0464d9d7a63b5259ff1fc4dd68184fafdf7c2ee51de0032d8d5bc454321d",
+    "version": 1
+  },
+  "raw": "{\"result\":{\"kind\":\"metric\",\"name\":\"settlement_lag_days\",\"dimensions\":[],\"filters\":[],\"window\":{\"kind\":\"absolute\",\"relative\":null,\"start\":\"2026-08-01\",\"end\":\"2026-08-31\",\"quarter\":null,\"year\":null,\"calendar\":\"unspecified\"},\"grain\":\"NONE\",\"compare_to\":null,\"order\":null,\"limit\":null,\"reporting_currency\":null,\"ambiguities\":[{\"term\":\"August\",\"kind\":\"window\",\"readings\":[\"August 2026, the most recent August before today\",\"August in another year\"],\"chosen\":\"August 2026, the most recent August before today\"}]}}",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 2339,
+    "output_tokens": 275
+  }
+}

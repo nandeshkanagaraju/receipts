@@ -1,0 +1,20 @@
+{
+  "intent": "METRIC",
+  "is_followup": false,
+  "language": "en",
+  "missing_concept": "",
+  "no_fit": {
+    "data_exists": true,
+    "reason": "The question asks for unsettled amount, a settlement/balance quantity, but unsettled_amount is not one of the offered metrics."
+  },
+  "outcome": "no_fit",
+  "qid": "DV-056",
+  "slice": [
+    "refund_rate",
+    "refunded_amount",
+    "net_revenue",
+    "failure_rate_by_reason",
+    "payment_success_rate_attempt",
+    "gmv_captured"
+  ]
+}

@@ -1,0 +1,57 @@
+{
+  "data": {
+    "result": {
+      "ambiguities": [
+        {
+          "chosen": "payment_success_rate_order",
+          "kind": "metric_choice",
+          "readings": [
+            "order-level: share of orders with at least one payment attempt that were eventually paid",
+            "attempt-level: share of individual payment attempts that were captured"
+          ],
+          "term": "payment success rate"
+        }
+      ],
+      "compare_to": "previous_period",
+      "dimensions": [],
+      "filters": [
+        {
+          "dimension": "country",
+          "op": "eq",
+          "values": [
+            "UK"
+          ]
+        }
+      ],
+      "grain": "NONE",
+      "kind": "metric",
+      "limit": null,
+      "name": "payment_success_rate_order",
+      "order": null,
+      "reporting_currency": null,
+      "window": {
+        "calendar": "unspecified",
+        "end": null,
+        "kind": "relative",
+        "quarter": null,
+        "relative": "last_week",
+        "start": null,
+        "year": null
+      }
+    }
+  },
+  "kind": "structured",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "planner",
+    "provider": "openai",
+    "sha256": "f26d0464d9d7a63b5259ff1fc4dd68184fafdf7c2ee51de0032d8d5bc454321d",
+    "version": 1
+  },
+  "raw": "{\"result\":{\"kind\":\"metric\",\"name\":\"payment_success_rate_order\",\"dimensions\":[],\"filters\":[{\"dimension\":\"country\",\"op\":\"eq\",\"values\":[\"UK\"]}],\"window\":{\"kind\":\"relative\",\"relative\":\"last_week\",\"start\":null,\"end\":null,\"quarter\":null,\"year\":null,\"calendar\":\"unspecified\"},\"grain\":\"NONE\",\"compare_to\":\"previous_period\",\"order\":null,\"limit\":null,\"reporting_currency\":null,\"ambiguities\":[{\"term\":\"payment success rate\",\"kind\":\"metric_choice\",\"readings\":[\"order-level: share of orders with at least one payment attempt that were eventually paid\",\"attempt-level: share of individual payment attempts that were captured\"],\"chosen\":\"payment_success_rate_order\"}]}}",
+  "usage": {
+    "cached_input_tokens": 1792,
+    "input_tokens": 2449,
+    "output_tokens": 299
+  }
+}

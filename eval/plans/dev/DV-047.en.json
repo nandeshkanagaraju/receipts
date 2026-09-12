@@ -1,0 +1,60 @@
+{
+  "intent": "BREAKDOWN",
+  "is_followup": false,
+  "language": "en",
+  "missing_concept": "",
+  "outcome": "plan",
+  "plan": {
+    "ambiguities": [],
+    "compare_to": null,
+    "dimensions": [
+      "model"
+    ],
+    "filters": [
+      {
+        "dimension": "payment_method",
+        "op": "eq",
+        "values": [
+          "card-paid"
+        ]
+      },
+      {
+        "dimension": "country",
+        "op": "eq",
+        "values": [
+          "UAE"
+        ]
+      }
+    ],
+    "grain": "NONE",
+    "kind": "metric",
+    "limit": null,
+    "name": "refund_rate",
+    "order": null,
+    "reporting_currency": null,
+    "window": {
+      "calendar": "unspecified",
+      "end": null,
+      "kind": "relative",
+      "quarter": null,
+      "relative": "last_month",
+      "start": null,
+      "year": null
+    }
+  },
+  "qid": "DV-047",
+  "slice": [
+    "refund_rate",
+    "orders_count",
+    "refund_age_days",
+    "accessory_attach_rate",
+    "payment_success_rate_attempt",
+    "failure_rate_by_reason",
+    "payment_success_rate_order",
+    "refunded_amount",
+    "units_sold",
+    "avg_order_value",
+    "gmv_captured",
+    "net_revenue"
+  ]
+}

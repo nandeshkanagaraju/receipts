@@ -1,0 +1,24 @@
+{
+  "intent": "METRIC",
+  "is_followup": false,
+  "language": "en",
+  "missing_concept": "",
+  "no_fit": {
+    "data_exists": true,
+    "reason": "The question asks for a count of failed card payment attempts. None of the offered metrics counts payment attempts or failed attempts; orders_count counts orders, not payment attempts."
+  },
+  "outcome": "no_fit",
+  "qid": "DV-049",
+  "slice": [
+    "orders_count",
+    "units_sold",
+    "gmv_captured",
+    "emi_share",
+    "refund_age_days",
+    "refunded_amount",
+    "net_revenue",
+    "avg_order_value",
+    "refund_rate",
+    "accessory_attach_rate"
+  ]
+}

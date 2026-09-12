@@ -1,0 +1,66 @@
+{
+  "data": {
+    "result": {
+      "ambiguities": [
+        {
+          "chosen": "payment_success_rate_attempt",
+          "kind": "metric_choice",
+          "readings": [
+            "payment_success_rate_attempt: share of individual payment attempts captured",
+            "payment_success_rate_order: share of orders eventually paid"
+          ],
+          "term": "success rate"
+        }
+      ],
+      "compare_to": null,
+      "dimensions": [
+        "issuing_bank"
+      ],
+      "filters": [
+        {
+          "dimension": "country",
+          "op": "eq",
+          "values": [
+            "UK"
+          ]
+        },
+        {
+          "dimension": "payment_method",
+          "op": "eq",
+          "values": [
+            "card"
+          ]
+        }
+      ],
+      "grain": "NONE",
+      "kind": "metric",
+      "limit": 10,
+      "name": "payment_success_rate_attempt",
+      "order": "value_desc",
+      "reporting_currency": null,
+      "window": {
+        "calendar": "unspecified",
+        "end": null,
+        "kind": "relative",
+        "quarter": null,
+        "relative": "last_month",
+        "start": null,
+        "year": null
+      }
+    }
+  },
+  "kind": "structured",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "planner",
+    "provider": "openai",
+    "sha256": "f26d0464d9d7a63b5259ff1fc4dd68184fafdf7c2ee51de0032d8d5bc454321d",
+    "version": 1
+  },
+  "raw": "{\"result\":{\"kind\":\"metric\",\"name\":\"payment_success_rate_attempt\",\"dimensions\":[\"issuing_bank\"],\"filters\":[{\"dimension\":\"country\",\"op\":\"eq\",\"values\":[\"UK\"]},{\"dimension\":\"payment_method\",\"op\":\"eq\",\"values\":[\"card\"]}],\"window\":{\"kind\":\"relative\",\"relative\":\"last_month\",\"start\":null,\"end\":null,\"quarter\":null,\"year\":null,\"calendar\":\"unspecified\"},\"grain\":\"NONE\",\"compare_to\":null,\"order\":\"value_desc\",\"limit\":10,\"reporting_currency\":null,\"ambiguities\":[{\"term\":\"success rate\",\"kind\":\"metric_choice\",\"readings\":[\"payment_success_rate_attempt: share of individual payment attempts captured\",\"payment_success_rate_order: share of orders eventually paid\"],\"chosen\":\"payment_success_rate_attempt\"}]}}",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 2216,
+    "output_tokens": 315
+  }
+}

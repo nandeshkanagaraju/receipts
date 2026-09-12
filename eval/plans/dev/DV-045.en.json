@@ -1,0 +1,53 @@
+{
+  "intent": "BREAKDOWN",
+  "is_followup": false,
+  "language": "en",
+  "missing_concept": "",
+  "outcome": "plan",
+  "plan": {
+    "ambiguities": [
+      {
+        "chosen": "the last 8 complete Monday-to-Sunday weeks",
+        "readings": [
+          "the last 8 complete Monday-to-Sunday weeks",
+          "the rolling 8 weeks ending yesterday"
+        ],
+        "term": "last 8 weeks"
+      }
+    ],
+    "compare_to": null,
+    "dimensions": [
+      "country"
+    ],
+    "filters": [
+      {
+        "dimension": "country",
+        "op": "eq",
+        "values": [
+          "UK"
+        ]
+      }
+    ],
+    "grain": "WEEK",
+    "kind": "metric",
+    "limit": null,
+    "name": "gmv_captured",
+    "order": "time_asc",
+    "reporting_currency": null,
+    "window": {
+      "calendar": "unspecified",
+      "end": null,
+      "kind": "relative",
+      "quarter": null,
+      "relative": null,
+      "start": null,
+      "year": null
+    }
+  },
+  "qid": "DV-045",
+  "slice": [
+    "gmv_captured",
+    "net_revenue",
+    "avg_order_value"
+  ]
+}

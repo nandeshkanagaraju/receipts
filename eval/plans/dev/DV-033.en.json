@@ -1,0 +1,26 @@
+{
+  "intent": "METRIC",
+  "is_followup": false,
+  "language": "en",
+  "missing_concept": "",
+  "no_fit": {
+    "data_exists": true,
+    "reason": "The question asks for a distinct count of issuing banks, but no offered metric measures the number of unique values of a dimension."
+  },
+  "outcome": "no_fit",
+  "qid": "DV-033",
+  "slice": [
+    "units_sold",
+    "orders_count",
+    "gmv_captured",
+    "refunded_amount",
+    "net_revenue",
+    "emi_share",
+    "refund_age_days",
+    "payment_success_rate_order",
+    "avg_order_value",
+    "payment_success_rate_attempt",
+    "refund_rate",
+    "accessory_attach_rate"
+  ]
+}

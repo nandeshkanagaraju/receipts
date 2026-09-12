@@ -1,0 +1,36 @@
+{
+  "intent": "METRIC",
+  "is_followup": false,
+  "language": "en",
+  "missing_concept": "",
+  "outcome": "plan",
+  "plan": {
+    "ambiguities": [],
+    "compare_to": null,
+    "dimensions": [
+      "country"
+    ],
+    "filters": [],
+    "grain": "NONE",
+    "kind": "metric",
+    "limit": null,
+    "name": "net_revenue",
+    "order": null,
+    "reporting_currency": "USD",
+    "window": {
+      "calendar": "unspecified",
+      "end": "2026-08-31",
+      "kind": "absolute",
+      "quarter": null,
+      "relative": null,
+      "start": "2026-08-01",
+      "year": null
+    }
+  },
+  "qid": "DV-021",
+  "slice": [
+    "net_revenue",
+    "gmv_captured",
+    "refunded_amount"
+  ]
+}

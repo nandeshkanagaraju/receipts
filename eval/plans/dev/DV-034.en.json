@@ -1,0 +1,9 @@
+{
+  "intent": "METRIC",
+  "is_followup": false,
+  "language": "en",
+  "missing_concept": "",
+  "outcome": "no_fit (empty slice, no model call)",
+  "qid": "DV-034",
+  "slice": []
+}

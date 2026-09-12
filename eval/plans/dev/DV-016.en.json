@@ -1,0 +1,24 @@
+{
+  "intent": "OUT_OF_SCOPE",
+  "is_followup": false,
+  "language": "en",
+  "missing_concept": "customer satisfaction",
+  "no_fit": {
+    "data_exists": false,
+    "reason": "No offered metric measures customer satisfaction. The available metrics cover orders, payments, refunds, revenue, EMI, units, and accessory attachment, not how satisfied customers were."
+  },
+  "outcome": "no_fit",
+  "qid": "DV-016",
+  "slice": [
+    "gmv_captured",
+    "emi_share",
+    "refund_age_days",
+    "orders_count",
+    "units_sold",
+    "refunded_amount",
+    "net_revenue",
+    "avg_order_value",
+    "refund_rate",
+    "accessory_attach_rate"
+  ]
+}

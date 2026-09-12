@@ -1,0 +1,28 @@
+{
+  "intent": "METRIC",
+  "is_followup": false,
+  "language": "en",
+  "missing_concept": "",
+  "no_fit": {
+    "data_exists": true,
+    "reason": "No offered metric measures authorised payment value that was never captured. The available captured-money metrics only count money actually captured, and unsettled_amount is captured money not yet settled, not authorised-but-uncaptured money."
+  },
+  "outcome": "no_fit",
+  "qid": "DV-032",
+  "slice": [
+    "gmv_captured",
+    "duplicate_capture_count",
+    "refunded_amount",
+    "emi_share",
+    "unsettled_amount",
+    "units_sold",
+    "net_revenue",
+    "payment_success_rate_order",
+    "avg_order_value",
+    "payment_success_rate_attempt",
+    "refund_rate",
+    "orders_count",
+    "accessory_attach_rate",
+    "settlement_lag_days"
+  ]
+}

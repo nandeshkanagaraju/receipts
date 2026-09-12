@@ -1,0 +1,68 @@
+{
+  "intent": "WHY",
+  "is_followup": false,
+  "language": "en",
+  "missing_concept": "",
+  "outcome": "plan",
+  "plan": {
+    "ambiguities": [
+      {
+        "chosen": "Use attempt-level failure_rate_by_reason as the diagnostic for why UPI success dropped",
+        "readings": [
+          "Payment success rate could mean order-level success rate",
+          "Payment success rate could mean attempt-level success rate; failure reasons are attempt-level diagnostics"
+        ],
+        "term": "success"
+      }
+    ],
+    "compare_to": "previous_period",
+    "dimensions": [
+      "failure_reason"
+    ],
+    "filters": [
+      {
+        "dimension": "payment_method",
+        "op": "eq",
+        "values": [
+          "UPI"
+        ]
+      },
+      {
+        "dimension": "city",
+        "op": "eq",
+        "values": [
+          "Chennai"
+        ]
+      }
+    ],
+    "grain": "NONE",
+    "kind": "metric",
+    "limit": null,
+    "name": "failure_rate_by_reason",
+    "order": "value_desc",
+    "reporting_currency": null,
+    "window": {
+      "calendar": "unspecified",
+      "end": null,
+      "kind": "relative",
+      "quarter": null,
+      "relative": "last_week",
+      "start": null,
+      "year": null
+    }
+  },
+  "qid": "DV-019",
+  "slice": [
+    "payment_success_rate_order",
+    "payment_success_rate_attempt",
+    "failure_rate_by_reason",
+    "gmv_captured",
+    "units_sold",
+    "net_revenue",
+    "refunded_amount",
+    "avg_order_value",
+    "refund_rate",
+    "orders_count",
+    "accessory_attach_rate"
+  ]
+}

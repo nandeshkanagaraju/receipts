@@ -1,0 +1,27 @@
+{
+  "intent": "METRIC",
+  "is_followup": false,
+  "language": "en",
+  "missing_concept": "",
+  "no_fit": {
+    "data_exists": true,
+    "reason": "The question asks for the count of payment attempts, but the offered metrics only include payment attempt success rate and failure-rate breakdowns, not a raw payment-attempt count."
+  },
+  "outcome": "no_fit",
+  "qid": "DV-023",
+  "slice": [
+    "gmv_captured",
+    "units_sold",
+    "payment_success_rate_order",
+    "orders_count",
+    "settlement_lag_days",
+    "payment_success_rate_attempt",
+    "refunded_amount",
+    "net_revenue",
+    "unsettled_amount",
+    "avg_order_value",
+    "failure_rate_by_reason",
+    "refund_rate",
+    "accessory_attach_rate"
+  ]
+}

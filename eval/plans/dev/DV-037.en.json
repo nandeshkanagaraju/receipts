@@ -1,0 +1,24 @@
+{
+  "intent": "OUT_OF_SCOPE",
+  "is_followup": false,
+  "language": "en",
+  "missing_concept": "staff rosters",
+  "no_fit": {
+    "data_exists": false,
+    "reason": "The question asks for staff working/headcount, but the available metrics cover orders, payments, refunds, and related sales dimensions only."
+  },
+  "outcome": "no_fit",
+  "qid": "DV-037",
+  "slice": [
+    "orders_count",
+    "units_sold",
+    "gmv_captured",
+    "emi_share",
+    "refund_age_days",
+    "refunded_amount",
+    "net_revenue",
+    "avg_order_value",
+    "refund_rate",
+    "accessory_attach_rate"
+  ]
+}

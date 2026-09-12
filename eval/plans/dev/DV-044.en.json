@@ -1,0 +1,40 @@
+{
+  "intent": "BREAKDOWN",
+  "is_followup": false,
+  "language": "en",
+  "missing_concept": "",
+  "outcome": "plan",
+  "plan": {
+    "ambiguities": [],
+    "compare_to": null,
+    "dimensions": [],
+    "filters": [],
+    "grain": "DAY",
+    "kind": "metric",
+    "limit": null,
+    "name": "orders_count",
+    "order": null,
+    "reporting_currency": null,
+    "window": {
+      "calendar": "unspecified",
+      "end": null,
+      "kind": "relative",
+      "quarter": null,
+      "relative": "last_7_days",
+      "start": null,
+      "year": null
+    }
+  },
+  "qid": "DV-044",
+  "slice": [
+    "refund_age_days",
+    "avg_order_value",
+    "orders_count",
+    "duplicate_capture_count",
+    "payment_success_rate_order",
+    "gmv_captured",
+    "refunded_amount",
+    "units_sold",
+    "payment_success_rate_attempt"
+  ]
+}

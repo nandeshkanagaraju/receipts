@@ -1,0 +1,23 @@
+{
+  "data": {
+    "result": {
+      "data_exists": true,
+      "no_fit": true,
+      "reason": "No offered metric measures the average number of payment attempts per order. The available payment metrics are success rates, not attempts-per-order."
+    }
+  },
+  "kind": "structured",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "planner",
+    "provider": "openai",
+    "sha256": "f26d0464d9d7a63b5259ff1fc4dd68184fafdf7c2ee51de0032d8d5bc454321d",
+    "version": 1
+  },
+  "raw": "{\"result\":{\"no_fit\":true,\"reason\":\"No offered metric measures the average number of payment attempts per order. The available payment metrics are success rates, not attempts-per-order.\",\"data_exists\":true}}",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 2536,
+    "output_tokens": 113
+  }
+}

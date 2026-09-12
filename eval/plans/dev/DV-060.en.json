@@ -1,0 +1,23 @@
+{
+  "intent": "LIVE",
+  "is_followup": false,
+  "language": "en",
+  "missing_concept": "",
+  "no_fit": {
+    "data_exists": true,
+    "reason": "The question asks for refunds that are still pending at the gateway, but the offered refund metric only counts refunds that have been processed successfully; pending refunds are explicitly not counted. There is also no offered metric for listing refund records by gateway status."
+  },
+  "outcome": "no_fit",
+  "qid": "DV-060",
+  "slice": [
+    "net_revenue",
+    "refunded_amount",
+    "accessory_attach_rate",
+    "failure_rate_by_reason",
+    "payment_success_rate_order",
+    "units_sold",
+    "payment_success_rate_attempt",
+    "gmv_captured",
+    "refund_rate"
+  ]
+}

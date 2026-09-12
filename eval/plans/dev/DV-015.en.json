@@ -1,0 +1,46 @@
+{
+  "intent": "METRIC",
+  "is_followup": false,
+  "language": "en",
+  "missing_concept": "",
+  "outcome": "plan",
+  "plan": {
+    "ambiguities": [
+      {
+        "chosen": "net_revenue",
+        "readings": [
+          "net_revenue (captured GMV minus refunds processed in the same window)",
+          "gmv_captured (total money captured from customers in the window, before subtracting refunds)"
+        ],
+        "term": "revenue"
+      }
+    ],
+    "compare_to": null,
+    "dimensions": [],
+    "filters": [],
+    "grain": "NONE",
+    "kind": "metric",
+    "limit": null,
+    "name": "net_revenue",
+    "order": null,
+    "reporting_currency": null,
+    "window": {
+      "calendar": "unspecified",
+      "end": null,
+      "kind": "relative",
+      "quarter": null,
+      "relative": "last_month",
+      "start": null,
+      "year": null
+    }
+  },
+  "qid": "DV-015",
+  "slice": [
+    "net_revenue",
+    "refund_rate",
+    "failure_rate_by_reason",
+    "payment_success_rate_attempt",
+    "gmv_captured",
+    "refunded_amount"
+  ]
+}

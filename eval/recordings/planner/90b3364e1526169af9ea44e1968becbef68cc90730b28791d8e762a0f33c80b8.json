@@ -1,0 +1,57 @@
+{
+  "data": {
+    "result": {
+      "ambiguities": [
+        {
+          "chosen": "showroom or branch named Anna Nagar",
+          "kind": "entity",
+          "readings": [
+            "showroom or branch named Anna Nagar",
+            "city/location named Anna Nagar"
+          ],
+          "term": "Anna Nagar"
+        }
+      ],
+      "compare_to": null,
+      "dimensions": [],
+      "filters": [
+        {
+          "dimension": "showroom",
+          "op": "eq",
+          "values": [
+            "Anna Nagar"
+          ]
+        }
+      ],
+      "grain": "NONE",
+      "kind": "metric",
+      "limit": null,
+      "name": "gmv_captured",
+      "order": null,
+      "reporting_currency": null,
+      "window": {
+        "calendar": "unspecified",
+        "end": null,
+        "kind": "relative",
+        "quarter": null,
+        "relative": "last_month",
+        "start": null,
+        "year": null
+      }
+    }
+  },
+  "kind": "structured",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "planner",
+    "provider": "openai",
+    "sha256": "f26d0464d9d7a63b5259ff1fc4dd68184fafdf7c2ee51de0032d8d5bc454321d",
+    "version": 1
+  },
+  "raw": "{\"result\":{\"kind\":\"metric\",\"name\":\"gmv_captured\",\"dimensions\":[],\"filters\":[{\"dimension\":\"showroom\",\"op\":\"eq\",\"values\":[\"Anna Nagar\"]}],\"window\":{\"kind\":\"relative\",\"relative\":\"last_month\",\"start\":null,\"end\":null,\"quarter\":null,\"year\":null,\"calendar\":\"unspecified\"},\"grain\":\"NONE\",\"compare_to\":null,\"order\":null,\"limit\":null,\"reporting_currency\":null,\"ambiguities\":[{\"term\":\"Anna Nagar\",\"kind\":\"entity\",\"readings\":[\"showroom or branch named Anna Nagar\",\"city/location named Anna Nagar\"],\"chosen\":\"showroom or branch named Anna Nagar\"}]}}",
+  "usage": {
+    "cached_input_tokens": 1792,
+    "input_tokens": 2083,
+    "output_tokens": 382
+  }
+}

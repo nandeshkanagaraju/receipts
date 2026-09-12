@@ -1,0 +1,18 @@
+{
+  "intent": "OUT_OF_SCOPE",
+  "is_followup": false,
+  "language": "en",
+  "missing_concept": "campaign attribution",
+  "no_fit": {
+    "data_exists": false,
+    "reason": "The requested breakdown is by marketing campaign / attribution, which is not an available dimension. Also, “sales” could mean captured GMV, net revenue, or order count, but the campaign attribution needed to identify which campaign drove the most sales is not available here."
+  },
+  "outcome": "no_fit",
+  "qid": "DV-055",
+  "slice": [
+    "gmv_captured",
+    "net_revenue",
+    "unsettled_amount",
+    "avg_order_value"
+  ]
+}

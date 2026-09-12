@@ -1,0 +1,59 @@
+{
+  "intent": "WHY",
+  "is_followup": false,
+  "language": "en",
+  "missing_concept": "",
+  "outcome": "plan",
+  "plan": {
+    "ambiguities": [
+      {
+        "chosen": "previous complete week",
+        "readings": [
+          "high compared with the previous complete week",
+          "high compared with a longer-term norm or target"
+        ],
+        "term": "so high"
+      },
+      {
+        "chosen": null,
+        "readings": [
+          "report monetary values in local currencies",
+          "convert monetary values to a single reporting currency"
+        ],
+        "term": "currency"
+      }
+    ],
+    "compare_to": "previous_period",
+    "dimensions": [
+      "acquiring_bank",
+      "country",
+      "payment_method"
+    ],
+    "filters": [],
+    "grain": "NONE",
+    "kind": "metric",
+    "limit": null,
+    "name": "unsettled_amount",
+    "order": "value_desc",
+    "reporting_currency": null,
+    "window": {
+      "calendar": "unspecified",
+      "end": null,
+      "kind": "relative",
+      "quarter": null,
+      "relative": "last_week",
+      "start": null,
+      "year": null
+    }
+  },
+  "qid": "DV-059",
+  "slice": [
+    "unsettled_amount",
+    "refund_rate",
+    "failure_rate_by_reason",
+    "payment_success_rate_attempt",
+    "refunded_amount",
+    "gmv_captured",
+    "settlement_lag_days"
+  ]
+}

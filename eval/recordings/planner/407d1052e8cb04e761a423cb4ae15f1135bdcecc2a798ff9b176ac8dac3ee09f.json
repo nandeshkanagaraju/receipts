@@ -1,0 +1,21 @@
+{
+  "data": {
+    "intent": "OUT_OF_SCOPE",
+    "is_followup": false,
+    "missing_concept": "campaign attribution"
+  },
+  "kind": "structured",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "intent",
+    "provider": "openai",
+    "sha256": "4a5d1e15a803c0a44e39b2a61fae2212f32ae76e70ed29e744133a3c86e297c5",
+    "version": 1
+  },
+  "raw": "{\"intent\":\"OUT_OF_SCOPE\",\"missing_concept\":\"campaign attribution\",\"is_followup\":false}",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 608,
+    "output_tokens": 134
+  }
+}

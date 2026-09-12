@@ -1,0 +1,24 @@
+{
+  "intent": "OUT_OF_SCOPE",
+  "is_followup": false,
+  "language": "en",
+  "missing_concept": "profit margin",
+  "no_fit": {
+    "data_exists": false,
+    "reason": "No offered metric measures profit or profit margin. The available metrics cover payments, refunds, settlement, EMI share, and related rates/amounts, but not cost or margin. Also, “flagship model” is not a specific model value to filter on."
+  },
+  "outcome": "no_fit",
+  "qid": "DV-038",
+  "slice": [
+    "failure_rate_by_reason",
+    "emi_share",
+    "refund_age_days",
+    "unsettled_amount",
+    "refund_rate",
+    "net_revenue",
+    "gmv_captured",
+    "payment_success_rate_attempt",
+    "refunded_amount",
+    "settlement_lag_days"
+  ]
+}

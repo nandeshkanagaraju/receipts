@@ -1,0 +1,55 @@
+{
+  "intent": "METRIC",
+  "is_followup": false,
+  "language": "en",
+  "missing_concept": "",
+  "outcome": "plan",
+  "plan": {
+    "ambiguities": [
+      {
+        "chosen": "payment_success_rate_order",
+        "readings": [
+          "payment_success_rate_order: share of orders with a payment attempt that were eventually paid",
+          "payment_success_rate_attempt: share of individual payment attempts that were captured",
+          "failure_rate_by_reason: failure rates split by decline/failure reason"
+        ],
+        "term": "payments doing"
+      }
+    ],
+    "compare_to": null,
+    "dimensions": [],
+    "filters": [],
+    "grain": "NONE",
+    "kind": "metric",
+    "limit": null,
+    "name": "payment_success_rate_order",
+    "order": null,
+    "reporting_currency": null,
+    "window": {
+      "calendar": "unspecified",
+      "end": null,
+      "kind": "relative",
+      "quarter": null,
+      "relative": "this_month",
+      "start": null,
+      "year": null
+    }
+  },
+  "qid": "DV-036",
+  "slice": [
+    "payment_success_rate_order",
+    "failure_rate_by_reason",
+    "emi_share",
+    "unsettled_amount",
+    "accessory_attach_rate",
+    "gmv_captured",
+    "refund_age_days",
+    "orders_count",
+    "units_sold",
+    "payment_success_rate_attempt",
+    "net_revenue",
+    "avg_order_value",
+    "refunded_amount",
+    "settlement_lag_days"
+  ]
+}

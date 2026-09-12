@@ -1,0 +1,49 @@
+{
+  "intent": "BREAKDOWN",
+  "is_followup": false,
+  "language": "en",
+  "missing_concept": "",
+  "outcome": "plan",
+  "plan": {
+    "ambiguities": [],
+    "compare_to": null,
+    "dimensions": [
+      "showroom"
+    ],
+    "filters": [
+      {
+        "dimension": "city",
+        "op": "eq",
+        "values": [
+          "Chennai"
+        ]
+      }
+    ],
+    "grain": "NONE",
+    "kind": "metric",
+    "limit": 5,
+    "name": "accessory_attach_rate",
+    "order": "value_desc",
+    "reporting_currency": null,
+    "window": {
+      "calendar": "unspecified",
+      "end": null,
+      "kind": "relative",
+      "quarter": null,
+      "relative": "last_month",
+      "start": null,
+      "year": null
+    }
+  },
+  "qid": "DV-031",
+  "slice": [
+    "accessory_attach_rate",
+    "refund_rate",
+    "payment_success_rate_attempt",
+    "failure_rate_by_reason",
+    "payment_success_rate_order",
+    "units_sold",
+    "refunded_amount",
+    "gmv_captured"
+  ]
+}

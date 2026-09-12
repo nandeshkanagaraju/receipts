@@ -1,0 +1,55 @@
+{
+  "intent": "METRIC",
+  "is_followup": false,
+  "language": "en",
+  "missing_concept": "",
+  "outcome": "plan",
+  "plan": {
+    "ambiguities": [],
+    "compare_to": null,
+    "dimensions": [],
+    "filters": [
+      {
+        "dimension": "payment_method",
+        "op": "eq",
+        "values": [
+          "UPI"
+        ]
+      },
+      {
+        "dimension": "city",
+        "op": "eq",
+        "values": [
+          "Chennai"
+        ]
+      }
+    ],
+    "grain": "NONE",
+    "kind": "metric",
+    "limit": null,
+    "name": "payment_success_rate_attempt",
+    "order": null,
+    "reporting_currency": null,
+    "window": {
+      "calendar": "unspecified",
+      "end": null,
+      "kind": "relative",
+      "quarter": null,
+      "relative": "last_week",
+      "start": null,
+      "year": null
+    }
+  },
+  "qid": "DV-028",
+  "slice": [
+    "payment_success_rate_attempt",
+    "refund_rate",
+    "payment_success_rate_order",
+    "failure_rate_by_reason",
+    "accessory_attach_rate",
+    "net_revenue",
+    "units_sold",
+    "gmv_captured",
+    "refunded_amount"
+  ]
+}

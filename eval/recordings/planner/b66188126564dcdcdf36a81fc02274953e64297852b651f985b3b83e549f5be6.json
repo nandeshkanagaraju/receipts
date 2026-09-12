@@ -1,0 +1,59 @@
+{
+  "data": {
+    "result": {
+      "ambiguities": [
+        {
+          "chosen": "the last 8 complete Monday-to-Sunday weeks",
+          "kind": "window",
+          "readings": [
+            "the last 8 complete Monday-to-Sunday weeks",
+            "the rolling 8 weeks ending yesterday"
+          ],
+          "term": "last 8 weeks"
+        }
+      ],
+      "compare_to": null,
+      "dimensions": [
+        "country"
+      ],
+      "filters": [
+        {
+          "dimension": "country",
+          "op": "eq",
+          "values": [
+            "UK"
+          ]
+        }
+      ],
+      "grain": "WEEK",
+      "kind": "metric",
+      "limit": null,
+      "name": "gmv_captured",
+      "order": "time_asc",
+      "reporting_currency": null,
+      "window": {
+        "calendar": "unspecified",
+        "end": null,
+        "kind": "relative",
+        "quarter": null,
+        "relative": null,
+        "start": null,
+        "year": null
+      }
+    }
+  },
+  "kind": "structured",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "planner",
+    "provider": "openai",
+    "sha256": "f26d0464d9d7a63b5259ff1fc4dd68184fafdf7c2ee51de0032d8d5bc454321d",
+    "version": 1
+  },
+  "raw": "{\"result\":{\"kind\":\"metric\",\"name\":\"gmv_captured\",\"dimensions\":[\"country\"],\"filters\":[{\"dimension\":\"country\",\"op\":\"eq\",\"values\":[\"UK\"]}],\"window\":{\"kind\":\"relative\",\"relative\":null,\"start\":null,\"end\":null,\"quarter\":null,\"year\":null,\"calendar\":\"unspecified\"},\"grain\":\"WEEK\",\"compare_to\":null,\"order\":\"time_asc\",\"limit\":null,\"reporting_currency\":null,\"ambiguities\":[{\"term\":\"last 8 weeks\",\"kind\":\"window\",\"readings\":[\"the last 8 complete Monday-to-Sunday weeks\",\"the rolling 8 weeks ending yesterday\"],\"chosen\":\"the last 8 complete Monday-to-Sunday weeks\"}]}}",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 1718,
+    "output_tokens": 1189
+  }
+}

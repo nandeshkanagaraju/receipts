@@ -1,0 +1,51 @@
+{
+  "intent": "METRIC",
+  "is_followup": false,
+  "language": "en",
+  "missing_concept": "",
+  "outcome": "plan",
+  "plan": {
+    "ambiguities": [],
+    "compare_to": null,
+    "dimensions": [],
+    "filters": [
+      {
+        "dimension": "country",
+        "op": "eq",
+        "values": [
+          "UK"
+        ]
+      }
+    ],
+    "grain": "NONE",
+    "kind": "metric",
+    "limit": null,
+    "name": "gmv_captured",
+    "order": null,
+    "reporting_currency": null,
+    "window": {
+      "calendar": "unspecified",
+      "end": null,
+      "kind": "relative",
+      "quarter": null,
+      "relative": "last_week",
+      "start": null,
+      "year": null
+    }
+  },
+  "qid": "DV-004",
+  "slice": [
+    "gmv_captured",
+    "refunded_amount",
+    "emi_share",
+    "units_sold",
+    "net_revenue",
+    "refund_age_days",
+    "orders_count",
+    "payment_success_rate_order",
+    "avg_order_value",
+    "payment_success_rate_attempt",
+    "refund_rate",
+    "accessory_attach_rate"
+  ]
+}

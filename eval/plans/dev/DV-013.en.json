@@ -1,0 +1,26 @@
+{
+  "intent": "METRIC",
+  "is_followup": false,
+  "language": "en",
+  "missing_concept": "",
+  "no_fit": {
+    "data_exists": true,
+    "reason": "The question asks how Tamil Nadu 'did' but does not specify a metric. It could mean captured GMV, net revenue, units sold, orders count, payment success, refunds, or another performance measure, and choosing one would answer a different question. Also, 'last quarter' is ambiguous without fiscal vs calendar context."
+  },
+  "outcome": "no_fit",
+  "qid": "DV-013",
+  "slice": [
+    "gmv_captured",
+    "units_sold",
+    "refunded_amount",
+    "net_revenue",
+    "emi_share",
+    "refund_age_days",
+    "orders_count",
+    "payment_success_rate_order",
+    "avg_order_value",
+    "payment_success_rate_attempt",
+    "refund_rate",
+    "accessory_attach_rate"
+  ]
+}

@@ -1,0 +1,68 @@
+{
+  "intent": "WHY",
+  "is_followup": false,
+  "language": "en",
+  "missing_concept": "",
+  "outcome": "plan",
+  "plan": {
+    "ambiguities": [
+      {
+        "chosen": "failure rate by reason for card payment attempts",
+        "readings": [
+          "failure rate by reason for card payment attempts",
+          "count of failed card payment attempts"
+        ],
+        "term": "card failures"
+      }
+    ],
+    "compare_to": "previous_period",
+    "dimensions": [
+      "failure_reason"
+    ],
+    "filters": [
+      {
+        "dimension": "country",
+        "op": "eq",
+        "values": [
+          "UK"
+        ]
+      },
+      {
+        "dimension": "payment_method",
+        "op": "eq",
+        "values": [
+          "card"
+        ]
+      }
+    ],
+    "grain": "NONE",
+    "kind": "metric",
+    "limit": null,
+    "name": "failure_rate_by_reason",
+    "order": "value_desc",
+    "reporting_currency": null,
+    "window": {
+      "calendar": "unspecified",
+      "end": null,
+      "kind": "relative",
+      "quarter": null,
+      "relative": "last_month",
+      "start": null,
+      "year": null
+    }
+  },
+  "qid": "DV-040",
+  "slice": [
+    "failure_rate_by_reason",
+    "gmv_captured",
+    "units_sold",
+    "net_revenue",
+    "refunded_amount",
+    "payment_success_rate_order",
+    "payment_success_rate_attempt",
+    "avg_order_value",
+    "refund_rate",
+    "orders_count",
+    "accessory_attach_rate"
+  ]
+}

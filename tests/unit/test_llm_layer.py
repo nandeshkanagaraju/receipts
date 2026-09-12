@@ -794,3 +794,35 @@ def test_the_chain_is_found_through_the_budget_and_recorder_wrappers(
     )
     system = type("S", (), {"llm": wrapped})()
     assert harness._fallback_counts(system) == {"primary": 2, "secondary": 1}
+
+
+def test_a_fallback_chain_carries_its_primary_identity(prompt_dir: Path) -> None:
+    """Without this the chain is unkeyable and every recording is orphaned.
+
+    `RecordingLLM` builds its key from the inner client's `provider` and `model`.
+    A chain exposing neither keyed 120 planner recordings with empty strings:
+    they wrote fine and replayed never. On the holdout, which runs once, that is
+    a wasted holdout rather than a wasted afternoon.
+    """
+    primary = FakeLLM(provider="openai", model="gpt-5.5-2026-04-23")
+    secondary = FakeLLM(provider="openai", model="gpt-5.4-2026-03-05")
+    chain = fallback_mod.FallbackLLM(primary, secondary)
+    assert chain.provider == "openai"
+    assert chain.model == "gpt-5.5-2026-04-23", "the chain does not identify as its primary"
+
+
+def test_a_recording_made_through_a_chain_replays(tmp_path: Path, prompt_dir: Path) -> None:
+    """The round trip, end to end, because the attribute alone proves nothing."""
+    recordings = tmp_path / "rec"
+    chain = fallback_mod.FallbackLLM(
+        FakeLLM(provider="openai", model="gpt-5.5-2026-04-23"),
+        FakeLLM(provider="openai", model="gpt-5.4-2026-03-05"),
+    )
+    messages = [Msg(role="user", content="q")]
+    recorded = replay_mod.RecordingLLM(chain, directory=recordings).structured(
+        prompt_id="toy", messages=messages, schema=SCHEMA, max_tokens=64
+    )
+    player = replay_mod.ReplayLLM(recordings, provider="openai", model="gpt-5.5-2026-04-23")
+    replayed = player.structured(prompt_id="toy", messages=messages, schema=SCHEMA, max_tokens=64)
+    print(f"\nrecorded through a chain and replayed: {replayed.data == recorded.data}")
+    assert replayed.data == recorded.data

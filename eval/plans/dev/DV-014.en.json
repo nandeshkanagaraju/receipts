@@ -1,0 +1,18 @@
+{
+  "intent": "BREAKDOWN",
+  "is_followup": false,
+  "language": "en",
+  "missing_concept": "",
+  "no_fit": {
+    "data_exists": true,
+    "reason": "“Best store” does not specify one of the offered metrics. It could mean highest revenue, most orders, highest payment success rate, lowest refunds, or another performance measure, and choosing one would answer a different question."
+  },
+  "outcome": "no_fit",
+  "qid": "DV-014",
+  "slice": [
+    "refund_age_days",
+    "failure_rate_by_reason",
+    "payment_success_rate_attempt",
+    "refunded_amount"
+  ]
+}

@@ -1,0 +1,57 @@
+{
+  "intent": "BREAKDOWN",
+  "is_followup": false,
+  "language": "en",
+  "missing_concept": "",
+  "outcome": "plan",
+  "plan": {
+    "ambiguities": [
+      {
+        "chosen": "August 2026",
+        "readings": [
+          "August 2026, the most recent August before today",
+          "August in another year"
+        ],
+        "term": "August"
+      }
+    ],
+    "compare_to": null,
+    "dimensions": [
+      "acquiring_bank"
+    ],
+    "filters": [
+      {
+        "dimension": "payment_method",
+        "op": "eq",
+        "values": [
+          "EMI"
+        ]
+      }
+    ],
+    "grain": "NONE",
+    "kind": "metric",
+    "limit": null,
+    "name": "settlement_lag_days",
+    "order": null,
+    "reporting_currency": null,
+    "window": {
+      "calendar": "unspecified",
+      "end": "2026-08-31",
+      "kind": "absolute",
+      "quarter": null,
+      "relative": null,
+      "start": "2026-08-01",
+      "year": null
+    }
+  },
+  "qid": "DV-046",
+  "slice": [
+    "settlement_lag_days",
+    "emi_share",
+    "orders_count",
+    "avg_order_value",
+    "gmv_captured",
+    "units_sold",
+    "unsettled_amount"
+  ]
+}

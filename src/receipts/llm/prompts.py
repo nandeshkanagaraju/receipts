@@ -28,6 +28,12 @@ class PromptError(FileNotFoundError):
     """A prompt that is missing, ambiguous, or misnamed."""
 
 
+# A line that is exactly three hyphens separates a prompt file's documentation
+# from the prompt itself. Everything above it explains the file to a person;
+# everything below is sent to the model.
+BODY_SEPARATOR = "---"
+
+
 @dataclass(frozen=True)
 class Prompt:
     prompt_id: str
@@ -35,6 +41,29 @@ class Prompt:
     sha256: str
     text: str
     path: Path
+
+    @property
+    def body(self) -> str:
+        """The part meant for the model, with the file's own notes removed.
+
+        The notes are not harmless. `planner.v1.md` opens by explaining that
+        scope is recomputed server-side from the role -- a sentence about the
+        architecture, written for a reader, and exactly the kind of thing the
+        planner must never be told (D7). Sending a file's commentary to the model
+        also spends tokens on text that describes the prompt instead of being it.
+
+        `sha256` still covers the WHOLE file, and `text` still returns it. That
+        is deliberate: the recording key is built from the sha (SDD §16), and
+        changing what it covers would invalidate the 162 baseline recordings --
+        which cannot be re-recorded without changing the measurement, since the
+        model is not temperature-controllable (ADR-018). So the hash keeps
+        identifying the file and the body is what travels.
+        """
+        lines = self.text.splitlines()
+        for index, line in enumerate(lines):
+            if line.strip() == BODY_SEPARATOR:
+                return "\n".join(lines[index + 1 :]).strip()
+        return self.text.strip()
 
 
 def _candidates(prompt_id: str, directory: Path) -> list[tuple[int, Path]]:

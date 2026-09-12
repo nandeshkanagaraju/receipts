@@ -1,0 +1,26 @@
+{
+  "intent": "METRIC",
+  "is_followup": false,
+  "language": "en",
+  "missing_concept": "",
+  "no_fit": {
+    "data_exists": true,
+    "reason": "No offered metric measures the average number of payment attempts per order. The available payment metrics are success rates, not attempts-per-order."
+  },
+  "outcome": "no_fit",
+  "qid": "DV-011",
+  "slice": [
+    "avg_order_value",
+    "payment_success_rate_order",
+    "settlement_lag_days",
+    "orders_count",
+    "units_sold",
+    "gmv_captured",
+    "payment_success_rate_attempt",
+    "emi_share",
+    "net_revenue",
+    "unsettled_amount",
+    "failure_rate_by_reason",
+    "accessory_attach_rate"
+  ]
+}

@@ -1,0 +1,62 @@
+{
+  "data": {
+    "result": {
+      "ambiguities": [
+        {
+          "chosen": "previous complete week",
+          "kind": "window",
+          "readings": [
+            "high compared with the previous complete week",
+            "high compared with a longer-term norm or target"
+          ],
+          "term": "so high"
+        },
+        {
+          "chosen": null,
+          "kind": "currency",
+          "readings": [
+            "report monetary values in local currencies",
+            "convert monetary values to a single reporting currency"
+          ],
+          "term": "currency"
+        }
+      ],
+      "compare_to": "previous_period",
+      "dimensions": [
+        "acquiring_bank",
+        "country",
+        "payment_method"
+      ],
+      "filters": [],
+      "grain": "NONE",
+      "kind": "metric",
+      "limit": null,
+      "name": "unsettled_amount",
+      "order": "value_desc",
+      "reporting_currency": null,
+      "window": {
+        "calendar": "unspecified",
+        "end": null,
+        "kind": "relative",
+        "quarter": null,
+        "relative": "last_week",
+        "start": null,
+        "year": null
+      }
+    }
+  },
+  "kind": "structured",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "planner",
+    "provider": "openai",
+    "sha256": "f26d0464d9d7a63b5259ff1fc4dd68184fafdf7c2ee51de0032d8d5bc454321d",
+    "version": 1
+  },
+  "raw": "{\"result\":{\"kind\":\"metric\",\"name\":\"unsettled_amount\",\"dimensions\":[\"acquiring_bank\",\"country\",\"payment_method\"],\"filters\":[],\"window\":{\"kind\":\"relative\",\"relative\":\"last_week\",\"start\":null,\"end\":null,\"quarter\":null,\"year\":null,\"calendar\":\"unspecified\"},\"grain\":\"NONE\",\"compare_to\":\"previous_period\",\"order\":\"value_desc\",\"limit\":null,\"reporting_currency\":null,\"ambiguities\":[{\"term\":\"so high\",\"kind\":\"window\",\"readings\":[\"high compared with the previous complete week\",\"high compared with a longer-term norm or target\"],\"chosen\":\"previous complete week\"},{\"term\":\"currency\",\"kind\":\"currency\",\"readings\":[\"report monetary values in local currencies\",\"convert monetary values to a single reporting currency\"],\"chosen\":null}]}}",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 2111,
+    "output_tokens": 685
+  }
+}

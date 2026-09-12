@@ -1,0 +1,55 @@
+{
+  "intent": "METRIC",
+  "is_followup": false,
+  "language": "en",
+  "missing_concept": "",
+  "outcome": "plan",
+  "plan": {
+    "ambiguities": [
+      {
+        "chosen": "showroom or branch named Anna Nagar",
+        "readings": [
+          "showroom or branch named Anna Nagar",
+          "city/location named Anna Nagar"
+        ],
+        "term": "Anna Nagar"
+      }
+    ],
+    "compare_to": null,
+    "dimensions": [],
+    "filters": [
+      {
+        "dimension": "showroom",
+        "op": "eq",
+        "values": [
+          "Anna Nagar"
+        ]
+      }
+    ],
+    "grain": "NONE",
+    "kind": "metric",
+    "limit": null,
+    "name": "gmv_captured",
+    "order": null,
+    "reporting_currency": null,
+    "window": {
+      "calendar": "unspecified",
+      "end": null,
+      "kind": "relative",
+      "quarter": null,
+      "relative": "last_month",
+      "start": null,
+      "year": null
+    }
+  },
+  "qid": "DV-052",
+  "slice": [
+    "gmv_captured",
+    "refund_rate",
+    "net_revenue",
+    "failure_rate_by_reason",
+    "payment_success_rate_attempt",
+    "avg_order_value",
+    "refunded_amount"
+  ]
+}

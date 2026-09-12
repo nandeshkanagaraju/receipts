@@ -1,0 +1,67 @@
+{
+  "data": {
+    "result": {
+      "ambiguities": [
+        {
+          "chosen": "increase versus the previous month",
+          "kind": "window",
+          "readings": [
+            "increase versus the previous month",
+            "increase versus the same month last year",
+            "increase within last month over time"
+          ],
+          "term": "go up"
+        }
+      ],
+      "compare_to": "previous_period",
+      "dimensions": [
+        "refund_reason"
+      ],
+      "filters": [
+        {
+          "dimension": "showroom",
+          "op": "eq",
+          "values": [
+            "Kestrel Dubai Garden Road"
+          ]
+        },
+        {
+          "dimension": "city",
+          "op": "eq",
+          "values": [
+            "Dubai"
+          ]
+        }
+      ],
+      "grain": "NONE",
+      "kind": "metric",
+      "limit": null,
+      "name": "refund_rate",
+      "order": null,
+      "reporting_currency": null,
+      "window": {
+        "calendar": "unspecified",
+        "end": null,
+        "kind": "relative",
+        "quarter": null,
+        "relative": "last_month",
+        "start": null,
+        "year": null
+      }
+    }
+  },
+  "kind": "structured",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "planner",
+    "provider": "openai",
+    "sha256": "f26d0464d9d7a63b5259ff1fc4dd68184fafdf7c2ee51de0032d8d5bc454321d",
+    "version": 1
+  },
+  "raw": "{\"result\":{\"kind\":\"metric\",\"name\":\"refund_rate\",\"dimensions\":[\"refund_reason\"],\"filters\":[{\"dimension\":\"showroom\",\"op\":\"eq\",\"values\":[\"Kestrel Dubai Garden Road\"]},{\"dimension\":\"city\",\"op\":\"eq\",\"values\":[\"Dubai\"]}],\"window\":{\"kind\":\"relative\",\"relative\":\"last_month\",\"start\":null,\"end\":null,\"quarter\":null,\"year\":null,\"calendar\":\"unspecified\"},\"grain\":\"NONE\",\"compare_to\":\"previous_period\",\"order\":null,\"limit\":null,\"reporting_currency\":null,\"ambiguities\":[{\"term\":\"go up\",\"kind\":\"window\",\"readings\":[\"increase versus the previous month\",\"increase versus the same month last year\",\"increase within last month over time\"],\"chosen\":\"increase versus the previous month\"}]}}",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 2510,
+    "output_tokens": 683
+  }
+}

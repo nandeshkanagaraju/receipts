@@ -1,0 +1,65 @@
+{
+  "intent": "BREAKDOWN",
+  "is_followup": false,
+  "language": "en",
+  "missing_concept": "",
+  "outcome": "plan",
+  "plan": {
+    "ambiguities": [
+      {
+        "chosen": "payment_success_rate_attempt",
+        "readings": [
+          "payment_success_rate_attempt: share of individual payment attempts captured",
+          "payment_success_rate_order: share of orders eventually paid"
+        ],
+        "term": "success rate"
+      }
+    ],
+    "compare_to": null,
+    "dimensions": [
+      "issuing_bank"
+    ],
+    "filters": [
+      {
+        "dimension": "country",
+        "op": "eq",
+        "values": [
+          "UK"
+        ]
+      },
+      {
+        "dimension": "payment_method",
+        "op": "eq",
+        "values": [
+          "card"
+        ]
+      }
+    ],
+    "grain": "NONE",
+    "kind": "metric",
+    "limit": 10,
+    "name": "payment_success_rate_attempt",
+    "order": "value_desc",
+    "reporting_currency": null,
+    "window": {
+      "calendar": "unspecified",
+      "end": null,
+      "kind": "relative",
+      "quarter": null,
+      "relative": "last_month",
+      "start": null,
+      "year": null
+    }
+  },
+  "qid": "DV-010",
+  "slice": [
+    "payment_success_rate_attempt",
+    "payment_success_rate_order",
+    "accessory_attach_rate",
+    "refund_rate",
+    "failure_rate_by_reason",
+    "units_sold",
+    "refunded_amount",
+    "gmv_captured"
+  ]
+}

@@ -1,0 +1,59 @@
+{
+  "intent": "COMPARE",
+  "is_followup": false,
+  "language": "en",
+  "missing_concept": "",
+  "outcome": "plan",
+  "plan": {
+    "ambiguities": [
+      {
+        "chosen": "payment_success_rate_order",
+        "readings": [
+          "order-level: share of orders with at least one payment attempt that were eventually paid",
+          "attempt-level: share of individual payment attempts that were captured"
+        ],
+        "term": "payment success rate"
+      }
+    ],
+    "compare_to": "previous_period",
+    "dimensions": [],
+    "filters": [
+      {
+        "dimension": "country",
+        "op": "eq",
+        "values": [
+          "UK"
+        ]
+      }
+    ],
+    "grain": "NONE",
+    "kind": "metric",
+    "limit": null,
+    "name": "payment_success_rate_order",
+    "order": null,
+    "reporting_currency": null,
+    "window": {
+      "calendar": "unspecified",
+      "end": null,
+      "kind": "relative",
+      "quarter": null,
+      "relative": "last_week",
+      "start": null,
+      "year": null
+    }
+  },
+  "qid": "DV-043",
+  "slice": [
+    "payment_success_rate_order",
+    "payment_success_rate_attempt",
+    "accessory_attach_rate",
+    "gmv_captured",
+    "units_sold",
+    "refunded_amount",
+    "refund_rate",
+    "failure_rate_by_reason",
+    "net_revenue",
+    "avg_order_value",
+    "orders_count"
+  ]
+}

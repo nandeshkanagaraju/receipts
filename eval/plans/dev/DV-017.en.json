@@ -1,0 +1,22 @@
+{
+  "intent": "METRIC",
+  "is_followup": false,
+  "language": "en",
+  "missing_concept": "",
+  "no_fit": {
+    "data_exists": false,
+    "reason": "The question asks for a forecast of future GMV next month. The offered metric gmv_captured measures captured GMV in an observed window, not a prediction for a future window."
+  },
+  "outcome": "no_fit",
+  "qid": "DV-017",
+  "slice": [
+    "gmv_captured",
+    "refund_rate",
+    "net_revenue",
+    "failure_rate_by_reason",
+    "payment_success_rate_attempt",
+    "unsettled_amount",
+    "avg_order_value",
+    "refunded_amount"
+  ]
+}
