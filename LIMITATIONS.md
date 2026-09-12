@@ -883,3 +883,27 @@ were all 0% cached, and the same prompt minutes later was at 93%. So the saving
 is real but the first trial of each role pays full price, and a run short enough
 to be all cold pays full price throughout. Worth knowing before anyone reads a
 small run's cost as representative.
+
+## M6b: the scorer reported the baseline's silent-wrong rate as zero
+
+SDD §25.3 defines Silent-wrong as "wrong, `VERIFIED`, **or any wrong baseline
+answer**". The scorer implemented only the first clause. The baseline marks every
+answer `UNVERIFIED`, because nothing verified it, so all thirty of its wrong dev
+answers were filed as **Wrong-flagged** and the first run reported a silent-wrong
+rate of `0.0000` — for the system whose silent wrongness is the entire quantity
+the thesis measures.
+
+It is worth being precise about how close this came to standing. The number was
+not obviously wrong. `0 silently wrong` next to `77 of 108 correct` reads like a
+well-behaved baseline, and every test passed, because the tests asserted the
+first clause too. What caught it was reading the outcome vocabulary and asking
+why a system with no way to flag anything had thirty flagged answers.
+
+The fix is a `flags_unverified` argument supplied by the caller, defaulting to
+`True`, with `FLAGS_UNVERIFIED = {"baseline": False}` in the harness. A status is
+not a flag; it is a flag when the asker sees it, and the baseline shows the asker
+a number. Nothing in an answer can say what the asker was shown, so the system
+has to.
+
+Corrected figure: **30 of 108 answerable trials silently wrong, 27.78%.** That is
+the number Receipts must at least halve.

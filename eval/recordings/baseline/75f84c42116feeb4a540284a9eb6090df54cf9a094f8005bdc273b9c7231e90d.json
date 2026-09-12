@@ -1,0 +1,15 @@
+{
+  "kind": "text",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "baseline",
+    "provider": "openai",
+    "sha256": "090de0f66427067263b3bab5362e4ec84053149f3b1f35e46139a141a5121fbd",
+    "version": 1
+  },
+  "text": "```sql\nwith fx as (\n    select c.rate_date,\n           c.currency,\n           cast(c.usd_per_unit / r.usd_per_unit as decimal(38,12)) as to_reporting\n    from fx_rates c\n    join fx_rates r\n      on r.rate_date = c.rate_date\n     and r.currency = 'USD'\n),\nauthorized_attempts as (\n    select a.attempt_id,\n           a.amount_minor,\n           a.currency,\n           a.business_date,\n           row_number() over (\n               partition by coalesce(a.gateway_payment_id, a.attempt_id)\n               order by a.attempt_no, a.attempt_id\n           ) as auth_rank\n    from payment_attempts a\n    join orders o on o.order_id = a.order_id\n    where not a.is_test\n      and not o.is_test\n      and a.status = 'authorized'\n      and a.business_date between date '2026-08-01' and date '2026-08-31'\n)\nselect null as key,\n       cast(coalesce(round(sum(a.amount_minor * fx.to_reporting)), 0) as bigint) as value\nfrom authorized_attempts a\njoin fx\n  on fx.currency = a.currency\n and fx.rate_date = a.business_date\nwhere a.auth_rank = 1\norder by value\n```",
+  "usage": {
+    "input_tokens": 16377,
+    "output_tokens": 1714
+  }
+}

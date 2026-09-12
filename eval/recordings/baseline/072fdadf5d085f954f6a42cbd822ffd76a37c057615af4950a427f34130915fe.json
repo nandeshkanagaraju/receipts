@@ -1,0 +1,15 @@
+{
+  "kind": "text",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "baseline",
+    "provider": "openai",
+    "sha256": "090de0f66427067263b3bab5362e4ec84053149f3b1f35e46139a141a5121fbd",
+    "version": 1
+  },
+  "text": "```sql\nwith fx as (\n    select c.rate_date,\n           c.currency,\n           cast(c.usd_per_unit / r.usd_per_unit as decimal(38,12)) as to_reporting\n    from fx_rates c\n    join fx_rates r on r.rate_date = c.rate_date and r.currency = 'USD'\n),\nperiods as (\n    select 1 as period_order, 'last_month' as period_label,\n           date '2026-08-01' as start_date, date '2026-08-31' as end_date\n    union all\n    select 2 as period_order, 'same_month_last_year' as period_label,\n           date '2025-08-01' as start_date, date '2025-08-31' as end_date\n),\ncaptures as (\n    select p.period_order,\n           p.period_label,\n           co.name as country_name,\n           a.amount_minor,\n           a.currency,\n           a.business_date,\n           row_number() over (\n               partition by a.order_id, a.amount_minor\n               order by a.attempt_no, a.attempt_id\n           ) as capture_rank\n    from payment_attempts a\n    join periods p\n      on a.business_date between p.start_date and p.end_date\n    join orders o on o.order_id = a.order_id\n    join showrooms s on s.showroom_id = o.showroom_id\n    join countries co on co.country_code = s.country_code\n    where a.status = 'captured'\n      and not a.is_test\n      and not o.is_test\n)\nselect cast(country_name || ' | ' || period_label as varchar) as key,\n       cast(round(sum(c.amount_minor * fx.to_reporting)) as bigint) as value\nfrom captures c\njoin fx on fx.currency = c.currency and fx.rate_date = c.business_date\nwhere c.capture_rank = 1\ngroup by country_name, period_order, period_label\norder by country_name asc, period_order asc\n```",
+  "usage": {
+    "input_tokens": 16381,
+    "output_tokens": 1971
+  }
+}

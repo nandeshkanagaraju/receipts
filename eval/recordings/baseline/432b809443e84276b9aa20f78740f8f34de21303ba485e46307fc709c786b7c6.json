@@ -1,0 +1,15 @@
+{
+  "kind": "text",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "baseline",
+    "provider": "openai",
+    "sha256": "090de0f66427067263b3bab5362e4ec84053149f3b1f35e46139a141a5121fbd",
+    "version": 1
+  },
+  "text": "```sql\nwith fx as (\n    select c.rate_date,\n           c.currency,\n           cast(c.usd_per_unit / r.usd_per_unit as decimal(38,12)) as to_reporting\n    from fx_rates c\n    join fx_rates r on r.rate_date = c.rate_date and r.currency = 'GBP'\n),\ncaptures as (\n    select a.order_id,\n           a.amount_minor,\n           a.currency,\n           a.business_date,\n           row_number() over (\n               partition by a.order_id, a.amount_minor\n               order by a.attempt_no, a.attempt_id\n           ) as capture_rank\n    from payment_attempts a\n    join orders o on o.order_id = a.order_id\n    join showrooms s on s.showroom_id = o.showroom_id\n    where a.status = 'captured'\n      and not a.is_test\n      and not o.is_test\n      and s.country_code = 'GB'\n      and a.business_date between date '2026-08-01' and date '2026-08-31'\n),\ndeduped_captures as (\n    select c.order_id,\n           c.amount_minor,\n           c.currency,\n           c.business_date\n    from captures c\n    where c.capture_rank = 1\n)\nselect null as key,\n       cast(round(sum(d.amount_minor * fx.to_reporting) / count(distinct d.order_id)) as bigint) as value\nfrom deduped_captures d\njoin fx on fx.currency = d.currency and fx.rate_date = d.business_date\norder by value\n```",
+  "usage": {
+    "input_tokens": 16161,
+    "output_tokens": 652
+  }
+}

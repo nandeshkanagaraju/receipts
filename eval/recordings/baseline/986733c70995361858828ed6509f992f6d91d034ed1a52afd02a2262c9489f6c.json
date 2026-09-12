@@ -1,0 +1,15 @@
+{
+  "kind": "text",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "baseline",
+    "provider": "openai",
+    "sha256": "090de0f66427067263b3bab5362e4ec84053149f3b1f35e46139a141a5121fbd",
+    "version": 1
+  },
+  "text": "```sql\nwith scoped_orders as (\n    select o.order_id\n    from orders o\n    join showrooms s on s.showroom_id = o.showroom_id\n    join cities ci on ci.city_id = s.city_id\n    where not o.is_test\n      and s.region_id = 'IN-TN'\n      and ci.name = 'Chennai'\n      and o.business_date between date '2026-08-01' and date '2026-08-31'\n),\ntried_upi_by_bank as (\n    select\n        a.issuing_bank as key,\n        a.order_id,\n        max(case when a.status = 'captured' then 1 else 0 end) as succeeded\n    from payment_attempts a\n    join scoped_orders so on so.order_id = a.order_id\n    where not a.is_test\n      and a.method = 'upi'\n    group by a.issuing_bank, a.order_id\n)\nselect\n    key,\n    cast(sum(succeeded) * 1.0 / count(*) as decimal(38,12)) as value\nfrom tried_upi_by_bank\ngroup by key\norder by value desc, key asc\nlimit 10\n```",
+  "usage": {
+    "input_tokens": 16169,
+    "output_tokens": 772
+  }
+}

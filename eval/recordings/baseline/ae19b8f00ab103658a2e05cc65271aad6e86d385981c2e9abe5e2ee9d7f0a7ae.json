@@ -1,0 +1,15 @@
+{
+  "kind": "text",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "baseline",
+    "provider": "openai",
+    "sha256": "090de0f66427067263b3bab5362e4ec84053149f3b1f35e46139a141a5121fbd",
+    "version": 1
+  },
+  "text": "```sql\nwith order_flags as (\n    select\n        o.order_id,\n        s.name as showroom_name,\n        max(case when not p.is_accessory then 1 else 0 end) as has_phone,\n        max(case when p.is_accessory then 1 else 0 end) as has_accessory\n    from orders o\n    join showrooms s on s.showroom_id = o.showroom_id\n    join cities ci on ci.city_id = s.city_id\n    join order_items i on i.order_id = o.order_id\n    join products p on p.sku = i.sku\n    where not o.is_test\n      and o.status = 'paid'\n      and s.region_id = 'IN-TN'\n      and ci.name = 'Chennai'\n      and o.business_date between date '2026-08-01' and date '2026-08-31'\n    group by o.order_id, s.name\n),\nshowroom_rates as (\n    select\n        showroom_name as key,\n        cast(\n            sum(case when has_phone = 1 and has_accessory = 1 then 1 else 0 end) * 1.0\n            / nullif(sum(case when has_phone = 1 then 1 else 0 end), 0)\n            as decimal(38,12)\n        ) as value\n    from order_flags\n    group by showroom_name\n    having sum(case when has_phone = 1 then 1 else 0 end) > 0\n)\nselect key, value\nfrom showroom_rates\norder by value desc, key asc\nlimit 5\n```",
+  "usage": {
+    "input_tokens": 16165,
+    "output_tokens": 622
+  }
+}

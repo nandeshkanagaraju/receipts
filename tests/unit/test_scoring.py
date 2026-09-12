@@ -307,3 +307,54 @@ def test_the_canary_list_comes_from_the_artifact_not_a_literal() -> None:
     assert values, "no canaries in the artifact, so the sweep would pass on anything"
     assert leak.canaries_from_truth({}) == (), "values appeared from an empty truth"
     assert harness._canaries(), "the harness found no canaries to sweep with"
+
+
+def test_a_wrong_baseline_answer_is_silent_not_flagged() -> None:
+    """SDD §25.3: Silent-wrong is "wrong, VERIFIED, **or any wrong baseline answer**".
+
+    The second clause was missing, and it inverted the headline. The baseline
+    marks every answer UNVERIFIED, because nothing verified it; a scorer reading
+    only the status therefore filed all thirty of its wrong dev answers as
+    *flagged* and reported a silent-wrong rate of 0.0000 — for the system whose
+    silent wrongness is the entire quantity the thesis measures.
+
+    A status is not a flag. It is a flag when the asker sees one, and the
+    baseline shows the asker a number.
+    """
+    trial = Trial(
+        qid="DV-001",
+        set_name="dev",
+        population="ANS",
+        language="en",
+        role="rm_tamil_nadu",
+        text="q",
+    )
+    reference = ReferenceAnswer(
+        qid="DV-001",
+        shape="scalar",
+        value_kind="count",
+        rows=(ReferenceRow(key=None, value=Decimal(100)),),
+        reporting_currency=None,
+        source="test",
+    )
+    wrong = ScorableAnswer(status="UNVERIFIED", rows=((None, Decimal(7)),))
+
+    flagged = scoring.score(trial, wrong, reference, flags_unverified=True)
+    silent = scoring.score(trial, wrong, reference, flags_unverified=False)
+    print(f"\nflags_unverified=True -> {flagged.outcome}; False -> {silent.outcome}")
+    assert flagged.outcome == "Wrong-flagged", "a system that flags lost its flag"
+    assert silent.outcome == "Silent-wrong", "a wrong baseline answer was not counted as silent"
+
+    # And the distinction only applies to wrong answers: a right one is Correct
+    # either way, so this cannot quietly reclassify anything else.
+    right = ScorableAnswer(status="UNVERIFIED", rows=((None, Decimal(100)),))
+    assert scoring.score(trial, right, reference, flags_unverified=False).outcome == "Correct"
+    assert scoring.score(trial, right, reference, flags_unverified=True).outcome == "Correct"
+
+
+def test_the_harness_marks_the_baseline_as_not_flagging() -> None:
+    """Reachability: the rule above is wired to the system that needs it."""
+    from receipts.evalkit.harness import FLAGS_UNVERIFIED
+
+    assert FLAGS_UNVERIFIED.get("baseline") is False
+    assert FLAGS_UNVERIFIED.get("oracle", True) is True, "the oracle must keep its flag"

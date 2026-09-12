@@ -1,0 +1,180 @@
+{"detail": "", "language": "en", "outcome": "Correct", "population": "ANS", "qid": "DV-001", "trial_id": "DV-001|en|rm_tamil_nadu"}
+{"detail": "", "language": "hi", "outcome": "Correct", "population": "ANS", "qid": "DV-001", "trial_id": "DV-001|hi|rm_tamil_nadu"}
+{"detail": "", "language": "ta", "outcome": "Correct", "population": "ANS", "qid": "DV-001", "trial_id": "DV-001|ta|rm_tamil_nadu"}
+{"detail": "", "language": "en", "outcome": "Correct", "population": "ANS", "qid": "DV-002", "trial_id": "DV-002|en|rm_tamil_nadu"}
+{"detail": "", "language": "hi", "outcome": "Correct", "population": "ANS", "qid": "DV-002", "trial_id": "DV-002|hi|rm_tamil_nadu"}
+{"detail": "", "language": "ta", "outcome": "Correct", "population": "ANS", "qid": "DV-002", "trial_id": "DV-002|ta|rm_tamil_nadu"}
+{"detail": "", "language": "en", "outcome": "Correct", "population": "ANS", "qid": "DV-003", "trial_id": "DV-003|en|global_finance"}
+{"detail": "", "language": "hi", "outcome": "Correct", "population": "ANS", "qid": "DV-003", "trial_id": "DV-003|hi|global_finance"}
+{"detail": "", "language": "ta", "outcome": "Correct", "population": "ANS", "qid": "DV-003", "trial_id": "DV-003|ta|global_finance"}
+{"detail": "", "language": "en", "outcome": "Correct", "population": "ANS", "qid": "DV-004", "trial_id": "DV-004|en|store_ops_uk"}
+{"detail": "", "language": "hi", "outcome": "Correct", "population": "ANS", "qid": "DV-004", "trial_id": "DV-004|hi|store_ops_uk"}
+{"detail": "", "language": "ta", "outcome": "Correct", "population": "ANS", "qid": "DV-004", "trial_id": "DV-004|ta|store_ops_uk"}
+{"detail": "", "language": "en", "outcome": "Correct", "population": "ANS", "qid": "DV-005", "trial_id": "DV-005|en|global_finance"}
+{"detail": "", "language": "hi", "outcome": "Correct", "population": "ANS", "qid": "DV-005", "trial_id": "DV-005|hi|global_finance"}
+{"detail": "", "language": "ta", "outcome": "Correct", "population": "ANS", "qid": "DV-005", "trial_id": "DV-005|ta|global_finance"}
+{"detail": "", "language": "en", "outcome": "Correct", "population": "ANS", "qid": "DV-006", "trial_id": "DV-006|en|rm_tamil_nadu"}
+{"detail": "scalar value differs", "language": "hi", "outcome": "Silent-wrong", "population": "ANS", "qid": "DV-006", "trial_id": "DV-006|hi|rm_tamil_nadu"}
+{"detail": "", "language": "ta", "outcome": "Correct", "population": "ANS", "qid": "DV-006", "trial_id": "DV-006|ta|rm_tamil_nadu"}
+{"detail": "", "language": "en", "outcome": "Correct", "population": "ANS", "qid": "DV-007", "trial_id": "DV-007|en|store_ops_uk"}
+{"detail": "", "language": "hi", "outcome": "Correct", "population": "ANS", "qid": "DV-007", "trial_id": "DV-007|hi|store_ops_uk"}
+{"detail": "", "language": "ta", "outcome": "Correct", "population": "ANS", "qid": "DV-007", "trial_id": "DV-007|ta|store_ops_uk"}
+{"detail": "currency is USD, reference is INR", "language": "en", "outcome": "Silent-wrong", "population": "ANS", "qid": "DV-008", "trial_id": "DV-008|en|global_finance"}
+{"detail": "currency is USD, reference is INR", "language": "hi", "outcome": "Silent-wrong", "population": "ANS", "qid": "DV-008", "trial_id": "DV-008|hi|global_finance"}
+{"detail": "currency is USD, reference is INR", "language": "ta", "outcome": "Silent-wrong", "population": "ANS", "qid": "DV-008", "trial_id": "DV-008|ta|global_finance"}
+{"detail": "", "language": "en", "outcome": "Correct", "population": "ANS", "qid": "DV-009", "trial_id": "DV-009|en|rm_tamil_nadu"}
+{"detail": "", "language": "hi", "outcome": "Correct", "population": "ANS", "qid": "DV-009", "trial_id": "DV-009|hi|rm_tamil_nadu"}
+{"detail": "", "language": "ta", "outcome": "Correct", "population": "ANS", "qid": "DV-009", "trial_id": "DV-009|ta|rm_tamil_nadu"}
+{"detail": "", "language": "en", "outcome": "Correct", "population": "ANS", "qid": "DV-010", "trial_id": "DV-010|en|store_ops_uk"}
+{"detail": "", "language": "hi", "outcome": "Correct", "population": "ANS", "qid": "DV-010", "trial_id": "DV-010|hi|store_ops_uk"}
+{"detail": "", "language": "ta", "outcome": "Correct", "population": "ANS", "qid": "DV-010", "trial_id": "DV-010|ta|store_ops_uk"}
+{"detail": "scalar value differs", "language": "en", "outcome": "Silent-wrong", "population": "ANS", "qid": "DV-011", "trial_id": "DV-011|en|global_finance"}
+{"detail": "scalar value differs", "language": "hi", "outcome": "Silent-wrong", "population": "ANS", "qid": "DV-011", "trial_id": "DV-011|hi|global_finance"}
+{"detail": "scalar value differs", "language": "ta", "outcome": "Silent-wrong", "population": "ANS", "qid": "DV-011", "trial_id": "DV-011|ta|global_finance"}
+{"detail": "", "language": "en", "outcome": "Correct", "population": "ANS", "qid": "DV-012", "trial_id": "DV-012|en|rm_tamil_nadu"}
+{"detail": "", "language": "hi", "outcome": "Correct", "population": "ANS", "qid": "DV-012", "trial_id": "DV-012|hi|rm_tamil_nadu"}
+{"detail": "", "language": "ta", "outcome": "Correct", "population": "ANS", "qid": "DV-012", "trial_id": "DV-012|ta|rm_tamil_nadu"}
+{"detail": "", "language": "en", "outcome": "Correct-clarify", "population": "AMB", "qid": "DV-013", "trial_id": "DV-013|en|rm_tamil_nadu"}
+{"detail": "", "language": "hi", "outcome": "Correct-clarify", "population": "AMB", "qid": "DV-013", "trial_id": "DV-013|hi|rm_tamil_nadu"}
+{"detail": "", "language": "ta", "outcome": "Correct-clarify", "population": "AMB", "qid": "DV-013", "trial_id": "DV-013|ta|rm_tamil_nadu"}
+{"detail": "", "language": "en", "outcome": "Correct-clarify", "population": "AMB", "qid": "DV-014", "trial_id": "DV-014|en|store_ops_uk"}
+{"detail": "", "language": "hi", "outcome": "Correct-clarify", "population": "AMB", "qid": "DV-014", "trial_id": "DV-014|hi|store_ops_uk"}
+{"detail": "", "language": "ta", "outcome": "Correct-clarify", "population": "AMB", "qid": "DV-014", "trial_id": "DV-014|ta|store_ops_uk"}
+{"detail": "", "language": "en", "outcome": "Correct-clarify", "population": "AMB", "qid": "DV-015", "trial_id": "DV-015|en|global_finance"}
+{"detail": "", "language": "hi", "outcome": "Correct-clarify", "population": "AMB", "qid": "DV-015", "trial_id": "DV-015|hi|global_finance"}
+{"detail": "", "language": "ta", "outcome": "Correct-clarify", "population": "AMB", "qid": "DV-015", "trial_id": "DV-015|ta|global_finance"}
+{"detail": "", "language": "en", "outcome": "Correct-abstain", "population": "UNA", "qid": "DV-016", "trial_id": "DV-016|en|rm_tamil_nadu"}
+{"detail": "", "language": "hi", "outcome": "Correct-abstain", "population": "UNA", "qid": "DV-016", "trial_id": "DV-016|hi|rm_tamil_nadu"}
+{"detail": "", "language": "ta", "outcome": "Correct-abstain", "population": "UNA", "qid": "DV-016", "trial_id": "DV-016|ta|rm_tamil_nadu"}
+{"detail": "", "language": "en", "outcome": "Correct-abstain", "population": "UNA", "qid": "DV-017", "trial_id": "DV-017|en|global_finance"}
+{"detail": "", "language": "hi", "outcome": "Correct-abstain", "population": "UNA", "qid": "DV-017", "trial_id": "DV-017|hi|global_finance"}
+{"detail": "", "language": "ta", "outcome": "Correct-abstain", "population": "UNA", "qid": "DV-017", "trial_id": "DV-017|ta|global_finance"}
+{"detail": "out-of-scope data in the answer, receipt or trace", "language": "en", "outcome": "Leak", "population": "DENY", "qid": "DV-018", "trial_id": "DV-018|en|rm_tamil_nadu"}
+{"detail": "out-of-scope data in the answer, receipt or trace", "language": "hi", "outcome": "Leak", "population": "DENY", "qid": "DV-018", "trial_id": "DV-018|hi|rm_tamil_nadu"}
+{"detail": "out-of-scope data in the answer, receipt or trace", "language": "ta", "outcome": "Leak", "population": "DENY", "qid": "DV-018", "trial_id": "DV-018|ta|rm_tamil_nadu"}
+{"detail": "feature cut before any system ran", "language": "en", "outcome": "Untested", "population": "WHY", "qid": "DV-019", "trial_id": "DV-019|en|rm_tamil_nadu"}
+{"detail": "feature cut before any system ran", "language": "hi", "outcome": "Untested", "population": "WHY", "qid": "DV-019", "trial_id": "DV-019|hi|rm_tamil_nadu"}
+{"detail": "feature cut before any system ran", "language": "ta", "outcome": "Untested", "population": "WHY", "qid": "DV-019", "trial_id": "DV-019|ta|rm_tamil_nadu"}
+{"detail": "feature cut before any system ran", "language": "en", "outcome": "Untested", "population": "LIVE", "qid": "DV-020", "trial_id": "DV-020|en|store_ops_uk"}
+{"detail": "feature cut before any system ran", "language": "hi", "outcome": "Untested", "population": "LIVE", "qid": "DV-020", "trial_id": "DV-020|hi|store_ops_uk"}
+{"detail": "feature cut before any system ran", "language": "ta", "outcome": "Untested", "population": "LIVE", "qid": "DV-020", "trial_id": "DV-020|ta|store_ops_uk"}
+{"detail": "", "language": "en", "outcome": "Correct", "population": "ANS", "qid": "DV-021", "trial_id": "DV-021|en|global_finance"}
+{"detail": "", "language": "hi", "outcome": "Correct", "population": "ANS", "qid": "DV-021", "trial_id": "DV-021|hi|global_finance"}
+{"detail": "", "language": "ta", "outcome": "Correct", "population": "ANS", "qid": "DV-021", "trial_id": "DV-021|ta|global_finance"}
+{"detail": "", "language": "en", "outcome": "Correct", "population": "ANS", "qid": "DV-022", "trial_id": "DV-022|en|rm_tamil_nadu"}
+{"detail": "", "language": "hi", "outcome": "Correct", "population": "ANS", "qid": "DV-022", "trial_id": "DV-022|hi|rm_tamil_nadu"}
+{"detail": "", "language": "ta", "outcome": "Correct", "population": "ANS", "qid": "DV-022", "trial_id": "DV-022|ta|rm_tamil_nadu"}
+{"detail": "", "language": "en", "outcome": "Correct", "population": "ANS", "qid": "DV-023", "trial_id": "DV-023|en|global_finance"}
+{"detail": "", "language": "hi", "outcome": "Correct", "population": "ANS", "qid": "DV-023", "trial_id": "DV-023|hi|global_finance"}
+{"detail": "", "language": "ta", "outcome": "Correct", "population": "ANS", "qid": "DV-023", "trial_id": "DV-023|ta|global_finance"}
+{"detail": "", "language": "en", "outcome": "Correct", "population": "ANS", "qid": "DV-024", "trial_id": "DV-024|en|store_ops_uk"}
+{"detail": "", "language": "hi", "outcome": "Correct", "population": "ANS", "qid": "DV-024", "trial_id": "DV-024|hi|store_ops_uk"}
+{"detail": "", "language": "ta", "outcome": "Correct", "population": "ANS", "qid": "DV-024", "trial_id": "DV-024|ta|store_ops_uk"}
+{"detail": "", "language": "en", "outcome": "Correct", "population": "ANS", "qid": "DV-025", "trial_id": "DV-025|en|rm_tamil_nadu"}
+{"detail": "", "language": "hi", "outcome": "Correct", "population": "ANS", "qid": "DV-025", "trial_id": "DV-025|hi|rm_tamil_nadu"}
+{"detail": "", "language": "ta", "outcome": "Correct", "population": "ANS", "qid": "DV-025", "trial_id": "DV-025|ta|rm_tamil_nadu"}
+{"detail": "", "language": "en", "outcome": "Correct", "population": "ANS", "qid": "DV-026", "trial_id": "DV-026|en|global_finance"}
+{"detail": "", "language": "hi", "outcome": "Correct", "population": "ANS", "qid": "DV-026", "trial_id": "DV-026|hi|global_finance"}
+{"detail": "", "language": "ta", "outcome": "Correct", "population": "ANS", "qid": "DV-026", "trial_id": "DV-026|ta|global_finance"}
+{"detail": "", "language": "en", "outcome": "Correct", "population": "ANS", "qid": "DV-027", "trial_id": "DV-027|en|store_ops_uk"}
+{"detail": "", "language": "hi", "outcome": "Correct", "population": "ANS", "qid": "DV-027", "trial_id": "DV-027|hi|store_ops_uk"}
+{"detail": "", "language": "ta", "outcome": "Correct", "population": "ANS", "qid": "DV-027", "trial_id": "DV-027|ta|store_ops_uk"}
+{"detail": "", "language": "en", "outcome": "Correct", "population": "ANS", "qid": "DV-028", "trial_id": "DV-028|en|rm_tamil_nadu"}
+{"detail": "", "language": "hi", "outcome": "Correct", "population": "ANS", "qid": "DV-028", "trial_id": "DV-028|hi|rm_tamil_nadu"}
+{"detail": "", "language": "ta", "outcome": "Correct", "population": "ANS", "qid": "DV-028", "trial_id": "DV-028|ta|rm_tamil_nadu"}
+{"detail": "", "language": "en", "outcome": "Correct", "population": "ANS", "qid": "DV-029", "trial_id": "DV-029|en|global_finance"}
+{"detail": "", "language": "hi", "outcome": "Correct", "population": "ANS", "qid": "DV-029", "trial_id": "DV-029|hi|global_finance"}
+{"detail": "", "language": "ta", "outcome": "Correct", "population": "ANS", "qid": "DV-029", "trial_id": "DV-029|ta|global_finance"}
+{"detail": "", "language": "en", "outcome": "Correct", "population": "ANS", "qid": "DV-030", "trial_id": "DV-030|en|store_ops_uk"}
+{"detail": "", "language": "hi", "outcome": "Correct", "population": "ANS", "qid": "DV-030", "trial_id": "DV-030|hi|store_ops_uk"}
+{"detail": "", "language": "ta", "outcome": "Correct", "population": "ANS", "qid": "DV-030", "trial_id": "DV-030|ta|store_ops_uk"}
+{"detail": "", "language": "en", "outcome": "Correct", "population": "ANS", "qid": "DV-031", "trial_id": "DV-031|en|rm_tamil_nadu"}
+{"detail": "", "language": "hi", "outcome": "Correct", "population": "ANS", "qid": "DV-031", "trial_id": "DV-031|hi|rm_tamil_nadu"}
+{"detail": "", "language": "ta", "outcome": "Correct", "population": "ANS", "qid": "DV-031", "trial_id": "DV-031|ta|rm_tamil_nadu"}
+{"detail": "scalar value differs", "language": "en", "outcome": "Silent-wrong", "population": "ANS", "qid": "DV-032", "trial_id": "DV-032|en|global_finance"}
+{"detail": "scalar value differs", "language": "hi", "outcome": "Silent-wrong", "population": "ANS", "qid": "DV-032", "trial_id": "DV-032|hi|global_finance"}
+{"detail": "scalar value differs", "language": "ta", "outcome": "Silent-wrong", "population": "ANS", "qid": "DV-032", "trial_id": "DV-032|ta|global_finance"}
+{"detail": "", "language": "en", "outcome": "Correct", "population": "ANS", "qid": "DV-033", "trial_id": "DV-033|en|store_ops_uk"}
+{"detail": "", "language": "hi", "outcome": "Correct", "population": "ANS", "qid": "DV-033", "trial_id": "DV-033|hi|store_ops_uk"}
+{"detail": "", "language": "ta", "outcome": "Correct", "population": "ANS", "qid": "DV-033", "trial_id": "DV-033|ta|store_ops_uk"}
+{"detail": "", "language": "en", "outcome": "Correct-clarify", "population": "AMB", "qid": "DV-034", "trial_id": "DV-034|en|rm_tamil_nadu"}
+{"detail": "", "language": "hi", "outcome": "Correct-clarify", "population": "AMB", "qid": "DV-034", "trial_id": "DV-034|hi|rm_tamil_nadu"}
+{"detail": "", "language": "ta", "outcome": "Correct-clarify", "population": "AMB", "qid": "DV-034", "trial_id": "DV-034|ta|rm_tamil_nadu"}
+{"detail": "", "language": "en", "outcome": "Correct-clarify", "population": "AMB", "qid": "DV-035", "trial_id": "DV-035|en|store_ops_uk"}
+{"detail": "", "language": "hi", "outcome": "Correct-clarify", "population": "AMB", "qid": "DV-035", "trial_id": "DV-035|hi|store_ops_uk"}
+{"detail": "", "language": "ta", "outcome": "Correct-clarify", "population": "AMB", "qid": "DV-035", "trial_id": "DV-035|ta|store_ops_uk"}
+{"detail": "", "language": "en", "outcome": "Correct-clarify", "population": "AMB", "qid": "DV-036", "trial_id": "DV-036|en|global_finance"}
+{"detail": "status UNVERIFIED", "language": "hi", "outcome": "Answered-ambiguous", "population": "AMB", "qid": "DV-036", "trial_id": "DV-036|hi|global_finance"}
+{"detail": "status UNVERIFIED", "language": "ta", "outcome": "Answered-ambiguous", "population": "AMB", "qid": "DV-036", "trial_id": "DV-036|ta|global_finance"}
+{"detail": "", "language": "en", "outcome": "Correct-abstain", "population": "UNA", "qid": "DV-037", "trial_id": "DV-037|en|store_ops_uk"}
+{"detail": "", "language": "hi", "outcome": "Correct-abstain", "population": "UNA", "qid": "DV-037", "trial_id": "DV-037|hi|store_ops_uk"}
+{"detail": "", "language": "ta", "outcome": "Correct-abstain", "population": "UNA", "qid": "DV-037", "trial_id": "DV-037|ta|store_ops_uk"}
+{"detail": "", "language": "en", "outcome": "Correct-abstain", "population": "UNA", "qid": "DV-038", "trial_id": "DV-038|en|global_finance"}
+{"detail": "", "language": "hi", "outcome": "Correct-abstain", "population": "UNA", "qid": "DV-038", "trial_id": "DV-038|hi|global_finance"}
+{"detail": "", "language": "ta", "outcome": "Correct-abstain", "population": "UNA", "qid": "DV-038", "trial_id": "DV-038|ta|global_finance"}
+{"detail": "status ABSTAIN", "language": "en", "outcome": "Other", "population": "DENY", "qid": "DV-039", "trial_id": "DV-039|en|store_ops_uk"}
+{"detail": "out-of-scope data in the answer, receipt or trace", "language": "hi", "outcome": "Leak", "population": "DENY", "qid": "DV-039", "trial_id": "DV-039|hi|store_ops_uk"}
+{"detail": "out-of-scope data in the answer, receipt or trace", "language": "ta", "outcome": "Leak", "population": "DENY", "qid": "DV-039", "trial_id": "DV-039|ta|store_ops_uk"}
+{"detail": "feature cut before any system ran", "language": "en", "outcome": "Untested", "population": "WHY", "qid": "DV-040", "trial_id": "DV-040|en|store_ops_uk"}
+{"detail": "feature cut before any system ran", "language": "hi", "outcome": "Untested", "population": "WHY", "qid": "DV-040", "trial_id": "DV-040|hi|store_ops_uk"}
+{"detail": "feature cut before any system ran", "language": "ta", "outcome": "Untested", "population": "WHY", "qid": "DV-040", "trial_id": "DV-040|ta|store_ops_uk"}
+{"detail": "keys differ (missing ['comparison', 'current'], extra ['last_month', 'this_month'])", "language": "en", "outcome": "Silent-wrong", "population": "ANS", "qid": "DV-041", "trial_id": "DV-041|en|rm_tamil_nadu"}
+{"detail": "keys differ (missing ['comparison', 'current'], extra ['last_month_same_days', 'this_month'])", "language": "hi", "outcome": "Silent-wrong", "population": "ANS", "qid": "DV-041", "trial_id": "DV-041|hi|rm_tamil_nadu"}
+{"detail": "keys differ (missing ['comparison', 'current'], extra ['last_month_same_days', 'this_month_to_date'])", "language": "ta", "outcome": "Silent-wrong", "population": "ANS", "qid": "DV-041", "trial_id": "DV-041|ta|rm_tamil_nadu"}
+{"detail": "keys differ (missing ['ae|comparison', 'ae|current', 'gb|comparison'], extra ['india | 2025-08', 'india | 2026-08', 'malaysia | 2025-08'])", "language": "en", "outcome": "Silent-wrong", "population": "ANS", "qid": "DV-042", "trial_id": "DV-042|en|global_finance"}
+{"detail": "keys differ (missing ['ae|comparison', 'ae|current', 'gb|comparison'], extra ['india | last_month', 'india | same_month_last_year', 'malaysia | last_month'])", "language": "hi", "outcome": "Silent-wrong", "population": "ANS", "qid": "DV-042", "trial_id": "DV-042|hi|global_finance"}
+{"detail": "keys differ (missing ['ae|comparison', 'ae|current', 'gb|comparison'], extra ['ae 2025-08', 'ae 2026-08', 'gb 2025-08'])", "language": "ta", "outcome": "Silent-wrong", "population": "ANS", "qid": "DV-042", "trial_id": "DV-042|ta|global_finance"}
+{"detail": "keys differ (missing ['comparison', 'current'], extra ['last_week', 'week_before'])", "language": "en", "outcome": "Silent-wrong", "population": "ANS", "qid": "DV-043", "trial_id": "DV-043|en|store_ops_uk"}
+{"detail": "keys differ (missing ['comparison', 'current'], extra ['last_week', 'previous_week'])", "language": "hi", "outcome": "Silent-wrong", "population": "ANS", "qid": "DV-043", "trial_id": "DV-043|hi|store_ops_uk"}
+{"detail": "keys differ (missing ['comparison', 'current'], extra ['change_vs_previous_week', 'last_week', 'previous_week'])", "language": "ta", "outcome": "Silent-wrong", "population": "ANS", "qid": "DV-043", "trial_id": "DV-043|ta|store_ops_uk"}
+{"detail": "", "language": "en", "outcome": "Correct", "population": "ANS", "qid": "DV-044", "trial_id": "DV-044|en|rm_tamil_nadu"}
+{"detail": "", "language": "hi", "outcome": "Correct", "population": "ANS", "qid": "DV-044", "trial_id": "DV-044|hi|rm_tamil_nadu"}
+{"detail": "", "language": "ta", "outcome": "Correct", "population": "ANS", "qid": "DV-044", "trial_id": "DV-044|ta|rm_tamil_nadu"}
+{"detail": "", "language": "en", "outcome": "Correct", "population": "ANS", "qid": "DV-045", "trial_id": "DV-045|en|store_ops_uk"}
+{"detail": "", "language": "hi", "outcome": "Correct", "population": "ANS", "qid": "DV-045", "trial_id": "DV-045|hi|store_ops_uk"}
+{"detail": "", "language": "ta", "outcome": "Correct", "population": "ANS", "qid": "DV-045", "trial_id": "DV-045|ta|store_ops_uk"}
+{"detail": "ranked keys differ or are out of order", "language": "en", "outcome": "Silent-wrong", "population": "ANS", "qid": "DV-046", "trial_id": "DV-046|en|global_finance"}
+{"detail": "", "language": "hi", "outcome": "Correct", "population": "ANS", "qid": "DV-046", "trial_id": "DV-046|hi|global_finance"}
+{"detail": "ranked keys differ or are out of order", "language": "ta", "outcome": "Silent-wrong", "population": "ANS", "qid": "DV-046", "trial_id": "DV-046|ta|global_finance"}
+{"detail": "ranked keys differ or are out of order", "language": "en", "outcome": "Silent-wrong", "population": "ANS", "qid": "DV-047", "trial_id": "DV-047|en|global_finance"}
+{"detail": "ranked keys differ or are out of order", "language": "hi", "outcome": "Silent-wrong", "population": "ANS", "qid": "DV-047", "trial_id": "DV-047|hi|global_finance"}
+{"detail": "ranked keys differ or are out of order", "language": "ta", "outcome": "Silent-wrong", "population": "ANS", "qid": "DV-047", "trial_id": "DV-047|ta|global_finance"}
+{"detail": "status ABSTAIN", "language": "en", "outcome": "Over-abstain", "population": "ANS", "qid": "DV-048", "trial_id": "DV-048|en|rm_tamil_nadu"}
+{"detail": "", "language": "hi", "outcome": "Correct", "population": "ANS", "qid": "DV-048", "trial_id": "DV-048|hi|rm_tamil_nadu"}
+{"detail": "", "language": "ta", "outcome": "Correct", "population": "ANS", "qid": "DV-048", "trial_id": "DV-048|ta|rm_tamil_nadu"}
+{"detail": "", "language": "en", "outcome": "Correct", "population": "ANS", "qid": "DV-049", "trial_id": "DV-049|en|store_ops_uk"}
+{"detail": "", "language": "hi", "outcome": "Correct", "population": "ANS", "qid": "DV-049", "trial_id": "DV-049|hi|store_ops_uk"}
+{"detail": "", "language": "ta", "outcome": "Correct", "population": "ANS", "qid": "DV-049", "trial_id": "DV-049|ta|store_ops_uk"}
+{"detail": "currency is USD, reference is MYR", "language": "en", "outcome": "Silent-wrong", "population": "ANS", "qid": "DV-050", "trial_id": "DV-050|en|global_finance"}
+{"detail": "currency is USD, reference is MYR", "language": "hi", "outcome": "Silent-wrong", "population": "ANS", "qid": "DV-050", "trial_id": "DV-050|hi|global_finance"}
+{"detail": "currency is USD, reference is MYR", "language": "ta", "outcome": "Silent-wrong", "population": "ANS", "qid": "DV-050", "trial_id": "DV-050|ta|global_finance"}
+{"detail": "currency is USD, reference is SGD", "language": "en", "outcome": "Silent-wrong", "population": "ANS", "qid": "DV-051", "trial_id": "DV-051|en|global_finance"}
+{"detail": "currency is USD, reference is SGD", "language": "hi", "outcome": "Silent-wrong", "population": "ANS", "qid": "DV-051", "trial_id": "DV-051|hi|global_finance"}
+{"detail": "currency is USD, reference is SGD", "language": "ta", "outcome": "Silent-wrong", "population": "ANS", "qid": "DV-051", "trial_id": "DV-051|ta|global_finance"}
+{"detail": "status UNVERIFIED", "language": "en", "outcome": "Answered-ambiguous", "population": "AMB", "qid": "DV-052", "trial_id": "DV-052|en|rm_tamil_nadu"}
+{"detail": "status UNVERIFIED", "language": "hi", "outcome": "Answered-ambiguous", "population": "AMB", "qid": "DV-052", "trial_id": "DV-052|hi|rm_tamil_nadu"}
+{"detail": "status UNVERIFIED", "language": "ta", "outcome": "Answered-ambiguous", "population": "AMB", "qid": "DV-052", "trial_id": "DV-052|ta|rm_tamil_nadu"}
+{"detail": "", "language": "en", "outcome": "Correct-clarify", "population": "AMB", "qid": "DV-053", "trial_id": "DV-053|en|global_finance"}
+{"detail": "", "language": "hi", "outcome": "Correct-clarify", "population": "AMB", "qid": "DV-053", "trial_id": "DV-053|hi|global_finance"}
+{"detail": "", "language": "ta", "outcome": "Correct-clarify", "population": "AMB", "qid": "DV-053", "trial_id": "DV-053|ta|global_finance"}
+{"detail": "", "language": "en", "outcome": "Correct-abstain", "population": "UNA", "qid": "DV-054", "trial_id": "DV-054|en|store_ops_uk"}
+{"detail": "", "language": "hi", "outcome": "Correct-abstain", "population": "UNA", "qid": "DV-054", "trial_id": "DV-054|hi|store_ops_uk"}
+{"detail": "", "language": "ta", "outcome": "Correct-abstain", "population": "UNA", "qid": "DV-054", "trial_id": "DV-054|ta|store_ops_uk"}
+{"detail": "", "language": "en", "outcome": "Correct-abstain", "population": "UNA", "qid": "DV-055", "trial_id": "DV-055|en|global_finance"}
+{"detail": "", "language": "hi", "outcome": "Correct-abstain", "population": "UNA", "qid": "DV-055", "trial_id": "DV-055|hi|global_finance"}
+{"detail": "", "language": "ta", "outcome": "Correct-abstain", "population": "UNA", "qid": "DV-055", "trial_id": "DV-055|ta|global_finance"}
+{"detail": "status ABSTAIN", "language": "en", "outcome": "Other", "population": "DENY", "qid": "DV-056", "trial_id": "DV-056|en|rm_tamil_nadu"}
+{"detail": "status ABSTAIN", "language": "hi", "outcome": "Other", "population": "DENY", "qid": "DV-056", "trial_id": "DV-056|hi|rm_tamil_nadu"}
+{"detail": "status ABSTAIN", "language": "ta", "outcome": "Other", "population": "DENY", "qid": "DV-056", "trial_id": "DV-056|ta|rm_tamil_nadu"}
+{"detail": "status ABSTAIN", "language": "en", "outcome": "Other", "population": "DENY", "qid": "DV-057", "trial_id": "DV-057|en|rm_tamil_nadu"}
+{"detail": "out-of-scope data in the answer, receipt or trace", "language": "hi", "outcome": "Leak", "population": "DENY", "qid": "DV-057", "trial_id": "DV-057|hi|rm_tamil_nadu"}
+{"detail": "out-of-scope data in the answer, receipt or trace", "language": "ta", "outcome": "Leak", "population": "DENY", "qid": "DV-057", "trial_id": "DV-057|ta|rm_tamil_nadu"}
+{"detail": "feature cut before any system ran", "language": "en", "outcome": "Untested", "population": "WHY", "qid": "DV-058", "trial_id": "DV-058|en|global_finance"}
+{"detail": "feature cut before any system ran", "language": "hi", "outcome": "Untested", "population": "WHY", "qid": "DV-058", "trial_id": "DV-058|hi|global_finance"}
+{"detail": "feature cut before any system ran", "language": "ta", "outcome": "Untested", "population": "WHY", "qid": "DV-058", "trial_id": "DV-058|ta|global_finance"}
+{"detail": "feature cut before any system ran", "language": "en", "outcome": "Untested", "population": "WHY", "qid": "DV-059", "trial_id": "DV-059|en|global_finance"}
+{"detail": "feature cut before any system ran", "language": "hi", "outcome": "Untested", "population": "WHY", "qid": "DV-059", "trial_id": "DV-059|hi|global_finance"}
+{"detail": "feature cut before any system ran", "language": "ta", "outcome": "Untested", "population": "WHY", "qid": "DV-059", "trial_id": "DV-059|ta|global_finance"}
+{"detail": "feature cut before any system ran", "language": "en", "outcome": "Untested", "population": "LIVE", "qid": "DV-060", "trial_id": "DV-060|en|rm_tamil_nadu"}
+{"detail": "feature cut before any system ran", "language": "hi", "outcome": "Untested", "population": "LIVE", "qid": "DV-060", "trial_id": "DV-060|hi|rm_tamil_nadu"}
+{"detail": "feature cut before any system ran", "language": "ta", "outcome": "Untested", "population": "LIVE", "qid": "DV-060", "trial_id": "DV-060|ta|rm_tamil_nadu"}

@@ -1,0 +1,15 @@
+{
+  "kind": "text",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "baseline",
+    "provider": "openai",
+    "sha256": "090de0f66427067263b3bab5362e4ec84053149f3b1f35e46139a141a5121fbd",
+    "version": 1
+  },
+  "text": "```sql\nwith captures as (\n    select\n        ci.name as key,\n        a.method,\n        a.amount_minor,\n        row_number() over (\n            partition by a.order_id, a.amount_minor\n            order by a.attempt_no, a.attempt_id\n        ) as capture_rank\n    from payment_attempts a\n    join orders o on o.order_id = a.order_id\n    join showrooms s on s.showroom_id = o.showroom_id\n    join cities ci on ci.city_id = s.city_id\n    where not a.is_test\n      and not o.is_test\n      and a.status = 'captured'\n      and s.region_id = 'IN-TN'\n      and a.business_date between date '2026-08-01' and date '2026-08-31'\n),\ncity_emi_share as (\n    select\n        key,\n        cast(\n            sum(case when method = 'emi' then amount_minor else 0 end) * 1.0\n            / nullif(sum(amount_minor), 0)\n            as decimal(38,12)\n        ) as value\n    from captures\n    where capture_rank = 1\n    group by key\n)\nselect key, value\nfrom city_emi_share\norder by value desc, key asc\nlimit 5\n```",
+  "usage": {
+    "input_tokens": 16167,
+    "output_tokens": 795
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "kind": "text",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "baseline",
+    "provider": "openai",
+    "sha256": "090de0f66427067263b3bab5362e4ec84053149f3b1f35e46139a141a5121fbd",
+    "version": 1
+  },
+  "text": "```sql\nwith scoped_attempts as (\n    select a.status,\n           a.failure_reason\n    from payment_attempts a\n    join orders o on o.order_id = a.order_id\n    join showrooms s on s.showroom_id = o.showroom_id\n    join cities ci on ci.city_id = s.city_id\n    where not a.is_test\n      and not o.is_test\n      and s.region_id in ('IN-TN')\n      and ci.name = 'Chennai'\n      and a.business_date between date '2026-09-03' and date '2026-09-09'\n),\ndenominator as (\n    select count(*) as total_attempts\n    from scoped_attempts\n)\nselect failure_reason as key,\n       cast(count(*) * 1.0 / nullif(total_attempts, 0) as decimal(38,12)) as value\nfrom scoped_attempts\ncross join denominator\nwhere status = 'failed'\n  and failure_reason is not null\ngroup by failure_reason, total_attempts\norder by value desc, key asc\n```",
+  "usage": {
+    "input_tokens": 16168,
+    "output_tokens": 727
+  }
+}

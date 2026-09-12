@@ -1,0 +1,15 @@
+{
+  "kind": "text",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "baseline",
+    "provider": "openai",
+    "sha256": "090de0f66427067263b3bab5362e4ec84053149f3b1f35e46139a141a5121fbd",
+    "version": 1
+  },
+  "text": "```sql\nselect NULL as key,\n       count(*) as value\nfrom payment_attempts a\njoin orders o on o.order_id = a.order_id\njoin showrooms s on s.showroom_id = o.showroom_id\nwhere not a.is_test\n  and not o.is_test\n  and s.country_code = 'SG'\n  and a.business_date between date '2026-08-01' and date '2026-08-31'\norder by value\n```",
+  "usage": {
+    "input_tokens": 16368,
+    "output_tokens": 308
+  }
+}

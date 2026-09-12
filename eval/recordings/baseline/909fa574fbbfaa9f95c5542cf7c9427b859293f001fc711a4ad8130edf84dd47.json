@@ -1,0 +1,15 @@
+{
+  "kind": "text",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "baseline",
+    "provider": "openai",
+    "sha256": "090de0f66427067263b3bab5362e4ec84053149f3b1f35e46139a141a5121fbd",
+    "version": 1
+  },
+  "text": "```sql\nwith scoped_orders as (\n    select\n        o.order_id,\n        case\n            when o.business_date between date '2026-08-31' and date '2026-09-06' then 'last_week'\n            when o.business_date between date '2026-08-24' and date '2026-08-30' then 'previous_week'\n        end as period\n    from orders o\n    join showrooms s on s.showroom_id = o.showroom_id\n    where not o.is_test\n      and s.country_code = 'GB'\n      and o.business_date between date '2026-08-24' and date '2026-09-06'\n),\norders_with_attempts as (\n    select\n        so.period,\n        so.order_id,\n        max(case when a.status = 'captured' then 1 else 0 end) as succeeded\n    from scoped_orders so\n    join payment_attempts a on a.order_id = so.order_id\n    where not a.is_test\n    group by so.period, so.order_id\n),\nrates as (\n    select\n        period,\n        cast(sum(succeeded) * 1.0 / count(*) as decimal(38,12)) as rate\n    from orders_with_attempts\n    group by period\n),\ncomparison as (\n    select 'last_week' as key, rate as value from rates where period = 'last_week'\n    union all\n    select 'previous_week' as key, rate as value from rates where period = 'previous_week'\n    union all\n    select\n        'change_vs_previous_week' as key,\n        cast(\n            (select rate from rates where period = 'last_week')\n            - (select rate from rates where period = 'previous_week')\n            as decimal(38,12)\n        ) as value\n)\nselect key, value\nfrom comparison\norder by\n    case key\n        when 'last_week' then 1\n        when 'previous_week' then 2\n        when 'change_vs_previous_week' then 3\n    end\n```",
+  "usage": {
+    "input_tokens": 16174,
+    "output_tokens": 954
+  }
+}

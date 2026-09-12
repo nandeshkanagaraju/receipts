@@ -340,6 +340,7 @@
       "WHY"
     ],
     "data_version": "1c253c54cd598c861e800f5bf34b8c5f5c2a4ea294b3a4444671db7848344f4b",
+    "model": "openai/gpt-5.5-2026-04-23",
     "set": "dev"
   },
   "reference_failures": [],

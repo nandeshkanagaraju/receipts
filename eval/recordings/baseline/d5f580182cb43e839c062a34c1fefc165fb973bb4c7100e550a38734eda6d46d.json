@@ -1,0 +1,15 @@
+{
+  "kind": "text",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "baseline",
+    "provider": "openai",
+    "sha256": "090de0f66427067263b3bab5362e4ec84053149f3b1f35e46139a141a5121fbd",
+    "version": 1
+  },
+  "text": "```sql\nwith periods(key, start_date, end_date, sort_order) as (\n    values\n        ('week_before', date '2026-08-24', date '2026-08-30', 1),\n        ('last_week',   date '2026-08-31', date '2026-09-06', 2)\n),\nscope_orders as (\n    select p.key,\n           p.sort_order,\n           o.order_id\n    from periods p\n    join orders o\n      on o.business_date between p.start_date and p.end_date\n    join showrooms s\n      on s.showroom_id = o.showroom_id\n    where not o.is_test\n      and s.country_code in ('GB')\n),\nattempted_orders as (\n    select so.key,\n           so.sort_order,\n           so.order_id,\n           max(case when a.status = 'captured' then 1 else 0 end) as succeeded\n    from scope_orders so\n    join payment_attempts a\n      on a.order_id = so.order_id\n    where not a.is_test\n    group by so.key, so.sort_order, so.order_id\n)\nselect key,\n       cast(sum(succeeded) * 1.0 / count(*) as decimal(38,12)) as value\nfrom attempted_orders\ngroup by key, sort_order\norder by sort_order\n```",
+  "usage": {
+    "input_tokens": 16160,
+    "output_tokens": 805
+  }
+}

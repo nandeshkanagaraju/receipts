@@ -1,0 +1,15 @@
+{
+  "kind": "text",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "baseline",
+    "provider": "openai",
+    "sha256": "090de0f66427067263b3bab5362e4ec84053149f3b1f35e46139a141a5121fbd",
+    "version": 1
+  },
+  "text": "```sql\nwith fx as (\n    select c.rate_date,\n           c.currency,\n           cast(c.usd_per_unit / r.usd_per_unit as decimal(38,12)) as to_reporting\n    from fx_rates c\n    join fx_rates r on r.rate_date = c.rate_date and r.currency = 'INR'\n),\ncaptures as (\n    select case\n               when a.business_date between date '2026-09-01' and date '2026-09-09'\n                   then 'this_month_to_date'\n               when a.business_date between date '2026-08-01' and date '2026-08-09'\n                   then 'last_month_same_days'\n           end as period_key,\n           a.amount_minor,\n           a.currency,\n           a.business_date,\n           row_number() over (\n               partition by a.order_id, a.amount_minor\n               order by a.attempt_no, a.attempt_id\n           ) as capture_rank\n    from payment_attempts a\n    join orders o on o.order_id = a.order_id\n    join showrooms s on s.showroom_id = o.showroom_id\n    where a.status = 'captured'\n      and not a.is_test\n      and not o.is_test\n      and s.region_id = 'IN-TN'\n      and (\n          a.business_date between date '2026-09-01' and date '2026-09-09'\n          or a.business_date between date '2026-08-01' and date '2026-08-09'\n      )\n)\nselect period_key as key,\n       cast(round(sum(c.amount_minor * fx.to_reporting)) as bigint) as value\nfrom captures c\njoin fx on fx.currency = c.currency and fx.rate_date = c.business_date\nwhere c.capture_rank = 1\ngroup by period_key\norder by key\n```",
+  "usage": {
+    "input_tokens": 16169,
+    "output_tokens": 907
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "kind": "text",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "baseline",
+    "provider": "openai",
+    "sha256": "090de0f66427067263b3bab5362e4ec84053149f3b1f35e46139a141a5121fbd",
+    "version": 1
+  },
+  "text": "CANNOT_ANSWER: there is no footfall data in this database. The schema covers orders, payments, refunds, products, and store locations only, so no query can answer this.",
+  "usage": {
+    "input_tokens": 16155,
+    "output_tokens": 85
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "kind": "text",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "baseline",
+    "provider": "openai",
+    "sha256": "090de0f66427067263b3bab5362e4ec84053149f3b1f35e46139a141a5121fbd",
+    "version": 1
+  },
+  "text": "```sql\nwith per_order as (\n    select o.order_id,\n           count(a.attempt_id) as attempts\n    from orders o\n    join showrooms s on s.showroom_id = o.showroom_id\n    left join payment_attempts a\n      on a.order_id = o.order_id\n     and not a.is_test\n    where not o.is_test\n      and s.country_code = 'IN'\n    group by o.order_id\n)\nselect cast(NULL as varchar) as key,\n       cast(avg(attempts) as decimal(38,12)) as value\nfrom per_order\norder by value\n```",
+  "usage": {
+    "input_tokens": 16374,
+    "output_tokens": 1168
+  }
+}

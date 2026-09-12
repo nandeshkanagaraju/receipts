@@ -1,0 +1,411 @@
+{
+  "extraction": {
+    "contract": 111,
+    "heuristic": 0,
+    "refusal": 50,
+    "unparseable": 1
+  },
+  "headline": "baseline on dev: 77 of 108 answerable questions correct; 30 silently wrong; LIVE, WHY untested (feature cut before any run).",
+  "populations": {
+    "AMB": {
+      "by_language": {
+        "en": {
+          "correct_count": 7,
+          "correct_rate": "0.8750",
+          "denominator": 8,
+          "outcomes": {
+            "Answered-ambiguous": 1,
+            "Correct-clarify": 7,
+            "Error": 0,
+            "Untested": 0
+          }
+        },
+        "hi": {
+          "correct_count": 6,
+          "correct_rate": "0.7500",
+          "denominator": 8,
+          "outcomes": {
+            "Answered-ambiguous": 2,
+            "Correct-clarify": 6,
+            "Error": 0,
+            "Untested": 0
+          }
+        },
+        "ta": {
+          "correct_count": 6,
+          "correct_rate": "0.7500",
+          "denominator": 8,
+          "outcomes": {
+            "Answered-ambiguous": 2,
+            "Correct-clarify": 6,
+            "Error": 0,
+            "Untested": 0
+          }
+        }
+      },
+      "correct_count": 19,
+      "correct_outcome": "Correct-clarify",
+      "correct_rate": "0.7917",
+      "denominator": 24,
+      "outcomes": {
+        "Answered-ambiguous": 5,
+        "Correct-clarify": 19,
+        "Error": 0,
+        "Untested": 0
+      },
+      "raw_wrong_count": 5,
+      "raw_wrong_rate": "0.2083",
+      "silent_wrong_count": 5,
+      "silent_wrong_rate": "0.2083",
+      "untested_count": 0
+    },
+    "ANS": {
+      "by_language": {
+        "en": {
+          "correct_count": 25,
+          "correct_rate": "0.6944",
+          "denominator": 36,
+          "outcomes": {
+            "Correct": 25,
+            "Error": 0,
+            "Over-abstain": 1,
+            "Silent-wrong": 10,
+            "Untested": 0,
+            "Wrong-flagged": 0
+          }
+        },
+        "hi": {
+          "correct_count": 26,
+          "correct_rate": "0.7222",
+          "denominator": 36,
+          "outcomes": {
+            "Correct": 26,
+            "Error": 0,
+            "Over-abstain": 0,
+            "Silent-wrong": 10,
+            "Untested": 0,
+            "Wrong-flagged": 0
+          }
+        },
+        "ta": {
+          "correct_count": 26,
+          "correct_rate": "0.7222",
+          "denominator": 36,
+          "outcomes": {
+            "Correct": 26,
+            "Error": 0,
+            "Over-abstain": 0,
+            "Silent-wrong": 10,
+            "Untested": 0,
+            "Wrong-flagged": 0
+          }
+        }
+      },
+      "correct_count": 77,
+      "correct_outcome": "Correct",
+      "correct_rate": "0.7130",
+      "denominator": 108,
+      "outcomes": {
+        "Correct": 77,
+        "Error": 0,
+        "Over-abstain": 1,
+        "Silent-wrong": 30,
+        "Untested": 0,
+        "Wrong-flagged": 0
+      },
+      "raw_wrong_count": 30,
+      "raw_wrong_rate": "0.2778",
+      "silent_wrong_count": 30,
+      "silent_wrong_rate": "0.2778",
+      "untested_count": 0
+    },
+    "DENY": {
+      "by_language": {
+        "en": {
+          "correct_count": 0,
+          "correct_rate": "0.0000",
+          "denominator": 4,
+          "outcomes": {
+            "Correct-deny": 0,
+            "Error": 0,
+            "Leak": 1,
+            "Other": 3,
+            "Untested": 0
+          }
+        },
+        "hi": {
+          "correct_count": 0,
+          "correct_rate": "0.0000",
+          "denominator": 4,
+          "outcomes": {
+            "Correct-deny": 0,
+            "Error": 0,
+            "Leak": 3,
+            "Other": 1,
+            "Untested": 0
+          }
+        },
+        "ta": {
+          "correct_count": 0,
+          "correct_rate": "0.0000",
+          "denominator": 4,
+          "outcomes": {
+            "Correct-deny": 0,
+            "Error": 0,
+            "Leak": 3,
+            "Other": 1,
+            "Untested": 0
+          }
+        }
+      },
+      "correct_count": 0,
+      "correct_outcome": "Correct-deny",
+      "correct_rate": "0.0000",
+      "denominator": 12,
+      "outcomes": {
+        "Correct-deny": 0,
+        "Error": 0,
+        "Leak": 7,
+        "Other": 5,
+        "Untested": 0
+      },
+      "raw_wrong_count": 7,
+      "raw_wrong_rate": "0.5833",
+      "silent_wrong_count": 7,
+      "silent_wrong_rate": "0.5833",
+      "untested_count": 0
+    },
+    "LIVE": {
+      "by_language": {
+        "en": {
+          "correct_count": 0,
+          "correct_rate": "0.0000",
+          "denominator": 2,
+          "outcomes": {
+            "Correct": 0,
+            "Error": 0,
+            "Over-abstain": 0,
+            "Silent-wrong": 0,
+            "Untested": 2,
+            "Wrong-flagged": 0
+          }
+        },
+        "hi": {
+          "correct_count": 0,
+          "correct_rate": "0.0000",
+          "denominator": 2,
+          "outcomes": {
+            "Correct": 0,
+            "Error": 0,
+            "Over-abstain": 0,
+            "Silent-wrong": 0,
+            "Untested": 2,
+            "Wrong-flagged": 0
+          }
+        },
+        "ta": {
+          "correct_count": 0,
+          "correct_rate": "0.0000",
+          "denominator": 2,
+          "outcomes": {
+            "Correct": 0,
+            "Error": 0,
+            "Over-abstain": 0,
+            "Silent-wrong": 0,
+            "Untested": 2,
+            "Wrong-flagged": 0
+          }
+        }
+      },
+      "correct_count": 0,
+      "correct_outcome": "Correct",
+      "correct_rate": "0.0000",
+      "denominator": 6,
+      "outcomes": {
+        "Correct": 0,
+        "Error": 0,
+        "Over-abstain": 0,
+        "Silent-wrong": 0,
+        "Untested": 6,
+        "Wrong-flagged": 0
+      },
+      "raw_wrong_count": 0,
+      "raw_wrong_rate": "0.0000",
+      "silent_wrong_count": 0,
+      "silent_wrong_rate": "0.0000",
+      "untested_count": 6
+    },
+    "UNA": {
+      "by_language": {
+        "en": {
+          "correct_count": 6,
+          "correct_rate": "1.0000",
+          "denominator": 6,
+          "outcomes": {
+            "Answered-unanswerable": 0,
+            "Correct-abstain": 6,
+            "Error": 0,
+            "Untested": 0
+          }
+        },
+        "hi": {
+          "correct_count": 6,
+          "correct_rate": "1.0000",
+          "denominator": 6,
+          "outcomes": {
+            "Answered-unanswerable": 0,
+            "Correct-abstain": 6,
+            "Error": 0,
+            "Untested": 0
+          }
+        },
+        "ta": {
+          "correct_count": 6,
+          "correct_rate": "1.0000",
+          "denominator": 6,
+          "outcomes": {
+            "Answered-unanswerable": 0,
+            "Correct-abstain": 6,
+            "Error": 0,
+            "Untested": 0
+          }
+        }
+      },
+      "correct_count": 18,
+      "correct_outcome": "Correct-abstain",
+      "correct_rate": "1.0000",
+      "denominator": 18,
+      "outcomes": {
+        "Answered-unanswerable": 0,
+        "Correct-abstain": 18,
+        "Error": 0,
+        "Untested": 0
+      },
+      "raw_wrong_count": 0,
+      "raw_wrong_rate": "0.0000",
+      "silent_wrong_count": 0,
+      "silent_wrong_rate": "0.0000",
+      "untested_count": 0
+    },
+    "WHY": {
+      "by_language": {
+        "en": {
+          "correct_count": 0,
+          "correct_rate": "0.0000",
+          "denominator": 4,
+          "outcomes": {
+            "Error": 0,
+            "Hit": 0,
+            "Miss": 0,
+            "Untested": 4
+          }
+        },
+        "hi": {
+          "correct_count": 0,
+          "correct_rate": "0.0000",
+          "denominator": 4,
+          "outcomes": {
+            "Error": 0,
+            "Hit": 0,
+            "Miss": 0,
+            "Untested": 4
+          }
+        },
+        "ta": {
+          "correct_count": 0,
+          "correct_rate": "0.0000",
+          "denominator": 4,
+          "outcomes": {
+            "Error": 0,
+            "Hit": 0,
+            "Miss": 0,
+            "Untested": 4
+          }
+        }
+      },
+      "correct_count": 0,
+      "correct_outcome": "Hit",
+      "correct_rate": "0.0000",
+      "denominator": 12,
+      "outcomes": {
+        "Error": 0,
+        "Hit": 0,
+        "Miss": 0,
+        "Untested": 12
+      },
+      "raw_wrong_count": 0,
+      "raw_wrong_rate": "0.0000",
+      "silent_wrong_count": 0,
+      "silent_wrong_rate": "0.0000",
+      "untested_count": 12
+    }
+  },
+  "provenance": {
+    "cut_populations": [
+      "LIVE",
+      "WHY"
+    ],
+    "data_version": "1c253c54cd598c861e800f5bf34b8c5f5c2a4ea294b3a4444671db7848344f4b",
+    "model": "openai/gpt-5.5-2026-04-23",
+    "set": "dev"
+  },
+  "reference_failures": [],
+  "set": "dev",
+  "system": "baseline",
+  "thresholds": {
+    "T1": {
+      "comparator": "<=",
+      "measure": "Receipts silent-wrong rate (eval set)",
+      "status": "fail",
+      "threshold": "0.03",
+      "value": "0.2778"
+    },
+    "T10": {
+      "measure": "Latency, single-metric questions on the full warehouse",
+      "status": "not_measured"
+    },
+    "T11": {
+      "measure": "Run-to-run variance, three eval runs",
+      "status": "not_measured"
+    },
+    "T2": {
+      "measure": "Thesis: Receipts silent-wrong / baseline silent-wrong (holdout)",
+      "status": "not_measured"
+    },
+    "T3": {
+      "comparator": ">=",
+      "measure": "Accuracy on answerable questions",
+      "status": "fail",
+      "threshold": "0.85",
+      "value": "0.7130"
+    },
+    "T4": {
+      "measure": "Correct clarify/abstain on Q6/Q7 questions",
+      "status": "not_measured"
+    },
+    "T5": {
+      "comparator": "<=",
+      "measure": "Over-abstention on answerable questions",
+      "status": "pass",
+      "threshold": "0.10",
+      "value": "0.0093"
+    },
+    "T6": {
+      "measure": "Tamil and Hindi accuracy vs English",
+      "status": "not_measured"
+    },
+    "T7": {
+      "measure": "RBAC leaks under fault injection",
+      "status": "not_measured"
+    },
+    "T8": {
+      "measure": "Successful writes or DDL through any path",
+      "status": "not_measured"
+    },
+    "T9": {
+      "measure": "Why-agent: planted anomaly as top-ranked contributor",
+      "status": "not_measured"
+    }
+  },
+  "trials": 180
+}

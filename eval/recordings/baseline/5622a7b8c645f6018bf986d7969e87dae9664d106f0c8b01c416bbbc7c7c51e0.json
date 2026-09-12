@@ -1,0 +1,15 @@
+{
+  "kind": "text",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "baseline",
+    "provider": "openai",
+    "sha256": "090de0f66427067263b3bab5362e4ec84053149f3b1f35e46139a141a5121fbd",
+    "version": 1
+  },
+  "text": "```sql\nwith captures as (\n    select\n        a.attempt_id,\n        a.business_date,\n        row_number() over (\n            partition by a.order_id, a.amount_minor\n            order by a.attempt_no, a.attempt_id\n        ) as capture_rank\n    from payment_attempts a\n    join orders o on o.order_id = a.order_id\n    join showrooms s on s.showroom_id = o.showroom_id\n    where a.status = 'captured'\n      and not a.is_test\n      and not o.is_test\n      and s.region_id = 'IN-TN'\n)\nselect\n    null as key,\n    count(*) as value\nfrom captures\nwhere capture_rank > 1\n  and business_date between date '2026-08-01' and date '2026-08-31'\norder by value\n```",
+  "usage": {
+    "input_tokens": 16159,
+    "output_tokens": 701
+  }
+}

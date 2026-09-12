@@ -1,0 +1,15 @@
+{
+  "kind": "text",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "baseline",
+    "provider": "openai",
+    "sha256": "090de0f66427067263b3bab5362e4ec84053149f3b1f35e46139a141a5121fbd",
+    "version": 1
+  },
+  "text": "```sql\nwith fx as (\n    select c.rate_date,\n           c.currency,\n           cast(c.usd_per_unit / r.usd_per_unit as decimal(38,12)) as to_reporting\n    from fx_rates c\n    join fx_rates r on r.rate_date = c.rate_date and r.currency = 'GBP'\n)\nselect null as key,\n       cast(coalesce(round(sum(rf.amount_minor * fx.to_reporting)), 0) as bigint) as value\nfrom refunds rf\njoin orders o on o.order_id = rf.order_id\njoin showrooms s on s.showroom_id = o.showroom_id\njoin fx on fx.currency = rf.currency and fx.rate_date = rf.business_date\nwhere not o.is_test\n  and rf.status = 'processed'\n  and s.country_code in ('GB')\n  and rf.business_date between date '2026-08-01' and date '2026-08-31'\norder by value\n```",
+  "usage": {
+    "input_tokens": 16160,
+    "output_tokens": 719
+  }
+}

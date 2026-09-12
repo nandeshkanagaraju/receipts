@@ -1,0 +1,15 @@
+{
+  "kind": "text",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "baseline",
+    "provider": "openai",
+    "sha256": "090de0f66427067263b3bab5362e4ec84053149f3b1f35e46139a141a5121fbd",
+    "version": 1
+  },
+  "text": "```sql\nwith captures as (\n    select\n        a.attempt_id,\n        a.order_id,\n        a.amount_minor,\n        a.currency,\n        a.business_date,\n        case\n            when a.business_date between date '2026-09-01' and date '2026-09-09' then 'this_month'\n            when a.business_date between date '2026-08-01' and date '2026-08-09' then 'last_month_same_days'\n        end as period_key,\n        row_number() over (\n            partition by a.order_id, a.amount_minor\n            order by a.attempt_no, a.attempt_id\n        ) as capture_rank\n    from payment_attempts a\n    join orders o on o.order_id = a.order_id\n    join showrooms s on s.showroom_id = o.showroom_id\n    where a.status = 'captured'\n      and not a.is_test\n      and not o.is_test\n      and s.region_id = 'IN-TN'\n      and (\n          a.business_date between date '2026-09-01' and date '2026-09-09'\n          or a.business_date between date '2026-08-01' and date '2026-08-09'\n      )\n),\ntotals as (\n    select\n        c.period_key as key,\n        cast(round(sum(c.amount_minor * fx.inr_per_unit)) as bigint) as value\n    from captures c\n    join fx_rates fx\n      on fx.currency = c.currency\n     and fx.rate_date = c.business_date\n    where c.capture_rank = 1\n    group by c.period_key\n),\nperiods as (\n    select 'this_month' as key, 1 as sort_order\n    union all\n    select 'last_month_same_days' as key, 2 as sort_order\n)\nselect\n    p.key,\n    coalesce(t.value, 0) as value\nfrom periods p\nleft join totals t on t.key = p.key\norder by p.sort_order\n```",
+  "usage": {
+    "input_tokens": 16166,
+    "output_tokens": 1939
+  }
+}

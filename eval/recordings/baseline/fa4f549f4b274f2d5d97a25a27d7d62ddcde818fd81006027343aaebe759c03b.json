@@ -1,0 +1,15 @@
+{
+  "kind": "text",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "baseline",
+    "provider": "openai",
+    "sha256": "090de0f66427067263b3bab5362e4ec84053149f3b1f35e46139a141a5121fbd",
+    "version": 1
+  },
+  "text": "```sql\nwith scoped_orders as (\n    select o.order_id\n    from orders o\n    where not o.is_test\n      and o.business_date between date '2026-09-01' and date '2026-09-09'\n),\nattempted_orders as (\n    select a.order_id,\n           max(case when a.status = 'captured' then 1 else 0 end) as succeeded\n    from payment_attempts a\n    join scoped_orders so on so.order_id = a.order_id\n    where not a.is_test\n    group by a.order_id\n)\nselect null as key,\n       cast(sum(succeeded) * 1.0 / count(*) as decimal(38,12)) as value\nfrom attempted_orders\norder by value\n```",
+  "usage": {
+    "input_tokens": 16362,
+    "output_tokens": 579
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "kind": "text",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "baseline",
+    "provider": "openai",
+    "sha256": "090de0f66427067263b3bab5362e4ec84053149f3b1f35e46139a141a5121fbd",
+    "version": 1
+  },
+  "text": "CANNOT_ANSWER: भविष्य की अवधि के लिए GMV का पूर्वानुमान इस डेटाबेस से नहीं निकाला जा सकता; schema में forecasts या predictions के लिए डेटा नहीं है.",
+  "usage": {
+    "input_tokens": 16363,
+    "output_tokens": 106
+  }
+}

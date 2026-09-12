@@ -1,0 +1,15 @@
+{
+  "kind": "text",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "baseline",
+    "provider": "openai",
+    "sha256": "090de0f66427067263b3bab5362e4ec84053149f3b1f35e46139a141a5121fbd",
+    "version": 1
+  },
+  "text": "with fx as (\n    select src.rate_date,\n           src.currency,\n           cast(src.usd_per_unit / tgt.usd_per_unit as decimal(38,12)) as to_reporting\n    from fx_rates src\n    join fx_rates tgt\n      on tgt.rate_date = src.rate_date\n     and tgt.currency = 'MYR'\n),\ncaptures as (\n    select a.attempt_id,\n           a.order_id,\n           a.amount_minor,\n           a.currency,\n           a.business_date,\n           row_number() over (\n               partition by a.order_id, a.amount_minor\n               order by a.attempt_no, a.attempt_id\n           ) as capture_rank\n    from payment_attempts a\n    join orders o on o.order_id = a.order_id\n    join showrooms s on s.showroom_id = o.showroom_id\n    join countries co on co.country_code = s.country_code\n    where a.status = 'captured'\n      and not a.is_test\n      and not o.is_test\n      and co.name = 'Malaysia'\n      and a.business_date between date '2026-08-01' and date '2026-08-31'\n),\ncaptured as (\n    select sum(c.amount_minor * fx.to_reporting) as amount\n    from captures c\n    join fx on fx.currency = c.currency\n           and fx.rate_date = c.business_date\n    where c.capture_rank = 1\n),\nrefunded as (\n    select sum(rf.amount_minor * fx.to_reporting) as amount\n    from refunds rf\n    join orders o on o.order_id = rf.order_id\n    join payment_attempts a on a.attempt_id = rf.attempt_id\n    join showrooms s on s.showroom_id = o.showroom_id\n    join countries co on co.country_code = s.country_code\n    join fx on fx.currency = rf.currency\n           and fx.rate_date = rf.business_date\n    where rf.status = 'processed'\n      and not o.is_test\n      and not a.is_test\n      and co.name = 'Malaysia'\n      and rf.business_date between date '2026-08-01' and date '2026-08-31'\n)\nselect cast(NULL as varchar) as key,\n       cast(round(coalesce(captured.amount, 0) - coalesce(refunded.amount, 0)) as bigint) as value\nfrom captured, refunded\norder by value;",
+  "usage": {
+    "input_tokens": 16364,
+    "output_tokens": 1538
+  }
+}

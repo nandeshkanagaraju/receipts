@@ -674,6 +674,23 @@ class Baseline:
     attempts: list[Attempt] = field(default_factory=list)
     _prompts: dict[str, str] = field(default_factory=dict)
 
+    @property
+    def extraction_counts(self) -> dict[str, int]:
+        """How the results had to be read: contract / heuristic / unparseable.
+
+        §25.4 asks for `unparseable` as a separate count, and the other two are
+        worth the same line: they say how much guessing it takes to score a
+        free-form system at all. Counted over *attempts*, so a retry that changed
+        a heuristic read into a contract one shows both.
+        """
+        counts: dict[str, int] = {"contract": 0, "heuristic": 0, "unparseable": 0, "refusal": 0}
+        for attempt in self.attempts:
+            if attempt.extraction is not None:
+                counts[attempt.extraction.mode] += 1
+            elif attempt.text.startswith((CLARIFY_PREFIX, CANNOT_PREFIX)):
+                counts["refusal"] += 1
+        return counts
+
     def system_prompt(self, role: str) -> str:
         if role not in self._prompts:
             scope = scope_for(role, roles=self.roles)

@@ -1,0 +1,15 @@
+{
+  "kind": "text",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "baseline",
+    "provider": "openai",
+    "sha256": "090de0f66427067263b3bab5362e4ec84053149f3b1f35e46139a141a5121fbd",
+    "version": 1
+  },
+  "text": "```sql\nwith days as (\n    select cast(d as date) as business_date\n    from generate_series(date '2026-09-03', date '2026-09-09', interval 1 day) as t(d)\n),\ndaily_orders as (\n    select o.business_date,\n           count(*) as order_count\n    from orders o\n    join showrooms s on s.showroom_id = o.showroom_id\n    where not o.is_test\n      and s.region_id in ('IN-TN')\n      and o.business_date between date '2026-09-03' and date '2026-09-09'\n    group by o.business_date\n)\nselect cast(d.business_date as varchar) as key,\n       coalesce(do.order_count, 0) as value\nfrom days d\nleft join daily_orders do on do.business_date = d.business_date\norder by d.business_date asc\n```",
+  "usage": {
+    "input_tokens": 16160,
+    "output_tokens": 454
+  }
+}

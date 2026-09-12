@@ -1,0 +1,15 @@
+{
+  "kind": "text",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "baseline",
+    "provider": "openai",
+    "sha256": "090de0f66427067263b3bab5362e4ec84053149f3b1f35e46139a141a5121fbd",
+    "version": 1
+  },
+  "text": "SELECT\n  NULL AS key,\n  CAST(\n    SUM(CASE WHEN a.status = 'captured' THEN 1 ELSE 0 END) * 1.0\n    / NULLIF(COUNT(*), 0)\n    AS DECIMAL(38,12)\n  ) AS value\nFROM payment_attempts a\nJOIN orders o ON o.order_id = a.order_id\nJOIN showrooms s ON s.showroom_id = o.showroom_id\nJOIN cities ci ON ci.city_id = s.city_id\nWHERE NOT a.is_test\n  AND NOT o.is_test\n  AND a.method = 'upi'\n  AND ci.name = 'Chennai'\n  AND s.region_id IN ('IN-TN')\n  AND a.business_date BETWEEN DATE '2026-08-31' AND DATE '2026-09-06'\nORDER BY value;",
+  "usage": {
+    "input_tokens": 16161,
+    "output_tokens": 438
+  }
+}

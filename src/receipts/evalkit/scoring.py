@@ -175,6 +175,7 @@ def score(
     tolerance: Decimal = DEFAULT_TOLERANCE,
     top_k: int | None = None,
     untested: bool = False,
+    flags_unverified: bool = True,
 ) -> Outcome:
     """One trial's outcome, per SDD §25.3.
 
@@ -231,6 +232,17 @@ def score(
     ok, detail = value_matches(answer, reference, tolerance=tolerance, top_k=top_k)
     if ok:
         return made("Correct")
-    if answer.status == "UNVERIFIED":
+    # SDD §25.3: Silent-wrong is "wrong, VERIFIED, **or any wrong baseline
+    # answer**". The second clause is the one that matters, and leaving it out
+    # inverted the headline: the baseline marks every answer UNVERIFIED because
+    # nothing verified it, so a scorer reading only the status filed all 30 of
+    # its wrong answers as *flagged* and reported a silent-wrong rate of zero --
+    # for the system whose silent wrongness the thesis exists to measure.
+    #
+    # A status is not a flag. It is a flag when the asker sees it, and the
+    # baseline shows the asker a number. `flags_unverified` is what the system
+    # actually does, supplied by the caller, because nothing in the answer can
+    # say it.
+    if answer.status == "UNVERIFIED" and flags_unverified:
         return made("Wrong-flagged", detail)
     return made("Silent-wrong", detail)

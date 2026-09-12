@@ -1,0 +1,15 @@
+{
+  "kind": "text",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "baseline",
+    "provider": "openai",
+    "sha256": "090de0f66427067263b3bab5362e4ec84053149f3b1f35e46139a141a5121fbd",
+    "version": 1
+  },
+  "text": "CLARIFY: Which payment metric do you want for this month -- order-level success rate, attempt-level success rate, failure rate by reason, captured GMV, or settlement lag?",
+  "usage": {
+    "input_tokens": 16360,
+    "output_tokens": 244
+  }
+}

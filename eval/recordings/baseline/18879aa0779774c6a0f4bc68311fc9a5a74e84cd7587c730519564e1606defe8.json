@@ -1,0 +1,15 @@
+{
+  "kind": "text",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "baseline",
+    "provider": "openai",
+    "sha256": "090de0f66427067263b3bab5362e4ec84053149f3b1f35e46139a141a5121fbd",
+    "version": 1
+  },
+  "text": "CANNOT_ANSWER: unsettled amount requires the finance capability and the settlements / settlement_items tables, which are not available to this role.",
+  "usage": {
+    "input_tokens": 16164,
+    "output_tokens": 98
+  }
+}

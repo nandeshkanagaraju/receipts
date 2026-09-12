@@ -42,6 +42,14 @@ REPO = Path(__file__).resolve().parents[3]
 RESULTS = REPO / "eval" / "results"
 THRESHOLDS = REPO / "config" / "thresholds.yaml"
 
+# Whether a system shows the asker that an answer was not verified (SDD §25.3).
+# Receipts does: an UNVERIFIED answer arrives labelled, and a wrong one is
+# Wrong-flagged. The baseline does not -- it returns a number, so a wrong answer
+# is Silent-wrong however this code labels it internally. Named per system rather
+# than inferred from the answer, because no field of an answer can say what the
+# asker was shown.
+FLAGS_UNVERIFIED: dict[str, bool] = {"baseline": False}
+
 # Populations whose feature was cut before any system ran (LIMITATIONS.md).
 # Scored `Untested`, never as a failure.
 CUT_POPULATIONS: frozenset[str] = frozenset({"WHY", "LIVE"})
@@ -180,8 +188,16 @@ def _provenance(set_name: str) -> dict[str, Any]:
     # git -- it is the commit the report is *in* -- so carrying it inside is both
     # redundant and self-defeating. Found by the CI byte-identity step within a
     # minute of adding it, which is the argument for that step.
+    # The model is an identifier, not a measurement: it is the same for every run
+    # of this commit, so it cannot break byte-identity, and a results file that
+    # does not name the model it measured is a file nobody can interpret two
+    # months later (ADR-018).
+    from ..config import load_settings
+
+    primary = load_settings().llm.primary
     return {
         "data_version": data_version,
+        "model": f"{primary.provider}/{primary.model}",
         "set": set_name,
         "cut_populations": sorted(CUT_POPULATIONS),
     }
@@ -333,6 +349,7 @@ def run(
                 tolerance=_tolerance(expected),
                 top_k=expected.get("top_k"),
                 untested=untested,
+                flags_unverified=FLAGS_UNVERIFIED.get(system_name, True),
             )
         )
 
@@ -346,6 +363,12 @@ def run(
     # Surfaced in the report rather than logged: a reference that would not build
     # is the difference between "the system was wrong" and "nothing was asked".
     built["reference_failures"] = sorted(failed_references)
+    # §25.4: unparseable is reported as its own count. Present only for systems
+    # that have an extraction step at all, so the field's absence is meaningful
+    # rather than a zero that looks like a measurement.
+    extraction = getattr(system, "extraction_counts", None)
+    if isinstance(extraction, dict):
+        built["extraction"] = dict(sorted(extraction.items()))
 
     if write:
         target = RESULTS / set_name / system_name
