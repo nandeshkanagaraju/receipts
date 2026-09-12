@@ -408,6 +408,15 @@ the project is written up:
 > fixed the sixth, because at the moment of writing, "the corpus passes today"
 > and "the corpus passes" are the same sentence.
 
+**Carry the conjunction pattern with it**, from the same file: *every leak in this
+build has been two reasonable rules whose conjunction nobody stated.* The two
+belong together because they are the pair of ways a defect stays invisible while
+it is being written — one by being true today, one by being right on its own line
+— and because they need opposite remedies. Milestone-assertion is met by a
+question you can learn to ask; a conjunction is met only by a refusal at the point
+where the two rules touch, because there is no question about either rule that
+surfaces the other.
+
 It belongs there rather than only in an internal note because it is the most
 transferable thing this build produced. The table of six instances is evidence; the
 sentence is the finding, and it generalises past this repository to any test suite

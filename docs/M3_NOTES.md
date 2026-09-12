@@ -186,6 +186,59 @@ the answer is "when the project makes progress", it is pinned to the state.
 
 ---
 
+## Standing pattern: the leak is the conjunction, not either rule
+
+Every leak in this build has been two reasonable rules whose conjunction nobody
+stated.
+
+Here they were **"a report goes in a gist"** and **"a report may quote what a scan
+found"**. Both are right. The first is how work gets reviewed without putting
+reports in the repository; the second is what makes a report about a scan worth
+reading — a finding with no example is an assertion. Held together, they publish
+holdout question text to an unlisted URL, and neither rule is the one to withdraw.
+
+The earlier instances have the same shape:
+
+| Leak | Rule A | Rule B |
+|---|---|---|
+| The sealed set pushed to a public repo | "generator output belongs beside the generator" | "the skeleton's `.gitignore` comments describe what is committed" |
+| The relaxed deny list that could reach `main` | "the isolated run needs the holdout readable" | "settings live in the repository so they travel with it" |
+| Holdout wording in five gists | "a report goes in a gist" | "a report may quote what a scan found" |
+
+In each case a review of either rule alone finds nothing wrong. The failure is
+only visible when the two are applied to the same object, which is the one view
+nobody holds while writing a single rule.
+
+### Why this is harder than the milestone-assertion pattern
+
+Both patterns are about a defect that is invisible at the moment of writing, but
+they differ in what would have caught them.
+
+Milestone-assertion is catchable by a question you can ask yourself about a single
+line: *when does this stop being true?* It is a habit, and the habit is
+learnable — though the record shows learning it is not enough, which is the
+point of that section.
+
+A conjunction is not catchable that way, because **neither rule is wrong on the
+line where it is written.** There is no question to ask about rule A that surfaces
+rule B. The only reliable catch is mechanical: make one of the two a refusal, at
+the point where they meet. Not a stricter rule — a narrower door.
+
+So: `scripts/publish_report.py` scans for a holdout qid and refuses if it finds
+one **at all**, bare or not, and the `PreToolUse` hook refuses `gh gist create`
+run any other way. The conjunction is now impossible to apply rather than
+discouraged, and nobody has to notice it at the moment they are busy.
+
+### The rule
+
+**When two rules meet on the same object, one of them becomes a refusal at the
+meeting point.** Ask it of any pair that touches the holdout boundary: reports and
+scans, settings and worktrees, generator output and version control. If the
+answer is "we would notice", that is the same answer that was true before each of
+the three leaks above.
+
+---
+
 ## Recorded in M3, closed in M3
 
 - **Ruling 3 stands at ten rows.** `scalar` + `compare` is the same defect as

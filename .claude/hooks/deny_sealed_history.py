@@ -121,6 +121,23 @@ HEREDOC = re.compile(r"<<-?\s*['\"]?(\w+)['\"]?.*?^\1$", re.M | re.S)
 SEPARATORS = re.compile(r"&&|\|\||;|\||\n")
 
 
+# Creating a gist goes through scripts/publish_report.py, which scans for holdout
+# qids first. Five gists reached this account carrying them, because "a report
+# goes in a gist" and "a report may quote what a scan found" are both reasonable
+# and their conjunction was never written down. A habit cannot be relied on at the
+# moment it matters; a refusal can.
+GIST_WRITE = re.compile(r"\bgh\s+gist\s+(?:create|edit)\b", re.I)
+SANCTIONED_PUBLISHER = re.compile(r"publish_report\.py", re.I)
+
+GIST_REFUSAL = (
+    "Refused: create a gist through scripts/publish_report.py, not directly.\n"
+    "It scans for holdout qids first and refuses if it finds one at all -- bare, "
+    "with a property, or with text.\n"
+    '  python scripts/publish_report.py <file> --desc "..."\n'
+    "HANDOFF §4.8. A report that needs to name a holdout row names a count instead."
+)
+
+
 def segments(command: str) -> list[str]:
     """Split into shell segments, with heredoc bodies removed.
 
@@ -152,6 +169,8 @@ def verdict(
     if protected is None:
         protected = ALWAYS_PROTECTED if isolated(repo) else PROTECTED
     for segment in segments(command):
+        if GIST_WRITE.search(segment) and not SANCTIONED_PUBLISHER.search(segment):
+            return GIST_REFUSAL
         if NON_DISPLAYING.match(segment):
             continue
         if not any(p.search(segment) for p in protected):
