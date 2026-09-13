@@ -30,9 +30,20 @@ for (const shot of SHOTS) {
   test(`screenshot ${shot.name}`, async ({ page }, info) => {
     const width = info.project.name === "mobile" ? 375 : 1280;
     await page.goto(`/?role=${shot.role}`);
-    await page.getByTestId("question-input").fill(shot.question);
-    await page.getByTestId("ask-button").click();
-    await expect(page.getByTestId("answer-canvas")).toBeVisible({ timeout: 40_000 });
+    // The same rate-limit wait the journeys use. This spec runs after them, so
+    // by the time it starts the demo's 20-a-minute allowance is often spent --
+    // and a screenshot of an error page is a screenshot nobody wants committed.
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      await page.getByTestId("question-input").fill(shot.question);
+      await page.getByTestId("ask-button").click();
+      const canvas = page.getByTestId("answer-canvas");
+      const failure = page.getByTestId("answer-error");
+      await expect(canvas.or(failure)).toBeVisible({ timeout: 40_000 });
+      if ((await failure.count()) === 0) break;
+      expect(await failure.getAttribute("data-code")).toBe("RATE_LIMITED");
+      await page.waitForTimeout(61_000 - (Date.now() % 60_000));
+    }
+    await expect(page.getByTestId("answer-canvas")).toBeVisible();
     await expect(page.getByTestId("receipt-card")).toBeVisible();
     await page.screenshot({
       path: `../docs/screens/ask-${width}-${shot.name}.png`,

@@ -14,6 +14,7 @@ export interface Copy {
   readonly emptyTitle: string;
   readonly emptyBody: string;
   readonly recordedNote: string;
+  readonly startWithExample: string;
   readonly thinking: string;
   readonly chart: string;
   readonly table: string;
@@ -62,7 +63,8 @@ const EN: Copy = {
   emptyTitle: "Ask a question about payments.",
   emptyBody: "Every answer comes with a receipt saying where the number came from.",
   recordedNote:
-    "This demo answers a fixed set of recorded questions.",
+    "Answers here are replayed from the recorded evaluation, so they are exactly the ones that were measured.",
+  startWithExample: "Start with an example below.",
   thinking: "Working",
   chart: "Chart",
   table: "Table",
@@ -100,7 +102,7 @@ const EN: Copy = {
   },
   errors: {
     MODEL_UNAVAILABLE:
-      "This demo answers a fixed set of recorded questions, and this one is not among them. Try one of the examples, or open the catalog to run a metric directly.",
+      "Nothing is broken — this question just was not part of the recorded evaluation, so there is no recorded answer to replay. The examples below are, and every one of them works. You can also open the catalog to run any metric directly, with no model involved at all.",
     RATE_LIMITED: "That is more questions than the demo allows in a minute.",
     DB_TIMEOUT: "The warehouse took too long. Ask again, or narrow the window.",
     DB_UNAVAILABLE: "The warehouse is not answering. Nothing was run.",
@@ -131,7 +133,8 @@ const TA: Copy = {
   emptyTitle: "Payments பற்றி ஒரு கேள்வி கேளுங்கள்.",
   emptyBody: "ஒவ்வொரு பதிலுடனும், அந்த எண் எங்கிருந்து வந்தது என்று சொல்லும் ஒரு receipt வரும்.",
   recordedNote:
-    "இந்த demo, பதிவு செய்யப்பட்ட குறிப்பிட்ட கேள்விகளுக்கு மட்டுமே பதிலளிக்கும்.",
+    "இங்குள்ள பதில்கள் பதிவு செய்யப்பட்ட மதிப்பீட்டிலிருந்து replay செய்யப்படுகின்றன — அளவிடப்பட்ட அதே பதில்கள்.",
+  startWithExample: "கீழே உள்ள எடுத்துக்காட்டு ஒன்றில் தொடங்குங்கள்.",
   thinking: "வேலை நடக்கிறது",
   chart: "விளக்கப்படம்",
   table: "அட்டவணை",
@@ -180,7 +183,8 @@ const HI: Copy = {
   emptyTitle: "भुगतान के बारे में एक सवाल पूछें।",
   emptyBody: "हर जवाब के साथ एक receipt आती है जो बताती है कि यह संख्या कहाँ से आई।",
   recordedNote:
-    "यह demo रिकॉर्ड किए गए सवालों के एक निश्चित सेट का ही जवाब देता है।",
+    "यहाँ के जवाब रिकॉर्ड किए गए मूल्यांकन से replay होते हैं — वही जवाब जो मापे गए थे।",
+  startWithExample: "नीचे दिए किसी उदाहरण से शुरू करें।",
   thinking: "काम चल रहा है",
   chart: "चार्ट",
   table: "तालिका",

@@ -159,6 +159,60 @@ test.describe("PDD §8.3", () => {
   });
 });
 
+test.describe("a first-time visitor is never at a dead end", () => {
+  test("an unrecorded question explains itself and the way out is on screen", async ({
+    page,
+  }) => {
+    await open(page, "rm_tamil_nadu");
+
+    // Exactly what a reviewer does: type their own question before noticing
+    // the examples. Nothing recorded this, so it cannot be answered.
+    await page.getByTestId("question-input").fill("what is the airspeed of a swallow");
+    await page.getByTestId("ask-button").click();
+
+    const failure = page.getByTestId("answer-error");
+    await expect(failure).toBeVisible({ timeout: 40_000 });
+    await expect(failure).toHaveAttribute("data-code", "MODEL_UNAVAILABLE");
+
+    // It says nothing is broken, and says why.
+    await expect(failure).toContainText("Nothing is broken");
+    await expect(failure).toContainText("recorded evaluation");
+
+    // And the thing it tells them to do is ON SCREEN. Before this, the copy
+    // said "try one of the examples" while the examples were hidden.
+    const examples = page.getByTestId("example-question");
+    await expect(examples.first()).toBeVisible();
+    expect(await examples.count()).toBeGreaterThanOrEqual(3);
+
+    // Clicking one gets a real answer with a receipt: the dead end has an exit
+    // and the exit works.
+    await examples.first().click();
+    await expect(page.getByTestId("answer-canvas")).toHaveAttribute("data-status", "VERIFIED", {
+      timeout: 40_000,
+    });
+    await expect(page.getByTestId("receipt-card")).toBeVisible();
+  });
+
+  test("the replay note is visible before anything is typed", async ({ page }) => {
+    await open(page, "rm_tamil_nadu");
+    const note = page.getByTestId("recorded-note");
+    await expect(note).toBeVisible();
+    // It leads with what IS true rather than with what is missing.
+    await expect(note).toContainText("replayed from the recorded evaluation");
+    await expect(note).toContainText("Start with an example");
+    // And the examples it names are there to start with.
+    expect(await page.getByTestId("example-question").count()).toBeGreaterThanOrEqual(3);
+
+    // Once an answer is up the examples go, and so does the instruction to use
+    // them -- the note must not point below itself at nothing.
+    await page.getByTestId("example-question").first().click();
+    await expect(page.getByTestId("answer-canvas")).toBeVisible({ timeout: 40_000 });
+    await expect(page.getByTestId("example-question")).toHaveCount(0);
+    await expect(note).toContainText("replayed from the recorded evaluation");
+    await expect(note).not.toContainText("Start with an example");
+  });
+});
+
 test.describe("quality floor (SDD §22)", () => {
   test("axe-core finds no serious violation with an answer rendered", async ({ page }) => {
     await open(page, "rm_tamil_nadu");

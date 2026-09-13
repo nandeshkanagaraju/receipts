@@ -200,6 +200,7 @@ export function App() {
             copy={copy}
             onAsk={(question) => run(question, null)}
             trace={<StepTrace steps={steps} running={busy} copy={copy} />}
+            stuck={failure !== null}
           />
         </section>
 

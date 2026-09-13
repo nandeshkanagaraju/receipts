@@ -14,6 +14,7 @@ export function ChatPane({
   copy,
   onAsk,
   trace,
+  stuck,
 }: {
   asked: string[];
   examples: readonly string[];
@@ -23,7 +24,11 @@ export function ChatPane({
   /** The step trace, rendered between the transcript and the input -- beside
    *  the question it describes rather than above it or below the examples. */
   trace: React.ReactNode;
+  /** True when the last attempt failed. The examples come back, because the
+   *  error copy tells the reader to try one and they were not on screen. */
+  stuck: boolean;
 }) {
+  const showExamples = asked.length === 0 || stuck;
   const [draft, setDraft] = useState("");
 
   return (
@@ -80,16 +85,26 @@ export function ChatPane({
             {copy.ask}
           </button>
         </div>
+        {/* The explanation is always true, so it is always shown. The
+            instruction is only true while the examples are on screen, so it is
+            only shown then -- a note telling the reader to start with an
+            example below, above nothing, is a small lie about its own page. */}
         <p className="mt-2 text-xs leading-relaxed text-ink/65" data-testid="recorded-note">
           {copy.recordedNote}
+          {showExamples ? ` ${copy.startWithExample}` : ""}
         </p>
       </form>
 
-      {/* The examples are an EMPTY STATE, so they go once a question has been
-          asked. Leaving them up pushed the answer below three buttons and the
-          step trace at 375px -- the asker had to scroll past the suggestions to
-          reach the thing they asked for. */}
-      {asked.length === 0 ? (
+      {/* Examples are an empty state, so they go once an answer is on screen --
+          leaving them up pushed the answer below three buttons and the trace at
+          375px. But they come BACK on a failure.
+          
+          Without that, the 503 copy said "try one of the examples" while the
+          examples were hidden: the one thing the error told the reader to do was
+          the one thing they could not see. A first-time visitor who typed their
+          own question before clicking an example reached a dead end that named
+          its own way out and then withheld it. */}
+      {showExamples ? (
         <ul className="mt-3 space-y-1.5" data-testid="examples">
           {examples.map((question) => (
             <li key={question}>
