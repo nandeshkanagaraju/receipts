@@ -1,0 +1,36 @@
+# The demo, as an AWS Lambda container image (ADR-022).
+#
+# Lightsail container services are quota-blocked on this account and App Runner
+# answers SubscriptionRequiredException, so the demo runs on Lambda behind a
+# Function URL -- which gives HTTPS for nothing and costs about two cents for a
+# four-day demo. Lambda's free tier is perpetual rather than promotional, so
+# this outlives the $100 credit too.
+#
+# Built ON TOP of the image `deploy/aws/deploy.sh` already produced, rather than
+# from scratch: that build takes twenty minutes under emulation and nothing
+# about it needs to change.
+ARG BASE
+FROM ${BASE}
+
+USER root
+
+# The AWS Lambda Web Adapter: an extension that turns Lambda's invoke into an
+# ordinary HTTP request against the app already listening on AWS_LWA_PORT. The
+# application does not know it is on Lambda, which is the point -- the same
+# uvicorn command serves locally, under Compose, and here.
+COPY --from=public.ecr.aws/awsguru/aws-lambda-adapter:0.9.1 /lambda-adapter /opt/extensions/lambda-adapter
+
+ENV AWS_LWA_PORT=7860 \
+    AWS_LWA_READINESS_CHECK_PATH=/healthz \
+    AWS_LWA_INVOKE_MODE=response_stream \
+    AWS_LWA_ASYNC_INIT=true \
+    RECEIPTS_LLM_MODE=replay \
+    DEMO_MODE=true \
+    # Everything outside /tmp is read-only on Lambda. The warehouse is opened
+    # read-only anyway (D8); the audit log is the only thing that writes.
+    RECEIPTS_AUDIT_PATH=/tmp/audit.sqlite \
+    HOME=/tmp
+
+USER receipts
+CMD ["python", "-m", "uvicorn", "--factory", "receipts.api.app:create_app", \
+     "--host", "0.0.0.0", "--port", "7860"]

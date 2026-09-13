@@ -57,6 +57,25 @@ class Runtime:
         return self._scopes[role]
 
 
+def _audit_path() -> Path:
+    """Where the append-only audit log lives.
+
+    `RECEIPTS_AUDIT_PATH` exists because some hosts give the application a
+    read-only filesystem with one writable directory -- AWS Lambda is the case
+    that forced it, where everything outside `/tmp` is read-only. The warehouse
+    is opened read-only anyway (D8), so the audit log is the only thing that
+    needs somewhere to write, and hardcoding it under `data/` made the whole
+    application undeployable on such a host.
+
+    A log on ephemeral storage does not survive a restart. That is stated in
+    LIMITATIONS rather than hidden: the receipt itself is deterministic and
+    reproducible from the repository, and the audit log is an index over what
+    happened, not the evidence.
+    """
+    override = os.environ.get("RECEIPTS_AUDIT_PATH")
+    return Path(override) if override else REPO / "data" / "audit.sqlite"
+
+
 def _demo_mode(default: bool) -> bool:
     """`DEMO_MODE` from the environment, else the settings value.
 
@@ -116,7 +135,7 @@ def build_runtime(*, audit_path: Path | None = None, llm: Any = None) -> Runtime
         deps=deps,
         roles=roles,
         places=places,
-        audit=AuditLog(audit_path or REPO / "data" / "audit.sqlite"),
+        audit=AuditLog(audit_path or _audit_path()),
         limiter=RateLimiter(per_minute=settings.demo.questions_per_minute),
         spend=DailySpend(cap_micro_usd=settings.demo.daily_spend_cap_micro_usd),
         # SDD §28: DEMO_MODE enables demo login, the rate limit and the
