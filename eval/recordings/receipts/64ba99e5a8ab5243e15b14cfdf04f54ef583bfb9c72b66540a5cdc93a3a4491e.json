@@ -1,0 +1,16 @@
+{
+  "kind": "text",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "composer",
+    "provider": "openai",
+    "sha256": "b2811b5cadb8075a4cba32008339059d163d0eb918b9b2525bb21fc546e8a498",
+    "version": 1
+  },
+  "text": "Captured GMV for 2026-09-01 to 2026-09-09 was USD 149643371; the table does not include last month’s value, so the comparison is not shown. Default applied: “captured GMV” was interpreted as gmv_captured in USD.",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 530,
+    "output_tokens": 301
+  }
+}

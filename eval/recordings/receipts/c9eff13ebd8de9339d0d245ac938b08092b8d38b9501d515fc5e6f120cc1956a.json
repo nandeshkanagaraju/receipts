@@ -1,0 +1,58 @@
+{
+  "data": {
+    "result": {
+      "ambiguities": [
+        {
+          "chosen": "net_revenue",
+          "kind": "metric_choice",
+          "readings": [
+            "net_revenue (net revenue: captured GMV minus refunds processed in the same window)",
+            "gmv_captured (gross captured money from customers)"
+          ],
+          "term": "राजस्व"
+        },
+        {
+          "chosen": null,
+          "kind": "currency",
+          "readings": [
+            "report in local/original currencies",
+            "convert to a single reporting currency"
+          ],
+          "term": "रिपोर्टिंग मुद्रा"
+        }
+      ],
+      "compare_to": null,
+      "dimensions": [],
+      "filters": [],
+      "grain": "NONE",
+      "kind": "metric",
+      "limit": null,
+      "name": "net_revenue",
+      "order": null,
+      "reporting_currency": null,
+      "window": {
+        "calendar": "unspecified",
+        "end": null,
+        "kind": "relative",
+        "quarter": null,
+        "relative": "last_month",
+        "start": null,
+        "year": null
+      }
+    }
+  },
+  "kind": "structured",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "planner",
+    "provider": "openai",
+    "sha256": "f26d0464d9d7a63b5259ff1fc4dd68184fafdf7c2ee51de0032d8d5bc454321d",
+    "version": 1
+  },
+  "raw": "{\"result\":{\"kind\":\"metric\",\"name\":\"net_revenue\",\"dimensions\":[],\"filters\":[],\"window\":{\"kind\":\"relative\",\"relative\":\"last_month\",\"start\":null,\"end\":null,\"quarter\":null,\"year\":null,\"calendar\":\"unspecified\"},\"grain\":\"NONE\",\"compare_to\":null,\"order\":null,\"limit\":null,\"reporting_currency\":null,\"ambiguities\":[{\"term\":\"राजस्व\",\"kind\":\"metric_choice\",\"readings\":[\"net_revenue (net revenue: captured GMV minus refunds processed in the same window)\",\"gmv_captured (gross captured money from customers)\"],\"chosen\":\"net_revenue\"},{\"term\":\"रिपोर्टिंग मुद्रा\",\"kind\":\"currency\",\"readings\":[\"report in local/original currencies\",\"convert to a single reporting currency\"],\"chosen\":null}]}}",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 2070,
+    "output_tokens": 680
+  }
+}

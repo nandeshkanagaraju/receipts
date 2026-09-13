@@ -285,3 +285,100 @@ __all__ = [
     "plan_json_schema",
     "short_hash",
 ]
+
+
+# --------------------------------------------------------------------------- #
+# M14: what the asker actually receives, and what the operator sees instead.
+# --------------------------------------------------------------------------- #
+
+
+class ChartSpec(Strict):
+    """What to draw. The UI renders it; a table view always accompanies it."""
+
+    type: Literal["number", "line", "bar", "hbar", "grouped_bar", "table"]
+    x: str | None = None
+    y: str = "value"
+    series: str | None = None
+    unit: Literal["count", "ratio", "money", "days"] = "count"
+    currency: str | None = None
+
+
+class Receipt(Strict):
+    """Why this number is this number (SDD §14.4, §8).
+
+    For `UNVERIFIED` there is no metric and no definition, and the receipt says
+    so plainly rather than leaving the fields out -- an absent field reads as an
+    oversight, and this one is the whole point of the status.
+    """
+
+    receipt_id: str
+    status: Status
+    metric: str | None = None
+    definition: str | None = None
+    scope_text: str = ""
+    window_text: str = ""
+    excludes: tuple[str, ...] = ()
+    base_count: int | None = None
+    source: str = ""
+    fresh_through: date | None = None
+    defaults_applied: tuple[str, ...] = ()
+    siblings: tuple[str, ...] = ()
+    plan_hash: str | None = None
+    sql_hash: str | None = None
+    sql: str | None = None
+
+
+class ClarifyChoice(Strict):
+    label: str
+    patch_json: str = "{}"
+
+
+class Clarification(Strict):
+    clarification_id: str
+    prompt: str
+    options: Annotated[tuple[ClarifyChoice, ...], Field(min_length=2, max_length=4)]
+
+
+class Answer(Strict):
+    """What the asker receives. **No telemetry** (D12).
+
+    No latency, no token count, no cost, no cache flag. An answer that carried
+    any of those would differ between two runs of the same question, which is
+    exactly what D16 forbids -- and the eval compares answers.
+    """
+
+    status: Status
+    language: Lang
+    narration: str = ""
+    table: ResultTable | None = None
+    chart: ChartSpec | None = None
+    receipt: Receipt | None = None
+    clarification: Clarification | None = None
+    reason: str | None = None
+
+
+class Span(Strict):
+    """One stage of the pipeline, for the trace. Never for the answer."""
+
+    name: str
+    detail: str = ""
+    ok: bool = True
+
+
+class Trace(Strict):
+    """Telemetry (D12): never compared, never hashed into a result."""
+
+    receipt_id: str | None = None
+    spans: tuple[Span, ...] = ()
+    tokens_in: int = 0
+    tokens_out: int = 0
+    cost_micro_usd: int = 0
+    notes: tuple[str, ...] = ()
+
+    def with_span(self, name: str, detail: str = "", ok: bool = True) -> Trace:
+        return self.model_copy(
+            update={"spans": (*self.spans, Span(name=name, detail=detail, ok=ok))}
+        )
+
+    def with_note(self, note: str) -> Trace:
+        return self.model_copy(update={"notes": (*self.notes, note)})

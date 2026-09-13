@@ -1,0 +1,68 @@
+{
+  "data": {
+    "result": {
+      "ambiguities": [
+        {
+          "chosen": "net_revenue",
+          "kind": "metric_choice",
+          "readings": [
+            "net_revenue as overall commercial performance",
+            "gmv_captured as gross sales captured",
+            "orders_count as order volume",
+            "units_sold as item volume"
+          ],
+          "term": "How did ... do"
+        },
+        {
+          "chosen": null,
+          "kind": "calendar",
+          "readings": [
+            "previous calendar quarter",
+            "previous fiscal quarter"
+          ],
+          "term": "last quarter"
+        }
+      ],
+      "compare_to": null,
+      "dimensions": [],
+      "filters": [
+        {
+          "dimension": "region",
+          "op": "eq",
+          "values": [
+            "Tamil Nadu"
+          ]
+        }
+      ],
+      "grain": "NONE",
+      "kind": "metric",
+      "limit": null,
+      "name": "net_revenue",
+      "order": null,
+      "reporting_currency": null,
+      "window": {
+        "calendar": "unspecified",
+        "end": null,
+        "kind": "relative",
+        "quarter": null,
+        "relative": "last_quarter",
+        "start": null,
+        "year": null
+      }
+    }
+  },
+  "kind": "structured",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "planner",
+    "provider": "openai",
+    "sha256": "f26d0464d9d7a63b5259ff1fc4dd68184fafdf7c2ee51de0032d8d5bc454321d",
+    "version": 1
+  },
+  "raw": "{\"result\":{\"kind\":\"metric\",\"name\":\"net_revenue\",\"dimensions\":[],\"filters\":[{\"dimension\":\"region\",\"op\":\"eq\",\"values\":[\"Tamil Nadu\"]}],\"window\":{\"kind\":\"relative\",\"relative\":\"last_quarter\",\"start\":null,\"end\":null,\"quarter\":null,\"year\":null,\"calendar\":\"unspecified\"},\"grain\":\"NONE\",\"compare_to\":null,\"order\":null,\"limit\":null,\"reporting_currency\":null,\"ambiguities\":[{\"term\":\"How did ... do\",\"kind\":\"metric_choice\",\"readings\":[\"net_revenue as overall commercial performance\",\"gmv_captured as gross sales captured\",\"orders_count as order volume\",\"units_sold as item volume\"],\"chosen\":\"net_revenue\"},{\"term\":\"last quarter\",\"kind\":\"calendar\",\"readings\":[\"previous calendar quarter\",\"previous fiscal quarter\"],\"chosen\":null}]}}",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 2513,
+    "output_tokens": 662
+  }
+}

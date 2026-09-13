@@ -1,0 +1,16 @@
+{
+  "kind": "text",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "composer",
+    "provider": "openai",
+    "sha256": "b2811b5cadb8075a4cba32008339059d163d0eb918b9b2525bb21fc546e8a498",
+    "version": 1
+  },
+  "text": "2026-08-01 से 2026-08-31 तक, ‘यूनिट’ को units_sold मानकर, शीर्ष मॉडल हैं: Kestrel Leather Case 12036, Kestrel Earbuds 12016, Kestrel Screen Guard 11980, Kestrel Silicone Case 11942, Kestrel Power Bank 11929, Kestrel 45W Charger 11847, Kestrel Pika 2 7201, Kestrel Pika 3 7198, Kestrel Pika 1 7190, और Kestrel Tern 2 5295।",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 639,
+    "output_tokens": 599
+  }
+}

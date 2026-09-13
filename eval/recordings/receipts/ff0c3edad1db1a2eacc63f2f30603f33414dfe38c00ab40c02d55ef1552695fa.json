@@ -1,0 +1,50 @@
+{
+  "data": {
+    "result": {
+      "ambiguities": [
+        {
+          "chosen": "Payment success rate measured per payment attempt",
+          "kind": "metric_choice",
+          "readings": [
+            "Payment success rate measured per payment attempt",
+            "Payment success rate measured per order",
+            "Failure rate by reason for payment attempts"
+          ],
+          "term": "How are payments doing"
+        }
+      ],
+      "compare_to": null,
+      "dimensions": [],
+      "filters": [],
+      "grain": "NONE",
+      "kind": "metric",
+      "limit": null,
+      "name": "payment_success_rate_attempt",
+      "order": null,
+      "reporting_currency": null,
+      "window": {
+        "calendar": "unspecified",
+        "end": null,
+        "kind": "relative",
+        "quarter": null,
+        "relative": "this_month",
+        "start": null,
+        "year": null
+      }
+    }
+  },
+  "kind": "structured",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "planner",
+    "provider": "openai",
+    "sha256": "f26d0464d9d7a63b5259ff1fc4dd68184fafdf7c2ee51de0032d8d5bc454321d",
+    "version": 1
+  },
+  "raw": "{\"result\":{\"kind\":\"metric\",\"name\":\"payment_success_rate_attempt\",\"dimensions\":[],\"filters\":[],\"window\":{\"kind\":\"relative\",\"relative\":\"this_month\",\"start\":null,\"end\":null,\"quarter\":null,\"year\":null,\"calendar\":\"unspecified\"},\"grain\":\"NONE\",\"compare_to\":null,\"order\":null,\"limit\":null,\"reporting_currency\":null,\"ambiguities\":[{\"term\":\"How are payments doing\",\"kind\":\"metric_choice\",\"readings\":[\"Payment success rate measured per payment attempt\",\"Payment success rate measured per order\",\"Failure rate by reason for payment attempts\"],\"chosen\":\"Payment success rate measured per payment attempt\"}]}}",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 2699,
+    "output_tokens": 322
+  }
+}

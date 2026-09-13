@@ -27,6 +27,7 @@ so nothing downstream has to remember whether the last day is included.
 from __future__ import annotations
 
 import difflib
+import re
 from dataclasses import dataclass, field
 from datetime import date, timedelta
 from typing import Any, Literal
@@ -331,6 +332,82 @@ def resolve_window(
 # --------------------------------------------------------------------------- #
 
 
+# Marker recorded in `defaults_applied` when the glossary settled a metric
+# choice. The gate reads it and stops asking about something §6.1 has already
+# answered.
+METRIC_SETTLED = "metric choice settled by the glossary:"
+
+
+def glossary_default(
+    question: str, catalog: Catalog, capabilities: tuple[str, ...] = ()
+) -> tuple[str, str] | None:
+    """The metric the glossary says an unqualified phrase means (§6.1).
+
+    GLOSSARY §6.1 lists terms that are "ambiguous in the wider world but settled
+    at Kestrel" -- "success rate" is order-level, "refund rate" is value-based,
+    "sales" is captured GMV -- and says to answer with the default and disclose
+    it. §9.1 rule 7 says the same from the other side.
+
+    **The longest matching phrase wins.** "attempt-level success rate" and
+    "success rate" both appear in the catalogue's `default_for` lists, and a
+    question containing the first contains the second; preferring the longer one
+    is what makes "attempt-level success rate" mean the attempt-level metric
+    rather than the default.
+    """
+    tokens = _words(question)
+    best: tuple[int, int, str, str] | None = None
+    for metric in catalog.visible_metrics(capabilities):
+        for phrases in metric.default_for.values():
+            for phrase in phrases:
+                needle = _words(str(phrase))
+                if not needle or not _subsequence(needle, tokens):
+                    continue
+                # Score by how many words of the phrase matched, then by their
+                # total length. A phrase matched as a token SUBSEQUENCE rather
+                # than a literal, because the glossary's phrases are patterns and
+                # a question puts words between them: "attempt-level UPI success
+                # rate" contains "attempt-level success rate" with a noun in the
+                # middle, and literal matching saw only the shorter "success
+                # rate" and answered with the wrong sibling.
+                candidate = (
+                    len(needle),
+                    sum(len(w) for w in needle),
+                    metric.name,
+                    " ".join(needle),
+                )
+                if best is None or candidate > best:
+                    best = candidate
+    return (best[2], best[3]) if best else None
+
+
+# Indic ranges named explicitly, for the reason M8 measured: Tamil vowel signs
+# and Devanagari matras are combining marks, which `\w` excludes. `[\w-]+` split
+# "सफलता दर" into fragments, so the Hindi `default_for` phrase never matched and
+# every Hindi question asking about success rate was clarified instead of
+# answered. The same bug in a second place, six modules later.
+WORD = re.compile(r"(?:[^\W\d_]|[\u0900-\u097F\u0B80-\u0BFF]|-)+", re.UNICODE)
+
+
+def _words(text: str) -> list[str]:
+    """Word tokens, case-folded. Hyphens kept: "attempt-level" is one word."""
+    return [m.group(0) for m in WORD.finditer(text.casefold())]
+
+
+def _subsequence(needle: list[str], haystack: list[str]) -> bool:
+    """Every word of `needle`, in order, somewhere in `haystack`.
+
+    Order matters and adjacency does not. "success rate attempt" is not
+    "attempt-level success rate", and "attempt-level UPI success rate" is.
+    """
+    position = 0
+    for word in needle:
+        try:
+            position = haystack.index(word, position) + 1
+        except ValueError:
+            return False
+    return True
+
+
 def _implied_currency(plan: QueryPlan, catalog: Catalog) -> str | None:
     """The one currency the filtered countries share, or None if they do not.
 
@@ -378,6 +455,7 @@ def validate(
     scope: Scope,
     as_of: date,
     *,
+    question: str = "",
     prefs: dict[str, Any] | None = None,
     first_date: date | None = None,
     last_date: date | None = None,
@@ -391,6 +469,32 @@ def validate(
     prefs = prefs or {}
     issues: list[Issue] = []
     applied: list[str] = []
+
+    # §6.1: a term with an official default is ANSWERED with the default, not
+    # asked about -- and the glossary's default outranks the model's choice.
+    #
+    # The planner picked `payment_success_rate_attempt` for "what was our UPI
+    # success rate", which §2.8 settles as order-level in the first line of the
+    # section. Without this the gate clarified a question the glossary had
+    # already answered, and had it proceeded instead it would have answered with
+    # the wrong sibling. This is the semantic layer overruling the model on a
+    # documented default, which is the thesis in one function.
+    settled = glossary_default(question or "", catalog, tuple(scope.capabilities))
+    if settled is not None:
+        default_metric, phrase = settled
+        try:
+            planned = catalog.metric(draft_plan.name)
+        except Exception:
+            planned = None
+        related = planned is not None and (
+            default_metric == planned.name or default_metric in planned.siblings
+        )
+        if related and default_metric != draft_plan.name:
+            label = catalog.metric(default_metric).label.get("en", default_metric)
+            applied.append(f"{METRIC_SETTLED} {phrase!r} -> {label}")
+            draft_plan = draft_plan.model_copy(update={"name": default_metric})
+        elif related:
+            applied.append(f"{METRIC_SETTLED} {phrase!r} -> as planned")
     # Values rewritten to their canonical spelling, so the compiler filters on a
     # value the database actually holds rather than on what somebody typed.
     resolved_filters: dict[str, tuple[str, ...]] = {}

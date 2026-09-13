@@ -1,0 +1,67 @@
+{
+  "data": {
+    "result": {
+      "ambiguities": [
+        {
+          "chosen": "Captured GMV / sales value",
+          "kind": "metric_choice",
+          "readings": [
+            "Captured GMV / sales value",
+            "Units sold / quantity sold",
+            "Orders count"
+          ],
+          "term": "बिक्री"
+        },
+        {
+          "chosen": "A showroom named Dubai",
+          "kind": "entity",
+          "readings": [
+            "A showroom named Dubai",
+            "A showroom located in Dubai city"
+          ],
+          "term": "दुबई शोरूम"
+        }
+      ],
+      "compare_to": null,
+      "dimensions": [],
+      "filters": [
+        {
+          "dimension": "showroom",
+          "op": "eq",
+          "values": [
+            "Dubai"
+          ]
+        }
+      ],
+      "grain": "NONE",
+      "kind": "metric",
+      "limit": null,
+      "name": "gmv_captured",
+      "order": null,
+      "reporting_currency": null,
+      "window": {
+        "calendar": "unspecified",
+        "end": null,
+        "kind": "relative",
+        "quarter": null,
+        "relative": "last_week",
+        "start": null,
+        "year": null
+      }
+    }
+  },
+  "kind": "structured",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "planner",
+    "provider": "openai",
+    "sha256": "f26d0464d9d7a63b5259ff1fc4dd68184fafdf7c2ee51de0032d8d5bc454321d",
+    "version": 1
+  },
+  "raw": "{\"result\":{\"kind\":\"metric\",\"name\":\"gmv_captured\",\"dimensions\":[],\"filters\":[{\"dimension\":\"showroom\",\"op\":\"eq\",\"values\":[\"Dubai\"]}],\"window\":{\"kind\":\"relative\",\"relative\":\"last_week\",\"start\":null,\"end\":null,\"quarter\":null,\"year\":null,\"calendar\":\"unspecified\"},\"grain\":\"NONE\",\"compare_to\":null,\"order\":null,\"limit\":null,\"reporting_currency\":null,\"ambiguities\":[{\"term\":\"बिक्री\",\"kind\":\"metric_choice\",\"readings\":[\"Captured GMV / sales value\",\"Units sold / quantity sold\",\"Orders count\"],\"chosen\":\"Captured GMV / sales value\"},{\"term\":\"दुबई शोरूम\",\"kind\":\"entity\",\"readings\":[\"A showroom named Dubai\",\"A showroom located in Dubai city\"],\"chosen\":\"A showroom named Dubai\"}]}}",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 2170,
+    "output_tokens": 334
+  }
+}

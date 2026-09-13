@@ -1,0 +1,59 @@
+{
+  "data": {
+    "result": {
+      "ambiguities": [
+        {
+          "chosen": "payment success rate at attempt level",
+          "kind": "metric_choice",
+          "readings": [
+            "payment success rate at attempt level",
+            "payment success rate at order level",
+            "captured payment value / GMV"
+          ],
+          "term": "payments எப்படி போகிறது"
+        },
+        {
+          "chosen": "daily trend across this month",
+          "kind": "window",
+          "readings": [
+            "single this-month-to-date value",
+            "daily trend across this month"
+          ],
+          "term": "எப்படி போகிறது"
+        }
+      ],
+      "compare_to": null,
+      "dimensions": [],
+      "filters": [],
+      "grain": "DAY",
+      "kind": "metric",
+      "limit": null,
+      "name": "payment_success_rate_attempt",
+      "order": "time_asc",
+      "reporting_currency": null,
+      "window": {
+        "calendar": "unspecified",
+        "end": null,
+        "kind": "relative",
+        "quarter": null,
+        "relative": "this_month",
+        "start": null,
+        "year": null
+      }
+    }
+  },
+  "kind": "structured",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "planner",
+    "provider": "openai",
+    "sha256": "f26d0464d9d7a63b5259ff1fc4dd68184fafdf7c2ee51de0032d8d5bc454321d",
+    "version": 1
+  },
+  "raw": "{\"result\":{\"kind\":\"metric\",\"name\":\"payment_success_rate_attempt\",\"dimensions\":[],\"filters\":[],\"window\":{\"kind\":\"relative\",\"relative\":\"this_month\",\"start\":null,\"end\":null,\"quarter\":null,\"year\":null,\"calendar\":\"unspecified\"},\"grain\":\"DAY\",\"compare_to\":null,\"order\":\"time_asc\",\"limit\":null,\"reporting_currency\":null,\"ambiguities\":[{\"term\":\"payments எப்படி போகிறது\",\"kind\":\"metric_choice\",\"readings\":[\"payment success rate at attempt level\",\"payment success rate at order level\",\"captured payment value / GMV\"],\"chosen\":\"payment success rate at attempt level\"},{\"term\":\"எப்படி போகிறது\",\"kind\":\"window\",\"readings\":[\"single this-month-to-date value\",\"daily trend across this month\"],\"chosen\":\"daily trend across this month\"}]}}",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 1965,
+    "output_tokens": 693
+  }
+}

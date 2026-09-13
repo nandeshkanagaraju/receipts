@@ -1220,3 +1220,24 @@ world` asserts the second half against three real external addresses.
 Widening a guard without testing the part that stays is how a guard quietly
 becomes a comment. The cost of this exemption is real and worth naming: a test
 could now reach a *local* service that is not Postgres, and nothing would object.
+
+## M14 — coverage, and what the dev numbers do not yet show
+
+**The freeform path is a stub.** Gate rule 5 (`FALLBACK_FREEFORM`) returns
+ABSTAIN with the trace note `freeform_not_implemented`. That single unimplemented
+branch accounts for **21 of the 62** over-abstentions on the dev answerable arm.
+Those questions are not being refused on principle; they are being refused
+because the code that would answer them is scheduled for a later module.
+
+**Value synonyms are English-only.** 18 of the 62 over-abstentions are
+`UNKNOWN_FILTER_VALUE`, and they are overwhelmingly Hindi and Tamil. The metric
+and dimension lexicons are trilingual; the *value* lists (city names, payment
+method names, product names) are not. Receipts answers 12 of 36 English
+answerable questions and 4 of 36 in each of Tamil and Hindi — a 22-point language
+gap that is a missing data file rather than a model failure.
+
+**Coverage fails PDD §5 as of M14.** §5 asks for half the silent-wrong rate while
+staying within 10 points of the baseline's coverage. Receipts answers 18.5% of
+the answerable arm against the baseline's 71.3%: 53 points behind, not 10. The
+silent-wrong comparison below is therefore not yet a like-for-like comparison,
+and no reading of it should be published without the coverage number beside it.

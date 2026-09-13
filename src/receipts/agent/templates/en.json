@@ -1,0 +1,13 @@
+{
+  "_note": "Deterministic fallbacks (SDD §14.2). Used when grounding rejects the model's narration, and as the whole narration whenever the composer is unavailable. They read as sentences a person would write, because a fallback that reads like an error message tells the asker the system broke when in fact it declined to repeat a number it could not verify.",
+  "scalar": "{metric} for {window} was {value}.",
+  "scalar_scoped": "{metric} for {window} in {scope} was {value}.",
+  "breakdown": "{metric} for {window}, broken down by {dimension}: {rows} rows, highest {top_key} at {top_value}.",
+  "breakdown_empty": "No {metric} for {window}.",
+  "compare": "{metric} for {window} was {value}, against {compare_value} for the period before.",
+  "empty": "There were no matching rows for {window}.",
+  "abstain": "I can't answer that from the data Kestrel records.",
+  "deny": "That is outside the regions this role covers.",
+  "clarify": "Before I answer: {question}",
+  "unverified": "Answered from the tables directly rather than from a governed metric, so this number is not verified."
+}

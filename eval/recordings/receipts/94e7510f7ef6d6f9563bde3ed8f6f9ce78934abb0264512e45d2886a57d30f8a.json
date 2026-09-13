@@ -1,0 +1,64 @@
+{
+  "data": {
+    "result": {
+      "ambiguities": [
+        {
+          "chosen": "lowest payment success rate by acquiring bank",
+          "kind": "metric_choice",
+          "readings": [
+            "lowest payment success rate by acquiring bank",
+            "highest failure/decline rate by acquiring bank"
+          ],
+          "term": "performing worst"
+        },
+        {
+          "chosen": "last_7_days",
+          "kind": "window",
+          "readings": [
+            "today",
+            "yesterday",
+            "last_7_days",
+            "last_week",
+            "this_month",
+            "last_month"
+          ],
+          "term": "no time window specified"
+        }
+      ],
+      "compare_to": null,
+      "dimensions": [
+        "acquiring_bank"
+      ],
+      "filters": [],
+      "grain": "NONE",
+      "kind": "metric",
+      "limit": 1,
+      "name": "payment_success_rate_attempt",
+      "order": "value_asc",
+      "reporting_currency": null,
+      "window": {
+        "calendar": "unspecified",
+        "end": null,
+        "kind": "relative",
+        "quarter": null,
+        "relative": "last_7_days",
+        "start": null,
+        "year": null
+      }
+    }
+  },
+  "kind": "structured",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "planner",
+    "provider": "openai",
+    "sha256": "f26d0464d9d7a63b5259ff1fc4dd68184fafdf7c2ee51de0032d8d5bc454321d",
+    "version": 1
+  },
+  "raw": "{\"result\":{\"kind\":\"metric\",\"name\":\"payment_success_rate_attempt\",\"dimensions\":[\"acquiring_bank\"],\"filters\":[],\"window\":{ \"kind\":\"relative\",\"relative\":\"last_7_days\",\"start\":null,\"end\":null,\"quarter\":null,\"year\":null,\"calendar\":\"unspecified\"},\"grain\":\"NONE\",\"compare_to\":null,\"order\":\"value_asc\",\"limit\":1,\"reporting_currency\":null,\"ambiguities\":[{\"term\":\"performing worst\",\"kind\":\"metric_choice\",\"readings\":[\"lowest payment success rate by acquiring bank\",\"highest failure/decline rate by acquiring bank\"],\"chosen\":\"lowest payment success rate by acquiring bank\"},{\"term\":\"no time window specified\",\"kind\":\"window\",\"readings\":[\"today\",\"yesterday\",\"last_7_days\",\"last_week\",\"this_month\",\"last_month\"],\"chosen\":\"last_7_days\"}]}}",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 1876,
+    "output_tokens": 700
+  }
+}

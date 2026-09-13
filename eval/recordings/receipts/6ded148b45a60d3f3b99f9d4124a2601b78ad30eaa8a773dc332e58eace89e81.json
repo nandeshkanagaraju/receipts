@@ -1,0 +1,16 @@
+{
+  "kind": "text",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "composer",
+    "provider": "openai",
+    "sha256": "b2811b5cadb8075a4cba32008339059d163d0eb918b9b2525bb21fc546e8a498",
+    "version": 1
+  },
+  "text": "पिछले हफ़्ते UK में captured GMV USD 107381818 था; UK को United Kingdom माना गया और reporting currency USD लागू की गई।",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 537,
+    "output_tokens": 154
+  }
+}

@@ -199,7 +199,66 @@ def _build_baseline() -> System:
     return system
 
 
+def _build_receipts() -> System:
+    """Receipts itself, over the whole pipeline (SDD §9)."""
+    import sys
+
+    from ..agent.orchestrator import Deps
+    from ..config import load_settings
+    from ..execute.adapters.duckdb import DuckDBAdapter
+    from ..llm.budget import BudgetedLLM, QuestionBudget
+    from ..llm.replay import RecordingLLM, ReplayLLM
+    from ..semantic import loader
+    from .baseline import load_roles
+    from .receipts_system import ReceiptsSystem
+    from .reference import DB_PATH
+
+    sys.path.insert(0, str(REPO / "scripts"))
+    import gate_dev
+
+    settings = load_settings()
+    mode = os.environ.get("RECEIPTS_LLM_MODE", settings.llm.mode)
+    provider, model = settings.llm.primary.provider, settings.llm.primary.model
+    recordings = REPO / "eval" / "recordings" / "receipts"
+
+    if mode == "replay":
+        llm: Any = ReplayLLM(recordings, provider=provider, model=model)
+    elif mode == "record":
+        llm = RecordingLLM(_provider_client(settings), directory=recordings)
+    else:
+        raise SystemExit(f"receipts needs mode replay or record, not {mode!r}")
+
+    budget = settings.llm.budget_per_question
+    catalog = loader.load()
+    roles = load_roles()
+    places = gate_dev.places_from_db()
+    manifest = REPO / "data" / "MANIFEST.json"
+    data_version = (
+        json.loads(manifest.read_text(encoding="utf-8")).get("data_version", "")
+        if manifest.exists()
+        else ""
+    )
+    deps = Deps(
+        catalog=catalog,
+        llm=BudgetedLLM(
+            llm, QuestionBudget(tokens_in=budget.tokens_in, tokens_out=budget.tokens_out)
+        ),
+        adapter=DuckDBAdapter(DB_PATH),
+        roles=roles,
+        places=places,
+        data_version=data_version,
+        first_date=settings.data.first_business_date,
+        last_date=settings.data.last_business_date,
+        row_limit=settings.row_limit,
+        timeout_s=settings.timeout_s,
+        freeform_enabled=settings.freeform.enabled,
+    )
+    scopes = {name: gate_dev.scope_for(name, roles, places) for name in roles}
+    return ReceiptsSystem(deps=deps, scopes=scopes, as_of=settings.as_of)
+
+
 SYSTEM_BUILDERS["baseline"] = _build_baseline
+SYSTEM_BUILDERS["receipts"] = _build_receipts
 ALL_SYSTEMS: tuple[str, ...] = tuple(sorted({*SYSTEMS, *SYSTEM_BUILDERS}))
 
 

@@ -1,0 +1,16 @@
+{
+  "kind": "text",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "composer",
+    "provider": "openai",
+    "sha256": "b2811b5cadb8075a4cba32008339059d163d0eb918b9b2525bb21fc546e8a498",
+    "version": 1
+  },
+  "text": "ग्लॉसरी के अनुसार ‘कैप्चर किया गया GMV’ को gmv_captured/as planned माना गया। 2026-08-01 से 2026-08-31 के लिए USD में देशवार कैप्चर किया गया GMV: India 2080409597, United Arab Emirates 491379908, United Kingdom 440181333, United States 414264400, Singapore 332934836, और Malaysia 221607466। पिछले साल के उसी महीने की तुलना के आंकड़े इस तालिका में नहीं दिए गए हैं।",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 603,
+    "output_tokens": 544
+  }
+}

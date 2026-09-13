@@ -1,0 +1,16 @@
+{
+  "kind": "text",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "composer",
+    "provider": "openai",
+    "sha256": "b2811b5cadb8075a4cba32008339059d163d0eb918b9b2525bb21fc546e8a498",
+    "version": 1
+  },
+  "text": "2026-08-01 से 2026-08-31 तक तमिलनाडु में शहर के अनुसार EMI हिस्सा: Chennai 23.6%, Trichy 23.3%, Coimbatore 22.9%, Salem 22.9%, और Madurai 22.0%। यहाँ ‘EMI हिस्सा’ को glossary के अनुसार emi_share माना गया और रिपोर्टिंग मुद्रा डिफ़ॉल्ट USD रही।",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 603,
+    "output_tokens": 463
+  }
+}

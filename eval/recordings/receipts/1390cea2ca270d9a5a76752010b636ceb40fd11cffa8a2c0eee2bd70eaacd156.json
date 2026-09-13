@@ -1,0 +1,16 @@
+{
+  "kind": "text",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "composer",
+    "provider": "openai",
+    "sha256": "b2811b5cadb8075a4cba32008339059d163d0eb918b9b2525bb21fc546e8a498",
+    "version": 1
+  },
+  "text": "Captured GMV was USD 107381818 in the United Kingdom for 2026-08-31 to 2026-09-06, using the defaults that “UK” means United Kingdom and “actually collect” means captured GMV.",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 543,
+    "output_tokens": 234
+  }
+}

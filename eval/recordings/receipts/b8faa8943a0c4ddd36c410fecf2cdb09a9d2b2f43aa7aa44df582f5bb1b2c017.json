@@ -1,0 +1,23 @@
+{
+  "data": {
+    "result": {
+      "data_exists": true,
+      "no_fit": true,
+      "reason": "The question asks for refund rate by phone model for card-paid orders in UAE last month, but refund_rate is not one of the offered metrics. Available refund-related metric is refunded_amount, which is an amount, not a rate."
+    }
+  },
+  "kind": "structured",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "planner",
+    "provider": "openai",
+    "sha256": "f26d0464d9d7a63b5259ff1fc4dd68184fafdf7c2ee51de0032d8d5bc454321d",
+    "version": 1
+  },
+  "raw": "{\"result\":{\"no_fit\":true,\"reason\":\"The question asks for refund rate by phone model for card-paid orders in UAE last month, but refund_rate is not one of the offered metrics. Available refund-related metric is refunded_amount, which is an amount, not a rate.\",\"data_exists\":true}}",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 2570,
+    "output_tokens": 186
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "kind": "text",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "composer",
+    "provider": "openai",
+    "sha256": "b2811b5cadb8075a4cba32008339059d163d0eb918b9b2525bb21fc546e8a498",
+    "version": 1
+  },
+  "text": "Using the default that “success rate” means order-level payment success rate, the top issuing banks in the United Kingdom for card payments in Aug 1–31 2026 were Pennine Building Society at 82.7%, Severn National at 81.9%, and Thameside Bank at 80.4%.",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 612,
+    "output_tokens": 374
+  }
+}

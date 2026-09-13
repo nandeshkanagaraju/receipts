@@ -1,0 +1,16 @@
+{
+  "kind": "text",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "composer",
+    "provider": "openai",
+    "sha256": "b2811b5cadb8075a4cba32008339059d163d0eb918b9b2525bb21fc546e8a498",
+    "version": 1
+  },
+  "text": "For 2026-08-01 to 2026-08-31, using UK as United Kingdom and “units sold” as units_sold, the top 5 showrooms were Kestrel Birmingham East with 1107, Kestrel Liverpool South with 983, Kestrel Manchester Riverside with 913, Kestrel Leicester Lakeside with 746, and Kestrel London City Centre with 742.",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 585,
+    "output_tokens": 275
+  }
+}

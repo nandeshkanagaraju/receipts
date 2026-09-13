@@ -274,10 +274,21 @@ def gate(
                 ),
                 ambiguity_key=key,
             )
+    # A metric choice the glossary has already settled is not a question (§6.1).
+    # The validator substituted the default and said so; asking anyway would be
+    # asking the person to confirm something their own company has written down.
+    from .validate import METRIC_SETTLED
+
+    settled_by_glossary = isinstance(validated, Validated) and any(
+        note.startswith(METRIC_SETTLED) for note in validated.resolved.defaults_applied
+    )
+
     if plan is not None:
         for ambiguity in plan.ambiguities:
             kind = _kind_of(ambiguity)
             key = f"{kind}:{ambiguity.term.casefold()}"
+            if kind == "metric_choice" and settled_by_glossary:
+                continue
             if kind in AMBIGUITY_FORCING and key not in answered_ambiguities:
                 return GateDecision(
                     decision="CLARIFY",
@@ -288,7 +299,7 @@ def gate(
                 )
         # A superlative with nothing to rank by forces the choice the model did
         # not declare (SDD §10).
-        if needs_metric_choice(question):
+        if needs_metric_choice(question) and not settled_by_glossary:
             key = "metric_choice:superlative"
             if key not in answered_ambiguities:
                 metric = _safe_metric(catalog, plan.name)

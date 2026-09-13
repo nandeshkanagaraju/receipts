@@ -1,0 +1,16 @@
+{
+  "kind": "text",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "composer",
+    "provider": "openai",
+    "sha256": "b2811b5cadb8075a4cba32008339059d163d0eb918b9b2525bb21fc546e8a498",
+    "version": 1
+  },
+  "text": "2026-08-01 முதல் 2026-08-31 வரை, glossary default-ஆக GMV = Captured GMV என எடுத்துக்கொள்ளப்பட்டது; நாடு வாரியாக USD மதிப்புகள்: India USD 2080409597, Malaysia USD 221607466, Singapore USD 332934836, United Arab Emirates USD 491379908, United Kingdom USD 440181333, United States USD 414264400. கடந்த ஆண்டின் அதே மாதத்துடன் ஒப்பீடு கேட்கப்பட்டிருந்தாலும், அட்டவணையில் கடந்த ஆண்டு மதிப்புகள் அல்லது மாற்றங்கள் இல்லை.",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 606,
+    "output_tokens": 378
+  }
+}

@@ -1,0 +1,64 @@
+{
+  "data": {
+    "result": {
+      "ambiguities": [
+        {
+          "chosen": "सबसे अधिक settlement_lag_days",
+          "kind": "metric_choice",
+          "readings": [
+            "सबसे अधिक settlement_lag_days: अधिग्रहणकर्ता बैंक ग्राहकों से capture हुई रकम Kestrel को settle करने में सबसे ज़्यादा समय ले रहा है",
+            "सबसे अधिक unsettled_amount: अधिग्रहणकर्ता बैंक के पास सबसे ज़्यादा captured money अभी unsettled है",
+            "सबसे कम gmv_captured: अधिग्रहणकर्ता बैंक से सबसे कम captured GMV आ रहा है"
+          ],
+          "term": "सबसे ख़राब प्रदर्शन"
+        },
+        {
+          "chosen": "this_month",
+          "kind": "window",
+          "readings": [
+            "today",
+            "last_7_days",
+            "last_week",
+            "this_month",
+            "last_month"
+          ],
+          "term": "समय अवधि नहीं बताई गई"
+        }
+      ],
+      "compare_to": null,
+      "dimensions": [
+        "acquiring_bank"
+      ],
+      "filters": [],
+      "grain": "NONE",
+      "kind": "metric",
+      "limit": 1,
+      "name": "settlement_lag_days",
+      "order": "value_desc",
+      "reporting_currency": null,
+      "window": {
+        "calendar": "unspecified",
+        "end": null,
+        "kind": "relative",
+        "quarter": null,
+        "relative": "this_month",
+        "start": null,
+        "year": null
+      }
+    }
+  },
+  "kind": "structured",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "planner",
+    "provider": "openai",
+    "sha256": "f26d0464d9d7a63b5259ff1fc4dd68184fafdf7c2ee51de0032d8d5bc454321d",
+    "version": 1
+  },
+  "raw": "{\"result\":{\"kind\":\"metric\",\"name\":\"settlement_lag_days\",\"dimensions\":[\"acquiring_bank\"],\"filters\":[],\"window\":{\"kind\":\"relative\",\"relative\":\"this_month\",\"start\":null,\"end\":null,\"quarter\":null,\"year\":null,\"calendar\":\"unspecified\"},\"grain\":\"NONE\",\"compare_to\":null,\"order\":\"value_desc\",\"limit\":1,\"reporting_currency\":null,\"ambiguities\":[{\"term\":\"सबसे ख़राब प्रदर्शन\",\"kind\":\"metric_choice\",\"readings\":[\"सबसे अधिक settlement_lag_days: अधिग्रहणकर्ता बैंक ग्राहकों से capture हुई रकम Kestrel को settle करने में सबसे ज़्यादा समय ले रहा है\",\"सबसे अधिक unsettled_amount: अधिग्रहणकर्ता बैंक के पास सबसे ज़्यादा captured money अभी unsettled है\",\"सबसे कम gmv_captured: अधिग्रहणकर्ता बैंक से सबसे कम captured GMV आ रहा है\"],\"chosen\":\"सबसे अधिक settlement_lag_days\"},{\"term\":\"समय अवधि नहीं बताई गई\",\"kind\":\"window\",\"readings\":[\"today\",\"last_7_days\",\"last_week\",\"this_month\",\"last_month\"],\"chosen\":\"this_month\"}]}}",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 1778,
+    "output_tokens": 764
+  }
+}

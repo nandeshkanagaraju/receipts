@@ -20,7 +20,7 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from .base import (
     LLM,
@@ -31,6 +31,7 @@ from .base import (
     TextResult,
     Usage,
 )
+from .prompts import load as load_prompt
 
 REPO = Path(__file__).resolve().parents[3]
 RECORDINGS = REPO / "recordings"
@@ -72,13 +73,44 @@ def _write(path: Path, body: dict[str, Any]) -> None:
 
 
 class RecordingLLM:
-    """Wraps a real client, writes every call to disk, returns what it returned."""
+    """Wraps a real client, writes every call to disk, returns what it returned.
 
-    def __init__(self, inner: LLM, directory: Path = RECORDINGS) -> None:
+    **Resumable.** A call whose key is already on disk is served from disk rather
+    than re-made. The key covers the provider, the model, the prompt sha, the
+    messages and the schema (SDD §16), so an identical key means an identical
+    call -- there is nothing a second one could tell us that the first did not.
+
+    This exists because a 180-trial run that dies at trial 150 previously cost
+    the whole run again. It also makes `record` idempotent: running it twice
+    spends money only on what is new, which is what you want when a prompt
+    changed for ten questions out of sixty.
+
+    `reuse=False` forces every call to be made fresh, for the rare case where
+    somebody wants to see whether a non-deterministic model still says the same
+    thing.
+    """
+
+    def __init__(self, inner: LLM, directory: Path = RECORDINGS, *, reuse: bool = True) -> None:
         self.inner = inner
         self.directory = directory
+        self.reuse = reuse
         self.provider = getattr(inner, "provider", "unknown")
         self.model = getattr(inner, "model", "unknown")
+        self.reused = 0
+        self.recorded = 0
+
+    def _existing(self, key: str) -> dict[str, Any] | None:
+        if not self.reuse:
+            return None
+        path = self.directory / f"{key}.json"
+        if not path.exists():
+            return None
+        try:
+            return cast(dict[str, Any], json.loads(path.read_text(encoding="utf-8")))
+        except Exception:
+            # A half-written file from a killed run. Re-making the call is
+            # cheaper than reasoning about which half survived.
+            return None
 
     def _record(self, key: str, body: dict[str, Any]) -> None:
         _write(self.directory / f"{key}.json", body)
@@ -86,19 +118,31 @@ class RecordingLLM:
     def structured(
         self, *, prompt_id: str, messages: list[Msg], schema: dict[str, Any], max_tokens: int
     ) -> StructuredResult:
-        result = self.inner.structured(
-            prompt_id=prompt_id, messages=messages, schema=schema, max_tokens=max_tokens
-        )
+        prompt = load_prompt(prompt_id)
         key = key_for(
             provider=self.provider,
             model=self.model,
             prompt_id=prompt_id,
-            prompt_sha=result.provenance.sha256,
+            prompt_sha=prompt.sha256,
             messages=messages,
             schema=schema,
             max_tokens=max_tokens,
             kind="structured",
         )
+        found = self._existing(key)
+        if found is not None:
+            self.reused += 1
+            return StructuredResult(
+                data=found.get("data", {}),
+                usage=_usage_from(found),
+                provenance=_provenance_from(found, self.provider, self.model),
+                raw=found.get("raw", ""),
+            )
+
+        result = self.inner.structured(
+            prompt_id=prompt_id, messages=messages, schema=schema, max_tokens=max_tokens
+        )
+        self.recorded += 1
         self._record(
             key,
             {
@@ -108,10 +152,6 @@ class RecordingLLM:
                 "usage": {
                     "input_tokens": result.usage.input_tokens,
                     "output_tokens": result.usage.output_tokens,
-                    # Recorded, because it cannot be recovered later. The first
-                    # 180-call run wrote only the two totals, so afterwards there
-                    # was no way to tell a fully-cached run from an uncached one
-                    # and the cost could only be reported as an upper bound.
                     "cached_input_tokens": result.usage.cached_input_tokens,
                 },
                 "provenance": {
@@ -126,17 +166,28 @@ class RecordingLLM:
         return result
 
     def text(self, *, prompt_id: str, messages: list[Msg], max_tokens: int) -> TextResult:
-        result = self.inner.text(prompt_id=prompt_id, messages=messages, max_tokens=max_tokens)
+        prompt = load_prompt(prompt_id)
         key = key_for(
             provider=self.provider,
             model=self.model,
             prompt_id=prompt_id,
-            prompt_sha=result.provenance.sha256,
+            prompt_sha=prompt.sha256,
             messages=messages,
             schema=None,
             max_tokens=max_tokens,
             kind="text",
         )
+        found = self._existing(key)
+        if found is not None:
+            self.reused += 1
+            return TextResult(
+                text=found.get("text", ""),
+                usage=_usage_from(found),
+                provenance=_provenance_from(found, self.provider, self.model),
+            )
+
+        result = self.inner.text(prompt_id=prompt_id, messages=messages, max_tokens=max_tokens)
+        self.recorded += 1
         self._record(
             key,
             {
@@ -145,10 +196,6 @@ class RecordingLLM:
                 "usage": {
                     "input_tokens": result.usage.input_tokens,
                     "output_tokens": result.usage.output_tokens,
-                    # Recorded, because it cannot be recovered later. The first
-                    # 180-call run wrote only the two totals, so afterwards there
-                    # was no way to tell a fully-cached run from an uncached one
-                    # and the cost could only be reported as an upper bound.
                     "cached_input_tokens": result.usage.cached_input_tokens,
                 },
                 "provenance": {
@@ -161,6 +208,26 @@ class RecordingLLM:
             },
         )
         return result
+
+
+def _usage_from(body: dict[str, Any]) -> Usage:
+    raw = body.get("usage", {})
+    return Usage(
+        input_tokens=int(raw.get("input_tokens", 0)),
+        output_tokens=int(raw.get("output_tokens", 0)),
+        cached_input_tokens=int(raw.get("cached_input_tokens", 0)),
+    )
+
+
+def _provenance_from(body: dict[str, Any], provider: str, model: str) -> Provenance:
+    raw = body.get("provenance", {})
+    return Provenance(
+        prompt_id=raw.get("prompt_id", ""),
+        version=int(raw.get("version", 0)),
+        sha256=raw.get("sha256", ""),
+        provider=raw.get("provider", provider),
+        model=raw.get("model", model),
+    )
 
 
 class ReplayLLM:

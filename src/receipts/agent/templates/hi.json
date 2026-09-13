@@ -1,0 +1,13 @@
+{
+  "_note": "Hindi fallbacks. Business nouns stay in English for the same reason as the Tamil file.",
+  "scalar": "{window} के लिए {metric}: {value}.",
+  "scalar_scoped": "{scope} में {window} के लिए {metric}: {value}.",
+  "breakdown": "{window} के लिए {metric}, {dimension} के अनुसार: {rows} पंक्तियाँ, सबसे अधिक {top_key} ({top_value}).",
+  "breakdown_empty": "{window} के लिए कोई {metric} नहीं।",
+  "compare": "{window} के लिए {metric}: {value}; पिछली अवधि में {compare_value}.",
+  "empty": "{window} के लिए कोई मेल खाती पंक्ति नहीं।",
+  "abstain": "Kestrel जो डेटा रखता है, उससे इसका उत्तर नहीं दिया जा सकता।",
+  "deny": "यह इस role के लिए अनुमत क्षेत्रों के बाहर है।",
+  "clarify": "उत्तर देने से पहले: {question}",
+  "unverified": "Governed metric के बिना, सीधे tables से लिया गया; यह संख्या verified नहीं है।"
+}

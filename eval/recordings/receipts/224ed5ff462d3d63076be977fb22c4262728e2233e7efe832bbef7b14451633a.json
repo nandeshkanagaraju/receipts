@@ -1,0 +1,64 @@
+{
+  "data": {
+    "result": {
+      "ambiguities": [
+        {
+          "chosen": "showrooms/in-store channel in the UK",
+          "kind": "entity",
+          "readings": [
+            "showrooms/in-store channel in the UK",
+            "a specific showroom named UK"
+          ],
+          "term": "UK showroom"
+        }
+      ],
+      "compare_to": null,
+      "dimensions": [],
+      "filters": [
+        {
+          "dimension": "country",
+          "op": "eq",
+          "values": [
+            "UK"
+          ]
+        },
+        {
+          "dimension": "channel",
+          "op": "eq",
+          "values": [
+            "showroom"
+          ]
+        }
+      ],
+      "grain": "NONE",
+      "kind": "metric",
+      "limit": null,
+      "name": "orders_count",
+      "order": null,
+      "reporting_currency": null,
+      "window": {
+        "calendar": "unspecified",
+        "end": null,
+        "kind": "relative",
+        "quarter": null,
+        "relative": "yesterday",
+        "start": null,
+        "year": null
+      }
+    }
+  },
+  "kind": "structured",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "planner",
+    "provider": "openai",
+    "sha256": "f26d0464d9d7a63b5259ff1fc4dd68184fafdf7c2ee51de0032d8d5bc454321d",
+    "version": 1
+  },
+  "raw": "{\"result\":{\"kind\":\"metric\",\"name\":\"orders_count\",\"dimensions\":[],\"filters\":[{\"dimension\":\"country\",\"op\":\"eq\",\"values\":[\"UK\"]},{\"dimension\":\"channel\",\"op\":\"eq\",\"values\":[\"showroom\"]}],\"window\":{\"kind\":\"relative\",\"relative\":\"yesterday\",\"start\":null,\"end\":null,\"quarter\":null,\"year\":null,\"calendar\":\"unspecified\"},\"grain\":\"NONE\",\"compare_to\":null,\"order\":null,\"limit\":null,\"reporting_currency\":null,\"ambiguities\":[{\"term\":\"UK showroom\",\"kind\":\"entity\",\"readings\":[\"showrooms/in-store channel in the UK\",\"a specific showroom named UK\"],\"chosen\":\"showrooms/in-store channel in the UK\"}]}}",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 2110,
+    "output_tokens": 671
+  }
+}

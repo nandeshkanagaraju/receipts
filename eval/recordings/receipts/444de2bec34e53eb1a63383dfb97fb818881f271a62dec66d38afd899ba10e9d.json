@@ -1,0 +1,16 @@
+{
+  "kind": "text",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "composer",
+    "provider": "openai",
+    "sha256": "b2811b5cadb8075a4cba32008339059d163d0eb918b9b2525bb21fc546e8a498",
+    "version": 1
+  },
+  "text": "2026-09-03 முதல் 2026-09-09 வரையிலான business dates-க்கு orders count 4242; daily breakdown இந்த முடிவில் இல்லை, மேலும் reporting currency USD default ஆக பயன்படுத்தப்பட்டது.",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 503,
+    "output_tokens": 366
+  }
+}

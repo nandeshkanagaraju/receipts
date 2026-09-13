@@ -1,0 +1,57 @@
+{
+  "data": {
+    "result": {
+      "ambiguities": [
+        {
+          "chosen": "चेन्नई नाम का शोरूम",
+          "kind": "entity",
+          "readings": [
+            "चेन्नई नाम का शोरूम",
+            "चेन्नई शहर के सभी शोरूम"
+          ],
+          "term": "चेन्नई शोरूम"
+        }
+      ],
+      "compare_to": null,
+      "dimensions": [],
+      "filters": [
+        {
+          "dimension": "showroom",
+          "op": "eq",
+          "values": [
+            "चेन्नई"
+          ]
+        }
+      ],
+      "grain": "NONE",
+      "kind": "metric",
+      "limit": null,
+      "name": "refund_rate",
+      "order": null,
+      "reporting_currency": null,
+      "window": {
+        "calendar": "unspecified",
+        "end": null,
+        "kind": "relative",
+        "quarter": null,
+        "relative": "last_month",
+        "start": null,
+        "year": null
+      }
+    }
+  },
+  "kind": "structured",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "planner",
+    "provider": "openai",
+    "sha256": "f26d0464d9d7a63b5259ff1fc4dd68184fafdf7c2ee51de0032d8d5bc454321d",
+    "version": 1
+  },
+  "raw": "{\"result\":{\"kind\":\"metric\",\"name\":\"refund_rate\",\"dimensions\":[],\"filters\":[{\"dimension\":\"showroom\",\"op\":\"eq\",\"values\":[\"चेन्नई\"]}],\"window\":{\"kind\":\"relative\",\"relative\":\"last_month\",\"start\":null,\"end\":null,\"quarter\":null,\"year\":null,\"calendar\":\"unspecified\"},\"grain\":\"NONE\",\"compare_to\":null,\"order\":null,\"limit\":null,\"reporting_currency\":null,\"ambiguities\":[{\"term\":\"चेन्नई शोरूम\",\"kind\":\"entity\",\"readings\":[\"चेन्नई नाम का शोरूम\",\"चेन्नई शहर के सभी शोरूम\"],\"chosen\":\"चेन्नई नाम का शोरूम\"}]}}",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 2530,
+    "output_tokens": 370
+  }
+}
