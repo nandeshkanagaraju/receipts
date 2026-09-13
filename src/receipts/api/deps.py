@@ -1,0 +1,111 @@
+"""receipts.api.deps — one place where the request path gets its engine.
+
+Built once at startup and handed to routes. The alternative -- each route
+reaching for a module global -- is how a test ends up unable to swap the adapter,
+and how a second code path for "the same thing but in the API" gets written.
+"""
+
+from __future__ import annotations
+
+import os
+from dataclasses import dataclass, field
+from datetime import date
+from pathlib import Path
+from typing import Any
+
+from ..agent.orchestrator import Deps
+from ..domain.types import Scope
+from ..observability.audit import AuditLog
+from .auth import load_roles, scope_for_role
+from .ratelimit import RateLimiter
+
+REPO = Path(__file__).resolve().parents[3]
+
+# A fixed, obviously-fake secret for demo mode. Named rather than inlined so that
+# `test_no_secrets_in_config` and a reader both see it is a placeholder, and long
+# enough for HS256 not to warn -- a warning nobody can act on gets ignored, and
+# then so does the next one.
+DEMO_SECRET = "demo-secret-not-for-production-32-bytes-minimum"
+
+
+@dataclass
+class Runtime:
+    """Everything a route needs that is not the request."""
+
+    deps: Deps
+    roles: dict[str, Any]
+    places: dict[str, tuple[str, ...]]
+    audit: AuditLog
+    limiter: RateLimiter
+    as_of: date
+    jwt_secret: str
+    catalog_mode: bool = False
+    _scopes: dict[str, Scope] = field(default_factory=dict)
+
+    def scope(self, role: str) -> Scope:
+        """The role's scope, recomputed from `roles.yaml` (D7, §21).
+
+        Cached by role name only. The cache key is the thing the token carries;
+        nothing a caller sends can reach this function, which is what makes the
+        cache safe.
+        """
+        if role not in self._scopes:
+            self._scopes[role] = scope_for_role(role, self.roles, self.places)
+        return self._scopes[role]
+
+
+def build_runtime(*, audit_path: Path | None = None, llm: Any = None) -> Runtime:
+    """Wire the engine for serving. Replay by default; `record` never here."""
+    import sys
+
+    sys.path.insert(0, str(REPO / "scripts"))
+    import gate_dev
+
+    from ..config import load_settings
+    from ..execute.adapters.duckdb import DuckDBAdapter, table_columns
+    from ..llm.budget import BudgetedLLM, QuestionBudget
+    from ..llm.replay import ReplayLLM
+    from ..semantic import loader
+
+    settings = load_settings()
+    catalog = loader.load()
+    roles = load_roles(REPO / "config" / "roles.yaml")
+    places = gate_dev.places_from_db()
+    db_path = REPO / "data" / "kestrel.duckdb"
+
+    if llm is None:
+        recordings = REPO / "eval" / "recordings" / "receipts"
+        llm = ReplayLLM(
+            recordings,
+            provider=settings.llm.primary.provider,
+            model=settings.llm.primary.model,
+        )
+    budget = settings.llm.budget_per_question
+    deps = Deps(
+        catalog=catalog,
+        llm=BudgetedLLM(
+            llm, QuestionBudget(tokens_in=budget.tokens_in, tokens_out=budget.tokens_out)
+        ),
+        adapter=DuckDBAdapter(db_path),
+        roles=roles,
+        places=places,
+        data_version=os.environ.get("RECEIPTS_DATA_VERSION", "dev"),
+        first_date=settings.data.first_business_date,
+        last_date=settings.data.last_business_date,
+        row_limit=settings.row_limit,
+        timeout_s=settings.timeout_s,
+        freeform_enabled=settings.freeform.enabled,
+        columns=table_columns(db_path),
+    )
+    return Runtime(
+        deps=deps,
+        roles=roles,
+        places=places,
+        audit=AuditLog(audit_path or REPO / "data" / "audit.sqlite"),
+        limiter=RateLimiter(per_minute=settings.demo.questions_per_minute),
+        as_of=settings.as_of,
+        jwt_secret=os.environ.get("RECEIPTS_JWT_SECRET", DEMO_SECRET),
+    )
+
+
+__all__ = ["REPO", "Runtime", "build_runtime"]

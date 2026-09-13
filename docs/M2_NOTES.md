@@ -1264,3 +1264,51 @@ answer, and a reader who checks the reasoning is reassured by it.
 It is now a test rather than a fix — `test_the_receipt_never_claims_there_is_no_role_default`
 asserts, for every role in `roles.yaml` that declares a currency, that no answer
 ever discloses "no role default".
+
+## §12 — M15: the API, and two bugs the tests found before a user could
+
+### The token says who; `roles.yaml` says what
+
+A JWT is a bearer credential the holder can read and, if the secret leaks, write.
+The only defence that survives that assumption is to use as little of it as
+possible, so the service reads exactly one claim — `role` — and derives scope
+from a file on the server on every request.
+
+`test_extra_claims_are_ignored` signs a **valid** token carrying
+`regions: ["AE-DXB", "GB-LDN"]` and `capabilities: ["finance", "audit"]` and
+asserts the resulting scope is byte-identical to the honest one, `scope_hash`
+included. **A signed token is proof of identity, never of permission.**
+
+### A shared budget made the second question of every process fail
+
+One `BudgetedLLM` is built at startup and shared by the process. The per-question
+budget (§16) is per *question*, and nothing was resetting it between requests, so
+the first question consumed the allowance and every question after it returned
+ERROR. In the eval harness this never appeared, because the harness builds a
+fresh system per run and the diagnostic scripts reset the budget by hand.
+
+**The bug lived in the gap between how the engine is used in tests and how it is
+used in a server**, which is the gap an API round exists to close.
+
+### A caught exception is a code the API never sees
+
+The orchestrator catches engine exceptions per stage and returns `Status.ERROR`
+rather than raising, which is right for the pipeline and wrong for HTTP: the
+typed code the API needs had already been swallowed, leaving a
+human-readable message to parse. With the model down, `/ask` answered **200**
+with an ERROR body and never told the caller that catalog mode was still open —
+J7 failing quietly, in the one place J7 exists to be loud.
+
+Stages now record the exception *type* as a trace note (`failed_with:`) and the
+API maps that to a code. The general shape is the same one M15.2 named: a value
+computed correctly by one component and unavailable to the next. This is its
+first instance in the serving path.
+
+### J7 is the argument for the whole architecture
+
+"The model is down" and "the product is down" have to be different sentences. In
+the same process whose `/ask` returns `MODEL_UNAVAILABLE`, `/catalog/run` answers
+**VERIFIED** with a plan hash and a SQL hash, and `/catalog/metrics` still lists
+the layer. That is only possible because the governed path contains no model at
+all — and it is the clearest demonstration in the project that the semantic layer
+is doing work rather than decorating a model's output.

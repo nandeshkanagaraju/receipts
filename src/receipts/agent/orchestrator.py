@@ -82,6 +82,11 @@ class Deps:
     grounding_enabled: bool = True
 
 
+# Prefix for the trace note naming the exception a stage failed with, so the API
+# can map it to a code without reading a human-readable message.
+FAILED_WITH = "failed_with:"
+
+
 def _language(question: str) -> str:
     from ..language import load as load_lexicons
     from ..language.detect import detect
@@ -162,7 +167,13 @@ def answer(
                 narration=templates.get("abstain", ""),
                 reason=f"intent: {type(exc).__name__}",
             ),
-            trace.with_span("intent", str(exc)[:80], ok=False),
+            # The exception TYPE goes in the trace as a note, not only its
+            # message in the span. The API maps engine exceptions to typed HTTP
+            # codes, and a stage that swallows one leaves the API with a string
+            # to parse -- which is how "the model is down" becomes a 200.
+            trace.with_span("intent", str(exc)[:80], ok=False).with_note(
+                f"{FAILED_WITH}{type(exc).__name__}"
+            ),
         )
 
     # Stage 3: retrieval.

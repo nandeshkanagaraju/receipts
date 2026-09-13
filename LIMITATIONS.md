@@ -1404,3 +1404,57 @@ Agrees with the reference to twelve decimal places.
 ceiling exists that is not a defect: some questions have more than one defensible
 answer and the reference picked one. Any report of Receipts' silent-wrong rate
 should say that roughly a fifth of it is this, not arithmetic.
+
+## The dev result has six rounds of history behind it
+
+Every fix from M14 through M15.3 was diagnosed against **dev**. The G2 result —
+71.3% coverage, 11.1% silent-wrong — is measured on the set that was looked at
+closely six times. That is not an accusation of tuning and it is not a reason to
+discount the number, but it is a fact that has to travel with it.
+
+**What was done to keep it honest, and what that is worth:**
+
+- Every fix implements a rule written down *before* the failure was seen —
+  GLOSSARY §1.4, §1.6a, §2.2, SDD §9.1, §10, §11.1 — and each was verified
+  against reference values computed by an independent hand-written SQL
+  implementation, not against the eval scorer's verdict.
+- The one place a threshold moved (`KNOWN_HINDI_MISSES`) names the three
+  questions rather than lowering a number, so a fourth fails.
+- **The residual was predicted before the fixes were made.** The M15.2
+  diagnosis said 7 of the wrong answers were planner choice and not defects, and
+  named them: DV-009, DV-021, DV-028. After fixing the other 28, exactly those 7
+  remain, out of 12. A diagnosis that predicts what will still be wrong is
+  stronger evidence than a number that improves.
+
+**None of that substitutes for a set with no history.** The eval set has never
+been run against any system, and the holdout runs once (D17). Those are the
+measurements that carry no memory of six rounds of looking, and the README
+should present the dev figure as what it is: the number from the set the system
+was debugged on.
+
+## AMB is the arm where Receipts is worse, and the scoring is unfavourable to it
+
+| population | baseline correct | receipts correct |
+|---|---:|---:|
+| AMB (24) | 19 (79.2%) | **9 (37.5%)** |
+
+Receipts is **worse than the baseline at handling ambiguous questions**, which is
+uncomfortable for a system whose argument is that it knows when to ask. It is
+stated here first because it is the weakest result in the report.
+
+**The scoring is part of it, and the direction matters.** SDD §25.3 gives AMB
+exactly two outcomes: `Correct-clarify` (status `CLARIFY`) and
+`Answered-ambiguous` (everything else). There is no third bucket, so **an
+`ABSTAIN` — a refusal to answer — is scored identically to confidently answering
+an ambiguous question.** 12 of the 24 AMB trials abstain, and all 12 count as
+though the system answered.
+
+That choice is **unfavourable to Receipts**: the baseline answers ambiguous
+questions and is scored for it, while Receipts declines and is scored the same.
+A third bucket would move the AMB column in Receipts' favour.
+
+**It was not changed after seeing the result, and it will not be.** SDD is frozen
+at `specs-frozen`, the rule was written before any system ran, and changing a
+scoring rule once you know which way it cuts is how a thesis stops being one. The
+number stands as measured and the reason it understates the system is recorded
+here instead.
