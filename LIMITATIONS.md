@@ -1550,3 +1550,36 @@ reuse**, and the journey table should not be read as though it were.
 Stated here rather than adjusted in the pass count, because a journey listed as
 covered and half-covered is exactly the shape of claim this project exists to
 avoid making.
+
+## M20: on the deployed demo, the audit log does not survive a restart
+
+The demo runs on a Hugging Face Space with an **ephemeral filesystem**. The
+append-only audit log lives in `data/audit.sqlite` inside the container, so a
+restart — which a free Space does after 48 hours of no traffic — starts it
+empty.
+
+**What that scopes.** The PDD observability bar is *"any receipt ID reconstructs
+the full trace, plan, SQL and row count"*, and `/api/v1/receipts/{id}` serves it
+from the audit log. On the deployed demo that holds **for the life of the
+current container**, not forever. A receipt id from before a restart returns
+`NOT_FOUND`.
+
+**What it does not scope.** The receipt itself is carried by the answer, is
+deterministic, and is reproducible from the repository: the same question, the
+same role, the same `as_of` and the same data version produce the same
+`receipt_id`, the same plan hash and the same SQL hash, on any machine. The
+audit log is a convenience index over what happened, not the evidence itself.
+Nothing in the thesis rests on it.
+
+It is not a defect of the design — the local and Compose deployments mount
+`data/` and keep the log — but a property of a free host, and a reader of the
+live demo should not have to find it out by clicking an old link.
+
+Two smaller properties of the same deployment, for completeness:
+
+- **The daily spend cap resets on restart**, because it is in-memory and per
+  process (`observability/spend.py` says so in its own docstring). On a replay
+  deployment it can never be reached anyway; it matters only if the demo is ever
+  switched to live.
+- **Rate-limit counters are per process** and likewise reset. One container, so
+  no divergence — but a second replica would each keep their own.

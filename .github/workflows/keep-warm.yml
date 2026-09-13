@@ -1,0 +1,45 @@
+# Keep the demo Space awake.
+#
+# A free Hugging Face Space sleeps after 48 hours with no traffic. Waking is a
+# container restart from the built image rather than a rebuild -- measured at
+# ~7.5s locally -- so this is a courtesy to a reviewer who follows a link, not a
+# fix for anything broken.
+#
+# It asks for /healthz, which touches no model, runs no query, and costs
+# nothing. Twice a day is enough to stay inside a 48-hour window with room for a
+# missed run.
+name: keep-warm
+
+on:
+  schedule:
+    - cron: "17 3,15 * * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wake the demo
+        env:
+          # Set this as a repository variable once the Space exists. Absent, the
+          # job says so and succeeds: a keep-warm cron that turns the repository
+          # red is a cron somebody disables.
+          DEMO_URL: ${{ vars.DEMO_URL }}
+        run: |
+          set -o pipefail
+          if [ -z "${DEMO_URL}" ]; then
+            echo "DEMO_URL is not set; nothing to keep warm."
+            exit 0
+          fi
+          echo "waking ${DEMO_URL}"
+          for attempt in 1 2 3 4 5 6 7 8 9 10; do
+            code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 30 "${DEMO_URL}/healthz" || echo 000)
+            echo "attempt ${attempt}: HTTP ${code}"
+            if [ "${code}" = "200" ]; then
+              echo "awake"
+              exit 0
+            fi
+            sleep 15
+          done
+          echo "the demo did not answer /healthz after ten attempts" >&2
+          exit 1
