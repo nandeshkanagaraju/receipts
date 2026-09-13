@@ -19,6 +19,11 @@ USER root
 # application does not know it is on Lambda, which is the point -- the same
 # uvicorn command serves locally, under Compose, and here.
 COPY --from=public.ecr.aws/awsguru/aws-lambda-adapter:0.9.1 /lambda-adapter /opt/extensions/lambda-adapter
+# The copy lands root-owned, and the image runs as `receipts`. Lambda starts
+# extensions as the image's user, so without this the function dies at init with
+#   Runtime.InvalidEntrypoint: ProcessPermissionDenied
+# which reads like a Lambda problem and is a file mode.
+RUN chmod -R 0755 /opt/extensions && chown -R receipts:receipts /opt/extensions
 
 ENV AWS_LWA_PORT=7860 \
     AWS_LWA_READINESS_CHECK_PATH=/healthz \
