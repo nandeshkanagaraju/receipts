@@ -147,7 +147,7 @@ def table_values(table: ResultTable | None, narration: str = "") -> set[Decimal]
             if column.kind == "dim":
                 if isinstance(cell, int | Decimal):
                     allowed.add(Decimal(str(cell)))
-                elif isinstance(cell, str) and narration:
+                elif isinstance(cell, str) and narration and cell in narration:
                     # Numbers inside a dimension STRING are licensed only when
                     # the narration quotes the whole label. A phone model called
                     # "Kestrel 12" puts a 12 in the sentence and refusing that
@@ -162,11 +162,10 @@ def table_values(table: ResultTable | None, narration: str = "") -> set[Decimal]
                     #
                     # Quoting a label licenses its numbers. Extracting a number
                     # out of a label does not.
-                    if cell in narration:
-                        for token in extract_numbers(cell):
-                            inner = to_decimal(token)
-                            if inner is not None:
-                                allowed.add(inner)
+                    for token in extract_numbers(cell):
+                        inner = to_decimal(token)
+                        if inner is not None:
+                            allowed.add(inner)
 
                 continue
             allowed.update(_renderings(cell, column.unit))

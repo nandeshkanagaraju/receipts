@@ -92,7 +92,8 @@ def main() -> int:
     # ---- language --------------------------------------------------------- #
     print("\nBY LANGUAGE — answerable arm only\n")
     print(
-        f"{'lang':<6} {'n':>4} | {'baseline correct':>17} {'silent':>8} | {'receipts correct':>17} {'silent':>8}"
+        f"{'lang':<6} {'n':>4} | {'baseline correct':>17} {'silent':>8}"
+        f" | {'receipts correct':>17} {'silent':>8}"
     )
     print("-" * 78)
     for language in ("en", "ta", "hi"):
