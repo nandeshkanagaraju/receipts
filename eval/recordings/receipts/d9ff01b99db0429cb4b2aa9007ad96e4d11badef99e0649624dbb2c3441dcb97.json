@@ -1,0 +1,16 @@
+{
+  "kind": "text",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "composer",
+    "provider": "openai",
+    "sha256": "b2811b5cadb8075a4cba32008339059d163d0eb918b9b2525bb21fc546e8a498",
+    "version": 1
+  },
+  "text": "चेन्नई में UPI के लिए 2026-08-31 से 2026-09-06 तक भुगतान सफलता दर 85.9% थी; यहाँ “सफलता दर” को डिफ़ॉल्ट के अनुसार ऑर्डर-स्तर माना गया, प्रयास-स्तर नहीं।",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 581,
+    "output_tokens": 332
+  }
+}

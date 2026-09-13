@@ -1,0 +1,22 @@
+{
+  "data": {
+    "assumption": "मैंने “पिछले महीने के अंत में बिना सेटल हुई राशि” को 2026-08-31 के end-of-day पर pending settlement/payout balance माना है।",
+    "sql": null,
+    "unit": "other",
+    "why_not": "इन तालिकाओं में settlement/payout status या settled_at/settlement_date जैसी जानकारी नहीं है, इसलिए 2026-08-31 के अंत तक कौन-सी successful payments अभी unsettled थीं यह निकाला नहीं जा सकता।"
+  },
+  "kind": "structured",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "freeform",
+    "provider": "openai",
+    "sha256": "fb698c2a85e957df0a8de83a3ce4c866dbe5bea3e7a1e3fbc16a04bc85d34ed6",
+    "version": 1
+  },
+  "raw": "{\"sql\":null,\"unit\":\"other\",\"why_not\":\"इन तालिकाओं में settlement/payout status या settled_at/settlement_date जैसी जानकारी नहीं है, इसलिए 2026-08-31 के अंत तक कौन-सी successful payments अभी unsettled थीं यह निकाला नहीं जा सकता।\",\"assumption\":\"मैंने “पिछले महीने के अंत में बिना सेटल हुई राशि” को 2026-08-31 के end-of-day पर pending settlement/payout balance माना है।\"}",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 801,
+    "output_tokens": 339
+  }
+}

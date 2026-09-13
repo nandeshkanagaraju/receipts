@@ -1,0 +1,16 @@
+{
+  "kind": "text",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "composer",
+    "provider": "openai",
+    "sha256": "b2811b5cadb8075a4cba32008339059d163d0eb918b9b2525bb21fc546e8a498",
+    "version": 1
+  },
+  "text": "2026-08-01 முதல் 2026-08-31 வரை தமிழ்நாட்டில் நகரம் வாரியாக EMI share top 5: Chennai 23.6%, Trichy 23.3%, Coimbatore 22.9%, Salem 22.9%, Madurai 22.0%. EMI share glossaryப்படி emi_share ஆக எடுத்துக்கொள்ளப்பட்டது; ‘தமிழ்நாடு’ என்பது Tamil Nadu ஆகவும் reporting currency USD ஆகவும் பயன்படுத்தப்பட்டது.",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 614,
+    "output_tokens": 423
+  }
+}

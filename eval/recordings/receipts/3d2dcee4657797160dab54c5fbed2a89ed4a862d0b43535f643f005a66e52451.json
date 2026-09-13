@@ -1,0 +1,22 @@
+{
+  "data": {
+    "assumption": "“கடந்த 8 வாரங்கள்” என்பதை நடப்பு வாரம் உட்பட கடைசி 8 calendar weeks என்றும், “capture ஆன GMV” என்பதை UK showrooms-க்கு GBP currency-யில் status captured ஆன payment attempts-ன் amount_minor மொத்தம் என்றும் எடுத்துக்கொண்டேன்.",
+    "sql": "SELECT DATE_TRUNC('week', pa.business_date)::date AS week_start, SUM(pa.amount_minor) AS value\nFROM payment_attempts pa\nJOIN orders o ON o.order_id = pa.order_id\nJOIN showrooms s ON s.showroom_id = o.showroom_id\nJOIN countries c ON c.country_code = s.country_code\nWHERE pa.is_test = false\n  AND o.is_test = false\n  AND LOWER(pa.status) = 'captured'\n  AND c.country_code = 'GB'\n  AND pa.currency = 'GBP'\n  AND pa.business_date >= DATE_TRUNC('week', DATE '2026-09-10')::date - INTERVAL '7 weeks'\n  AND pa.business_date < DATE_TRUNC('week', DATE '2026-09-10')::date + INTERVAL '1 week'\nGROUP BY DATE_TRUNC('week', pa.business_date)::date\nORDER BY week_start",
+    "unit": "GBP",
+    "why_not": ""
+  },
+  "kind": "structured",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "freeform",
+    "provider": "openai",
+    "sha256": "fb698c2a85e957df0a8de83a3ce4c866dbe5bea3e7a1e3fbc16a04bc85d34ed6",
+    "version": 1
+  },
+  "raw": "{\"sql\":\"SELECT DATE_TRUNC('week', pa.business_date)::date AS week_start, SUM(pa.amount_minor) AS value\\nFROM payment_attempts pa\\nJOIN orders o ON o.order_id = pa.order_id\\nJOIN showrooms s ON s.showroom_id = o.showroom_id\\nJOIN countries c ON c.country_code = s.country_code\\nWHERE pa.is_test = false\\n  AND o.is_test = false\\n  AND LOWER(pa.status) = 'captured'\\n  AND c.country_code = 'GB'\\n  AND pa.currency = 'GBP'\\n  AND pa.business_date >= DATE_TRUNC('week', DATE '2026-09-10')::date - INTERVAL '7 weeks'\\n  AND pa.business_date < DATE_TRUNC('week', DATE '2026-09-10')::date + INTERVAL '1 week'\\nGROUP BY DATE_TRUNC('week', pa.business_date)::date\\nORDER BY week_start\",\"unit\":\"GBP\",\"why_not\":\"\",\"assumption\":\"“கடந்த 8 வாரங்கள்” என்பதை நடப்பு வாரம் உட்பட கடைசி 8 calendar weeks என்றும், “capture ஆன GMV” என்பதை UK showrooms-க்கு GBP currency-யில் status captured ஆன payment attempts-ன் amount_minor மொத்தம் என்றும் எடுத்துக்கொண்டேன்.\"}",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 801,
+    "output_tokens": 796
+  }
+}

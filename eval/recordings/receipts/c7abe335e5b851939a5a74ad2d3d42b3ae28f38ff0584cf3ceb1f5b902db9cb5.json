@@ -1,0 +1,22 @@
+{
+  "data": {
+    "assumption": "मैंने “अगले महीने हमारा GMV कितना होगा” को 2026-10-01 से 2026-10-31 तक की भविष्य की GMV forecast के रूप में समझा है।",
+    "sql": null,
+    "unit": "other",
+    "why_not": "इन तालिकाओं में भविष्य के GMV का forecast, target, या predictive model उपलब्ध नहीं है; केवल ऐतिहासिक orders/payments data है।"
+  },
+  "kind": "structured",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "freeform",
+    "provider": "openai",
+    "sha256": "8120a4756391543ca9174f13e3f7e9cb0a45bd4076331e0f96fdd8f0fe4e1d73",
+    "version": 1
+  },
+  "raw": "{\"sql\":null,\"unit\":\"other\",\"why_not\":\"इन तालिकाओं में भविष्य के GMV का forecast, target, या predictive model उपलब्ध नहीं है; केवल ऐतिहासिक orders/payments data है।\",\"assumption\":\"मैंने “अगले महीने हमारा GMV कितना होगा” को 2026-10-01 से 2026-10-31 तक की भविष्य की GMV forecast के रूप में समझा है।\"}",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 747,
+    "output_tokens": 336
+  }
+}

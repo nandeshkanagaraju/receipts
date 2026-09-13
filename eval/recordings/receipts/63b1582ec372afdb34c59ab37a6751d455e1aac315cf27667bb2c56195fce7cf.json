@@ -1,0 +1,22 @@
+{
+  "data": {
+    "assumption": "“रिफ़ंड दर” को UAE में अगस्त 2026 के दौरान business_date वाले, सफल card payment_attempt से भुगतान किए गए non-test फ़ोन ऑर्डरों में से कम से कम एक succeeded refund वाले distinct orders का अनुपात माना गया है।",
+    "sql": "SELECT\n  p.model_name,\n  COUNT(DISTINCT o.order_id) AS card_paid_orders,\n  COUNT(DISTINCT CASE WHEN EXISTS (\n    SELECT 1\n    FROM refunds rf\n    WHERE rf.order_id = o.order_id\n      AND rf.status = 'succeeded'\n  ) THEN o.order_id END) AS refunded_orders,\n  CAST(COUNT(DISTINCT CASE WHEN EXISTS (\n    SELECT 1\n    FROM refunds rf\n    WHERE rf.order_id = o.order_id\n      AND rf.status = 'succeeded'\n  ) THEN o.order_id END) AS DECIMAL(18,6))\n  / NULLIF(COUNT(DISTINCT o.order_id), 0) AS refund_rate\nFROM orders o\nJOIN showrooms s ON s.showroom_id = o.showroom_id\nJOIN order_items oi ON oi.order_id = o.order_id\nJOIN products p ON p.sku = oi.sku\nWHERE o.is_test = false\n  AND s.country_code = 'AE'\n  AND o.business_date >= DATE '2026-08-01'\n  AND o.business_date < DATE '2026-09-01'\n  AND p.is_accessory = false\n  AND EXISTS (\n    SELECT 1\n    FROM payment_attempts pa\n    WHERE pa.order_id = o.order_id\n      AND pa.is_test = false\n      AND pa.method = 'card'\n      AND pa.status = 'succeeded'\n  )\nGROUP BY p.model_name\nORDER BY refund_rate DESC, refunded_orders DESC, p.model_name",
+    "unit": "ratio",
+    "why_not": ""
+  },
+  "kind": "structured",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "freeform",
+    "provider": "openai",
+    "sha256": "8120a4756391543ca9174f13e3f7e9cb0a45bd4076331e0f96fdd8f0fe4e1d73",
+    "version": 1
+  },
+  "raw": "{\"sql\":\"SELECT\\n  p.model_name,\\n  COUNT(DISTINCT o.order_id) AS card_paid_orders,\\n  COUNT(DISTINCT CASE WHEN EXISTS (\\n    SELECT 1\\n    FROM refunds rf\\n    WHERE rf.order_id = o.order_id\\n      AND rf.status = 'succeeded'\\n  ) THEN o.order_id END) AS refunded_orders,\\n  CAST(COUNT(DISTINCT CASE WHEN EXISTS (\\n    SELECT 1\\n    FROM refunds rf\\n    WHERE rf.order_id = o.order_id\\n      AND rf.status = 'succeeded'\\n  ) THEN o.order_id END) AS DECIMAL(18,6))\\n  / NULLIF(COUNT(DISTINCT o.order_id), 0) AS refund_rate\\nFROM orders o\\nJOIN showrooms s ON s.showroom_id = o.showroom_id\\nJOIN order_items oi ON oi.order_id = o.order_id\\nJOIN products p ON p.sku = oi.sku\\nWHERE o.is_test = false\\n  AND s.country_code = 'AE'\\n  AND o.business_date >= DATE '2026-08-01'\\n  AND o.business_date < DATE '2026-09-01'\\n  AND p.is_accessory = false\\n  AND EXISTS (\\n    SELECT 1\\n    FROM payment_attempts pa\\n    WHERE pa.order_id = o.order_id\\n      AND pa.is_test = false\\n      AND pa.method = 'card'\\n      AND pa.status = 'succeeded'\\n  )\\nGROUP BY p.model_name\\nORDER BY refund_rate DESC, refunded_orders DESC, p.model_name\",\"unit\":\"ratio\",\"why_not\":\"\",\"assumption\":\"“रिफ़ंड दर” को UAE में अगस्त 2026 के दौरान business_date वाले, सफल card payment_attempt से भुगतान किए गए non-test फ़ोन ऑर्डरों में से कम से कम एक succeeded refund वाले distinct orders का अनुपात माना गया है।\"}",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 764,
+    "output_tokens": 927
+  }
+}

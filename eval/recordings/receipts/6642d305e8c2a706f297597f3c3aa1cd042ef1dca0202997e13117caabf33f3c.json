@@ -1,0 +1,22 @@
+{
+  "data": {
+    "assumption": "I interpreted “அடுத்த மாதம் நமது GMV” as a forecast of total gross merchandise value for October 2026 across all non-test orders.",
+    "sql": null,
+    "unit": "other",
+    "why_not": "The available tables contain historical transactions only and do not include a forecast model or future demand inputs needed to estimate next month’s GMV."
+  },
+  "kind": "structured",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "freeform",
+    "provider": "openai",
+    "sha256": "fb698c2a85e957df0a8de83a3ce4c866dbe5bea3e7a1e3fbc16a04bc85d34ed6",
+    "version": 1
+  },
+  "raw": "{\"sql\":null,\"unit\":\"other\",\"why_not\":\"The available tables contain historical transactions only and do not include a forecast model or future demand inputs needed to estimate next month’s GMV.\",\"assumption\":\"I interpreted “அடுத்த மாதம் நமது GMV” as a forecast of total gross merchandise value for October 2026 across all non-test orders.\"}",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 838,
+    "output_tokens": 272
+  }
+}

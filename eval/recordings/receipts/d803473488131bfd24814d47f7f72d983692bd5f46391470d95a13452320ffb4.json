@@ -1,0 +1,22 @@
+{
+  "data": {
+    "assumption": "“UK last week” means showroom country code GB/UK and the previous Monday-to-Sunday business-date week, 2026-08-31 through 2026-09-06.",
+    "sql": "SELECT COUNT(*) AS value\nFROM payment_attempts pa\nJOIN orders o ON o.order_id = pa.order_id\nJOIN showrooms s ON s.showroom_id = o.showroom_id\nWHERE pa.is_test = FALSE\n  AND o.is_test = FALSE\n  AND LOWER(pa.method) = 'card'\n  AND LOWER(pa.status) = 'failed'\n  AND s.country_code IN ('GB', 'UK')\n  AND pa.business_date >= DATE '2026-08-31'\n  AND pa.business_date < DATE '2026-09-07'",
+    "unit": "count",
+    "why_not": ""
+  },
+  "kind": "structured",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "freeform",
+    "provider": "openai",
+    "sha256": "fb698c2a85e957df0a8de83a3ce4c866dbe5bea3e7a1e3fbc16a04bc85d34ed6",
+    "version": 1
+  },
+  "raw": "{\"sql\":\"SELECT COUNT(*) AS value\\nFROM payment_attempts pa\\nJOIN orders o ON o.order_id = pa.order_id\\nJOIN showrooms s ON s.showroom_id = o.showroom_id\\nWHERE pa.is_test = FALSE\\n  AND o.is_test = FALSE\\n  AND LOWER(pa.method) = 'card'\\n  AND LOWER(pa.status) = 'failed'\\n  AND s.country_code IN ('GB', 'UK')\\n  AND pa.business_date >= DATE '2026-08-31'\\n  AND pa.business_date < DATE '2026-09-07'\",\"unit\":\"count\",\"why_not\":\"\",\"assumption\":\"“UK last week” means showroom country code GB/UK and the previous Monday-to-Sunday business-date week, 2026-08-31 through 2026-09-06.\"}",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 795,
+    "output_tokens": 699
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "data": {
+    "assumption": "“अगस्त” से मतलब अगस्त 2026 है, और “अधिकृत की पर कभी कैप्चर नहीं की” से मतलब ऐसे non-test payment attempts हैं जिनका status 'authorized' है और जिनके लिए कोई settlement item नहीं है; राशि हर currency की minor units में अलग-अलग दी गई है.",
+    "sql": "SELECT payment_attempts.currency, SUM(payment_attempts.amount_minor) AS value\nFROM payment_attempts\nJOIN orders ON orders.order_id = payment_attempts.order_id\nWHERE orders.is_test = FALSE\n  AND payment_attempts.is_test = FALSE\n  AND payment_attempts.business_date >= DATE '2026-08-01'\n  AND payment_attempts.business_date < DATE '2026-09-01'\n  AND payment_attempts.status = 'authorized'\n  AND NOT EXISTS (\n    SELECT 1\n    FROM settlement_items\n    WHERE settlement_items.attempt_id = payment_attempts.attempt_id\n  )\nGROUP BY payment_attempts.currency",
+    "unit": "other",
+    "why_not": ""
+  },
+  "kind": "structured",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "freeform",
+    "provider": "openai",
+    "sha256": "fb698c2a85e957df0a8de83a3ce4c866dbe5bea3e7a1e3fbc16a04bc85d34ed6",
+    "version": 1
+  },
+  "raw": "{\"sql\":\"SELECT payment_attempts.currency, SUM(payment_attempts.amount_minor) AS value\\nFROM payment_attempts\\nJOIN orders ON orders.order_id = payment_attempts.order_id\\nWHERE orders.is_test = FALSE\\n  AND payment_attempts.is_test = FALSE\\n  AND payment_attempts.business_date >= DATE '2026-08-01'\\n  AND payment_attempts.business_date < DATE '2026-09-01'\\n  AND payment_attempts.status = 'authorized'\\n  AND NOT EXISTS (\\n    SELECT 1\\n    FROM settlement_items\\n    WHERE settlement_items.attempt_id = payment_attempts.attempt_id\\n  )\\nGROUP BY payment_attempts.currency\",\"unit\":\"other\",\"why_not\":\"\",\"assumption\":\"“अगस्त” से मतलब अगस्त 2026 है, और “अधिकृत की पर कभी कैप्चर नहीं की” से मतलब ऐसे non-test payment attempts हैं जिनका status 'authorized' है और जिनके लिए कोई settlement item नहीं है; राशि हर currency की minor units में अलग-अलग दी गई है.\"}",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 843,
+    "output_tokens": 743
+  }
+}

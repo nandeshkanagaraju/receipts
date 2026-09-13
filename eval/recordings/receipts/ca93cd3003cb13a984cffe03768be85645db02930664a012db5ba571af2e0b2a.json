@@ -1,0 +1,22 @@
+{
+  "data": {
+    "assumption": "“पिछले महीने” से मतलब 1 अगस्त 2026 से 31 अगस्त 2026 तक Chennai के non-test orders हैं, और रद्द ऑर्डर वे हैं जिनका status cancelled/canceled है; नतीजा 0–100 प्रतिशत स्केल पर है।",
+    "sql": "SELECT 100.0 * SUM(CASE WHEN LOWER(o.status) IN ('cancelled', 'canceled') THEN 1 ELSE 0 END) / NULLIF(COUNT(*), 0) AS cancelled_order_percentage\nFROM orders o\nJOIN showrooms s ON s.showroom_id = o.showroom_id\nJOIN cities c ON c.city_id = s.city_id\nWHERE o.is_test = FALSE\n  AND LOWER(c.name) = 'chennai'\n  AND o.business_date >= DATE '2026-08-01'\n  AND o.business_date < DATE '2026-09-01'",
+    "unit": "ratio",
+    "why_not": ""
+  },
+  "kind": "structured",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "freeform",
+    "provider": "openai",
+    "sha256": "8120a4756391543ca9174f13e3f7e9cb0a45bd4076331e0f96fdd8f0fe4e1d73",
+    "version": 1
+  },
+  "raw": "{\"sql\":\"SELECT 100.0 * SUM(CASE WHEN LOWER(o.status) IN ('cancelled', 'canceled') THEN 1 ELSE 0 END) / NULLIF(COUNT(*), 0) AS cancelled_order_percentage\\nFROM orders o\\nJOIN showrooms s ON s.showroom_id = o.showroom_id\\nJOIN cities c ON c.city_id = s.city_id\\nWHERE o.is_test = FALSE\\n  AND LOWER(c.name) = 'chennai'\\n  AND o.business_date >= DATE '2026-08-01'\\n  AND o.business_date < DATE '2026-09-01'\",\"unit\":\"ratio\",\"why_not\":\"\",\"assumption\":\"“पिछले महीने” से मतलब 1 अगस्त 2026 से 31 अगस्त 2026 तक Chennai के non-test orders हैं, और रद्द ऑर्डर वे हैं जिनका status cancelled/canceled है; नतीजा 0–100 प्रतिशत स्केल पर है।\"}",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 715,
+    "output_tokens": 561
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "data": {
+    "assumption": "“UK-யில் weekly capture ஆன GMV” என்பதை United Kingdom showrooms-இல் business_date அடிப்படையில் கடந்த 8 வாரங்களில் captured status உள்ள payment attempts-ன் amount_minor மொத்தம் என்று எடுத்துக்கொண்டேன்.",
+    "sql": "SELECT\n  DATE_TRUNC('week', pa.business_date)::date AS week_start,\n  SUM(pa.amount_minor) AS captured_gmv_minor\nFROM payment_attempts pa\nJOIN orders o ON o.order_id = pa.order_id\nJOIN showrooms s ON s.showroom_id = o.showroom_id\nJOIN countries c ON c.country_code = s.country_code\nWHERE pa.is_test = false\n  AND o.is_test = false\n  AND c.name = 'United Kingdom'\n  AND pa.status = 'captured'\n  AND pa.business_date >= DATE '2026-09-10' - INTERVAL '8 weeks'\n  AND pa.business_date <= DATE '2026-09-10'\nGROUP BY DATE_TRUNC('week', pa.business_date)::date\nORDER BY week_start",
+    "unit": "GBP",
+    "why_not": ""
+  },
+  "kind": "structured",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "freeform",
+    "provider": "openai",
+    "sha256": "8120a4756391543ca9174f13e3f7e9cb0a45bd4076331e0f96fdd8f0fe4e1d73",
+    "version": 1
+  },
+  "raw": "{\"sql\":\"SELECT\\n  DATE_TRUNC('week', pa.business_date)::date AS week_start,\\n  SUM(pa.amount_minor) AS captured_gmv_minor\\nFROM payment_attempts pa\\nJOIN orders o ON o.order_id = pa.order_id\\nJOIN showrooms s ON s.showroom_id = o.showroom_id\\nJOIN countries c ON c.country_code = s.country_code\\nWHERE pa.is_test = false\\n  AND o.is_test = false\\n  AND c.name = 'United Kingdom'\\n  AND pa.status = 'captured'\\n  AND pa.business_date >= DATE '2026-09-10' - INTERVAL '8 weeks'\\n  AND pa.business_date <= DATE '2026-09-10'\\nGROUP BY DATE_TRUNC('week', pa.business_date)::date\\nORDER BY week_start\",\"unit\":\"GBP\",\"why_not\":\"\",\"assumption\":\"“UK-யில் weekly capture ஆன GMV” என்பதை United Kingdom showrooms-இல் business_date அடிப்படையில் கடந்த 8 வாரங்களில் captured status உள்ள payment attempts-ன் amount_minor மொத்தம் என்று எடுத்துக்கொண்டேன்.\"}",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 714,
+    "output_tokens": 756
+  }
+}

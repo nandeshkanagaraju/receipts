@@ -1,0 +1,22 @@
+{
+  "data": {
+    "assumption": "“கடந்த மாதம் சிங்கப்பூரில் median order value” என்பது 2026 ஆகஸ்ட் மாத business_date கொண்ட, test அல்லாத Singapore showroom orders-இன் total_minor மதிப்பின் discrete median என்று எடுத்துக்கொண்டேன்.",
+    "sql": "SELECT PERCENTILE_DISC(0.5) WITHIN GROUP (ORDER BY o.total_minor) AS value\nFROM orders o\nJOIN showrooms s ON s.showroom_id = o.showroom_id\nJOIN countries c ON c.country_code = s.country_code\nWHERE o.is_test = FALSE\n  AND c.name = 'Singapore'\n  AND o.currency = 'SGD'\n  AND o.business_date >= DATE '2026-08-01'\n  AND o.business_date < DATE '2026-09-01'",
+    "unit": "SGD",
+    "why_not": ""
+  },
+  "kind": "structured",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "freeform",
+    "provider": "openai",
+    "sha256": "fb698c2a85e957df0a8de83a3ce4c866dbe5bea3e7a1e3fbc16a04bc85d34ed6",
+    "version": 1
+  },
+  "raw": "{\"sql\":\"SELECT PERCENTILE_DISC(0.5) WITHIN GROUP (ORDER BY o.total_minor) AS value\\nFROM orders o\\nJOIN showrooms s ON s.showroom_id = o.showroom_id\\nJOIN countries c ON c.country_code = s.country_code\\nWHERE o.is_test = FALSE\\n  AND c.name = 'Singapore'\\n  AND o.currency = 'SGD'\\n  AND o.business_date >= DATE '2026-08-01'\\n  AND o.business_date < DATE '2026-09-01'\",\"unit\":\"SGD\",\"why_not\":\"\",\"assumption\":\"“கடந்த மாதம் சிங்கப்பூரில் median order value” என்பது 2026 ஆகஸ்ட் மாத business_date கொண்ட, test அல்லாத Singapore showroom orders-இன் total_minor மதிப்பின் discrete median என்று எடுத்துக்கொண்டேன்.\"}",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 842,
+    "output_tokens": 700
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "data": {
+    "assumption": "मैंने “अगले महीने हमारा GMV” को 2026-10 के भविष्य के कुल order total_minor GMV के forecast के रूप में समझा।",
+    "sql": null,
+    "unit": "other",
+    "why_not": "इन तालिकाओं में भविष्य के GMV का forecast या forecasting model/assumptions उपलब्ध नहीं हैं, इसलिए अगले महीने का GMV सीधे निकाला नहीं जा सकता।"
+  },
+  "kind": "structured",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "freeform",
+    "provider": "openai",
+    "sha256": "fb698c2a85e957df0a8de83a3ce4c866dbe5bea3e7a1e3fbc16a04bc85d34ed6",
+    "version": 1
+  },
+  "raw": "{\"sql\":null,\"unit\":\"other\",\"why_not\":\"इन तालिकाओं में भविष्य के GMV का forecast या forecasting model/assumptions उपलब्ध नहीं हैं, इसलिए अगले महीने का GMV सीधे निकाला नहीं जा सकता।\",\"assumption\":\"मैंने “अगले महीने हमारा GMV” को 2026-10 के भविष्य के कुल order total_minor GMV के forecast के रूप में समझा।\"}",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 834,
+    "output_tokens": 256
+  }
+}

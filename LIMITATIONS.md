@@ -1241,3 +1241,33 @@ staying within 10 points of the baseline's coverage. Receipts answers 18.5% of
 the answerable arm against the baseline's 71.3%: 53 points behind, not 10. The
 silent-wrong comparison below is therefore not yet a like-for-like comparison,
 and no reading of it should be published without the coverage number beside it.
+
+## M15 — after both fixes, the thesis still does not hold on dev
+
+**Coverage is 37.0% against the baseline's 71.3%: 34 points short where PDD §5
+allows 10.** Better than M14's 53, still a failure of the constraint, so the
+silent-wrong comparison remains not-like-for-like and must never be quoted
+without the coverage figure beside it.
+
+**Silent-wrong is 23.1% against 27.8%.** §5 asks for half — 13.9% or below. It is
+a 4.7-point improvement, not a halving. Conditional on having answered, Receipts
+is still worse than the baseline: 33.3% against 28.0%.
+
+**`UNKNOWN_FILTER_VALUE` is gone.** It was 18 over-abstentions in M14 and is 0
+now. The English/Indic gap narrowed but did not close: 44.4% / 41.7% / 25.0%
+correct for en / ta / hi against a baseline flat at ~70%. Hindi remains the worst
+arm and the cause is no longer value synonyms.
+
+**22 of the 29 remaining over-abstentions are gate rule 4, CLARIFY.** That is now
+the single largest cause by a wide margin, and it is not obviously a defect:
+asking rather than guessing is what the gate is for. Whether those 22 are correct
+clarifications or over-eager ones is the next diagnostic question, and it was not
+answered this round.
+
+**`capture_vs_settlement` is unanswered on all 9 dev trials** — 0 correct, 0
+wrong, 8 abstained. The baseline gets 7 of 9. Whatever is blocking that trap
+blocks it completely.
+
+**Two open defects** (M2_NOTES §7): an ambiguous `acquiring_bank` reference when
+the compiler joins settlements, and a currency code failing `Column` validation
+on DV-050. Four dev trials, scored as `Error`, unfixed.

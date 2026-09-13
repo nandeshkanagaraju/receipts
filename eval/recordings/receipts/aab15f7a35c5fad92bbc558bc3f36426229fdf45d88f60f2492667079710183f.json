@@ -1,0 +1,22 @@
+{
+  "data": {
+    "assumption": "“पिछले महीने” का मतलब 2026-08-01 से 2026-08-31 तक है, और “सिंगापुर में” का मतलब Singapore country वाले showroom से जुड़े orders के सभी non-test payment attempts हैं।",
+    "sql": "SELECT COUNT(*) AS payment_attempt_count\nFROM payment_attempts pa\nJOIN orders o ON o.order_id = pa.order_id\nJOIN showrooms s ON s.showroom_id = o.showroom_id\nJOIN countries c ON c.country_code = s.country_code\nWHERE pa.is_test = FALSE\n  AND o.is_test = FALSE\n  AND pa.business_date >= DATE '2026-08-01'\n  AND pa.business_date < DATE '2026-09-01'\n  AND c.name = 'Singapore'",
+    "unit": "count",
+    "why_not": ""
+  },
+  "kind": "structured",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "freeform",
+    "provider": "openai",
+    "sha256": "8120a4756391543ca9174f13e3f7e9cb0a45bd4076331e0f96fdd8f0fe4e1d73",
+    "version": 1
+  },
+  "raw": "{\"sql\":\"SELECT COUNT(*) AS payment_attempt_count\\nFROM payment_attempts pa\\nJOIN orders o ON o.order_id = pa.order_id\\nJOIN showrooms s ON s.showroom_id = o.showroom_id\\nJOIN countries c ON c.country_code = s.country_code\\nWHERE pa.is_test = FALSE\\n  AND o.is_test = FALSE\\n  AND pa.business_date >= DATE '2026-08-01'\\n  AND pa.business_date < DATE '2026-09-01'\\n  AND c.name = 'Singapore'\",\"unit\":\"count\",\"why_not\":\"\",\"assumption\":\"“पिछले महीने” का मतलब 2026-08-01 से 2026-08-31 तक है, और “सिंगापुर में” का मतलब Singapore country वाले showroom से जुड़े orders के सभी non-test payment attempts हैं।\"}",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 752,
+    "output_tokens": 451
+  }
+}

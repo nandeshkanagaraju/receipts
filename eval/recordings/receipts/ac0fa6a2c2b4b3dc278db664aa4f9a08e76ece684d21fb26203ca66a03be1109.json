@@ -1,0 +1,22 @@
+{
+  "data": {
+    "assumption": "“அடுத்த மாத GMV” என்பது வரவிருக்கும் calendar month-இல் எதிர்பார்க்கப்படும் மொத்த non-test order GMV என்று எடுத்துக்கொண்டேன்.",
+    "sql": null,
+    "unit": "other",
+    "why_not": "The tables contain historical orders and payments but no forecast model, targets, or future order data needed to estimate next month’s GMV."
+  },
+  "kind": "structured",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "freeform",
+    "provider": "openai",
+    "sha256": "8120a4756391543ca9174f13e3f7e9cb0a45bd4076331e0f96fdd8f0fe4e1d73",
+    "version": 1
+  },
+  "raw": "{\"sql\":null,\"unit\":\"other\",\"why_not\":\"The tables contain historical orders and payments but no forecast model, targets, or future order data needed to estimate next month’s GMV.\",\"assumption\":\"“அடுத்த மாத GMV” என்பது வரவிருக்கும் calendar month-இல் எதிர்பார்க்கப்படும் மொத்த non-test order GMV என்று எடுத்துக்கொண்டேன்.\"}",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 751,
+    "output_tokens": 218
+  }
+}

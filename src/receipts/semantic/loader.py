@@ -16,6 +16,7 @@ number returned to somebody.
 from __future__ import annotations
 
 import re
+from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
@@ -32,6 +33,7 @@ from .catalog import (
     Entity,
     Metric,
 )
+from .value_synonyms import load_curated, synonyms_for
 
 REPO = Path(__file__).resolve().parents[3]
 SEMANTIC_DIR = REPO / "semantic"
@@ -410,6 +412,25 @@ def load(
     if with_values:
         artifact = db_path if db_path is not None else REPO / "data" / "kestrel.duckdb"
         values = dimension_value_index(dimensions, artifact)
+
+    # SDD §9.1 rule 3: values resolve case-insensitively and through trilingual
+    # synonyms. Three sources, in precedence order -- derived from the value
+    # index, then the dimension's own YAML, then the curated trilingual file.
+    # Built here rather than at match time so the whole index is fixed once, at
+    # load, and a question cannot influence what a name resolves to.
+    curated = load_curated()
+    dimensions = tuple(
+        replace(
+            dimension,
+            value_synonyms=synonyms_for(
+                dimension.name,
+                values.get(dimension.name, ()),
+                dimension.value_synonyms,
+                curated,
+            ),
+        )
+        for dimension in dimensions
+    )
 
     return Catalog(
         entities=entities,

@@ -1,0 +1,22 @@
+{
+  "data": {
+    "assumption": "“Average order” means all non-test orders from showrooms in India, with the value calculated as non-test payment attempts divided by orders, including orders with zero payment attempts.",
+    "sql": "SELECT COUNT(pa.attempt_id)::numeric / NULLIF(COUNT(DISTINCT o.order_id), 0) AS value\nFROM orders o\nJOIN showrooms s ON s.showroom_id = o.showroom_id\nJOIN countries c ON c.country_code = s.country_code\nLEFT JOIN payment_attempts pa ON pa.order_id = o.order_id AND pa.is_test = false\nWHERE o.is_test = false\n  AND c.name = 'India'",
+    "unit": "ratio",
+    "why_not": ""
+  },
+  "kind": "structured",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "freeform",
+    "provider": "openai",
+    "sha256": "fb698c2a85e957df0a8de83a3ce4c866dbe5bea3e7a1e3fbc16a04bc85d34ed6",
+    "version": 1
+  },
+  "raw": "{\"sql\":\"SELECT COUNT(pa.attempt_id)::numeric / NULLIF(COUNT(DISTINCT o.order_id), 0) AS value\\nFROM orders o\\nJOIN showrooms s ON s.showroom_id = o.showroom_id\\nJOIN countries c ON c.country_code = s.country_code\\nLEFT JOIN payment_attempts pa ON pa.order_id = o.order_id AND pa.is_test = false\\nWHERE o.is_test = false\\n  AND c.name = 'India'\",\"unit\":\"ratio\",\"why_not\":\"\",\"assumption\":\"“Average order” means all non-test orders from showrooms in India, with the value calculated as non-test payment attempts divided by orders, including orders with zero payment attempts.\"}",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 836,
+    "output_tokens": 560
+  }
+}

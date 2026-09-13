@@ -200,3 +200,28 @@ class _deadline:
 
 
 assert isinstance(DuckDBAdapter(Path(".")), Adapter)
+
+
+def table_columns(db_path: Path) -> dict[str, tuple[str, ...]]:
+    """Table -> column names, read once at startup for the free-form prompt.
+
+    Read-only and sorted by ordinal position, so the prompt text -- and therefore
+    the replay key, which hashes the messages -- is the same on every run of the
+    same artifact (D5).
+    """
+    import duckdb
+
+    if not db_path.exists():
+        return {}
+    connection = duckdb.connect(str(db_path), read_only=True)
+    try:
+        rows = connection.execute(
+            "SELECT table_name, column_name FROM information_schema.columns "
+            "WHERE table_schema = 'main' ORDER BY table_name, ordinal_position"
+        ).fetchall()
+    finally:
+        connection.close()
+    out: dict[str, list[str]] = {}
+    for table, column in rows:
+        out.setdefault(str(table), []).append(str(column))
+    return {table: tuple(columns) for table, columns in out.items()}

@@ -1,0 +1,22 @@
+{
+  "data": {
+    "assumption": "I interpreted “share of Chennai orders were cancelled last month” as cancelled Chennai orders divided by all non-test Chennai orders with business dates in August 2026.",
+    "sql": "SELECT CAST(SUM(CASE WHEN LOWER(o.status) = 'cancelled' THEN 1 ELSE 0 END) AS DOUBLE PRECISION) / NULLIF(COUNT(*), 0) AS cancelled_order_share\nFROM orders o\nJOIN showrooms s ON s.showroom_id = o.showroom_id\nJOIN cities c ON c.city_id = s.city_id\nWHERE o.is_test = FALSE\n  AND c.name = 'Chennai'\n  AND o.business_date >= DATE '2026-08-01'\n  AND o.business_date < DATE '2026-09-01'",
+    "unit": "ratio",
+    "why_not": ""
+  },
+  "kind": "structured",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "freeform",
+    "provider": "openai",
+    "sha256": "8120a4756391543ca9174f13e3f7e9cb0a45bd4076331e0f96fdd8f0fe4e1d73",
+    "version": 1
+  },
+  "raw": "{\"sql\":\"SELECT CAST(SUM(CASE WHEN LOWER(o.status) = 'cancelled' THEN 1 ELSE 0 END) AS DOUBLE PRECISION) / NULLIF(COUNT(*), 0) AS cancelled_order_share\\nFROM orders o\\nJOIN showrooms s ON s.showroom_id = o.showroom_id\\nJOIN cities c ON c.city_id = s.city_id\\nWHERE o.is_test = FALSE\\n  AND c.name = 'Chennai'\\n  AND o.business_date >= DATE '2026-08-01'\\n  AND o.business_date < DATE '2026-09-01'\",\"unit\":\"ratio\",\"why_not\":\"\",\"assumption\":\"I interpreted “share of Chennai orders were cancelled last month” as cancelled Chennai orders divided by all non-test Chennai orders with business dates in August 2026.\"}",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 707,
+    "output_tokens": 301
+  }
+}

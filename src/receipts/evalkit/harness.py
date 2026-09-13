@@ -205,7 +205,7 @@ def _build_receipts() -> System:
 
     from ..agent.orchestrator import Deps
     from ..config import load_settings
-    from ..execute.adapters.duckdb import DuckDBAdapter
+    from ..execute.adapters.duckdb import DuckDBAdapter, table_columns
     from ..llm.budget import BudgetedLLM, QuestionBudget
     from ..llm.replay import RecordingLLM, ReplayLLM
     from ..semantic import loader
@@ -252,6 +252,7 @@ def _build_receipts() -> System:
         row_limit=settings.row_limit,
         timeout_s=settings.timeout_s,
         freeform_enabled=settings.freeform.enabled,
+        columns=table_columns(DB_PATH),
     )
     scopes = {name: gate_dev.scope_for(name, roles, places) for name in roles}
     return ReceiptsSystem(deps=deps, scopes=scopes, as_of=settings.as_of)

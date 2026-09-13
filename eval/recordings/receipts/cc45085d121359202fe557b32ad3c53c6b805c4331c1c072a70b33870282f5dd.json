@@ -1,0 +1,22 @@
+{
+  "data": {
+    "assumption": "“கடந்த மாதம் சிங்கப்பூரில் median order value” means the median non-test order total_minor for Singapore showrooms during the August 2026 business dates, returned in SGD minor units.",
+    "sql": "SELECT percentile_disc(0.5) WITHIN GROUP (ORDER BY o.total_minor) AS median_order_value_minor\nFROM orders o\nJOIN showrooms s ON s.showroom_id = o.showroom_id\nJOIN countries c ON c.country_code = s.country_code\nWHERE o.is_test = false\n  AND o.business_date >= DATE '2026-08-01'\n  AND o.business_date < DATE '2026-09-01'\n  AND c.name = 'Singapore'\n  AND o.currency = 'SGD'",
+    "unit": "SGD",
+    "why_not": ""
+  },
+  "kind": "structured",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "freeform",
+    "provider": "openai",
+    "sha256": "8120a4756391543ca9174f13e3f7e9cb0a45bd4076331e0f96fdd8f0fe4e1d73",
+    "version": 1
+  },
+  "raw": "{\"sql\":\"SELECT percentile_disc(0.5) WITHIN GROUP (ORDER BY o.total_minor) AS median_order_value_minor\\nFROM orders o\\nJOIN showrooms s ON s.showroom_id = o.showroom_id\\nJOIN countries c ON c.country_code = s.country_code\\nWHERE o.is_test = false\\n  AND o.business_date >= DATE '2026-08-01'\\n  AND o.business_date < DATE '2026-09-01'\\n  AND c.name = 'Singapore'\\n  AND o.currency = 'SGD'\",\"unit\":\"SGD\",\"why_not\":\"\",\"assumption\":\"“கடந்த மாதம் சிங்கப்பூரில் median order value” means the median non-test order total_minor for Singapore showrooms during the August 2026 business dates, returned in SGD minor units.\"}",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 755,
+    "output_tokens": 694
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "data": {},
+  "kind": "structured",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "freeform",
+    "provider": "openai",
+    "sha256": "fb698c2a85e957df0a8de83a3ce4c866dbe5bea3e7a1e3fbc16a04bc85d34ed6",
+    "version": 1
+  },
+  "raw": "{}",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 848,
+    "output_tokens": 1200
+  }
+}

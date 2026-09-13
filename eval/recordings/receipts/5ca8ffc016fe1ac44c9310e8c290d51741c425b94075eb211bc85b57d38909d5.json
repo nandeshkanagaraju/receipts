@@ -1,0 +1,22 @@
+{
+  "data": {
+    "assumption": "“Share of Chennai orders cancelled last month” means cancelled orders divided by all non-test Chennai orders with business dates in August 2026.",
+    "sql": "SELECT COUNT(*) FILTER (WHERE LOWER(o.status) = 'cancelled')::numeric / NULLIF(COUNT(*), 0) AS value\nFROM orders o\nJOIN showrooms s ON s.showroom_id = o.showroom_id\nJOIN cities c ON c.city_id = s.city_id\nWHERE o.is_test IS FALSE\n  AND c.name = 'Chennai'\n  AND o.business_date >= DATE '2026-08-01'\n  AND o.business_date < DATE '2026-09-01'",
+    "unit": "ratio",
+    "why_not": ""
+  },
+  "kind": "structured",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "freeform",
+    "provider": "openai",
+    "sha256": "fb698c2a85e957df0a8de83a3ce4c866dbe5bea3e7a1e3fbc16a04bc85d34ed6",
+    "version": 1
+  },
+  "raw": "{\"sql\":\"SELECT COUNT(*) FILTER (WHERE LOWER(o.status) = 'cancelled')::numeric / NULLIF(COUNT(*), 0) AS value\\nFROM orders o\\nJOIN showrooms s ON s.showroom_id = o.showroom_id\\nJOIN cities c ON c.city_id = s.city_id\\nWHERE o.is_test IS FALSE\\n  AND c.name = 'Chennai'\\n  AND o.business_date >= DATE '2026-08-01'\\n  AND o.business_date < DATE '2026-09-01'\",\"unit\":\"ratio\",\"why_not\":\"\",\"assumption\":\"“Share of Chennai orders cancelled last month” means cancelled orders divided by all non-test Chennai orders with business dates in August 2026.\"}",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 794,
+    "output_tokens": 441
+  }
+}

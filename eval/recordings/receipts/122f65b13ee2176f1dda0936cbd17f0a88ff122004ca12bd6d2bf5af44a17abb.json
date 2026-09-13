@@ -1,0 +1,22 @@
+{
+  "data": {
+    "assumption": "“கடந்த மாதம்” என்பது 2026-08-01 முதல் 2026-08-31 வரை, showroom நாட்டின் பெயர் Singapore ஆக உள்ள non-test payment attempts எண்ணிக்கை என்று எடுத்துக்கொண்டேன்.",
+    "sql": "SELECT COUNT(*) AS value\nFROM payment_attempts pa\nJOIN orders o ON o.order_id = pa.order_id\nJOIN showrooms s ON s.showroom_id = o.showroom_id\nJOIN countries c ON c.country_code = s.country_code\nWHERE pa.is_test = FALSE\n  AND o.is_test = FALSE\n  AND pa.business_date >= DATE '2026-08-01'\n  AND pa.business_date < DATE '2026-09-01'\n  AND c.name = 'Singapore'",
+    "unit": "count",
+    "why_not": ""
+  },
+  "kind": "structured",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "freeform",
+    "provider": "openai",
+    "sha256": "fb698c2a85e957df0a8de83a3ce4c866dbe5bea3e7a1e3fbc16a04bc85d34ed6",
+    "version": 1
+  },
+  "raw": "{\"sql\":\"SELECT COUNT(*) AS value\\nFROM payment_attempts pa\\nJOIN orders o ON o.order_id = pa.order_id\\nJOIN showrooms s ON s.showroom_id = o.showroom_id\\nJOIN countries c ON c.country_code = s.country_code\\nWHERE pa.is_test = FALSE\\n  AND o.is_test = FALSE\\n  AND pa.business_date >= DATE '2026-08-01'\\n  AND pa.business_date < DATE '2026-09-01'\\n  AND c.name = 'Singapore'\",\"unit\":\"count\",\"why_not\":\"\",\"assumption\":\"“கடந்த மாதம்” என்பது 2026-08-01 முதல் 2026-08-31 வரை, showroom நாட்டின் பெயர் Singapore ஆக உள்ள non-test payment attempts எண்ணிக்கை என்று எடுத்துக்கொண்டேன்.\"}",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 843,
+    "output_tokens": 471
+  }
+}

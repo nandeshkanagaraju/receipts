@@ -1,0 +1,166 @@
+# Trilingual aliases for values the data holds. SDD §9.1 rule 3.
+#
+# PROVENANCE, stated plainly because the rule about where a synonym came from is
+# the whole difference between a synonym and a guess:
+#
+#   * Every canonical key below is a value that EXISTS in the warehouse's value
+#     index. Nothing here invents a place, a method, or a bank.
+#   * The Tamil and Devanagari forms are the ordinary written names for those
+#     same entities. The warehouse has no localised name column and the glossary
+#     defines metrics rather than naming places, so this layer is written down
+#     rather than derived -- which is exactly why it is in a reviewable file and
+#     not in code.
+#   * English aliases are either the business's own word for the thing (the
+#     warehouse table is called `showrooms`, so "showroom" resolves to the
+#     `in_store` channel), a widely used former name (Madras, Bangalore), or an
+#     ISO code already present in `countries.country_code`.
+#   * NOTHING here was read from eval/questions. Each dimension covers EVERY
+#     value the data holds for it, not the values that happened to fail -- the
+#     failing set was Chennai, Tamil Nadu and India, and a file containing only
+#     those three would be eval-tuning in a data file's clothes.
+#     `test_curated_synonyms_cover_every_value` enforces the coverage.
+#
+# NOT COVERED, deliberately: showroom (263 values) and model (46) are compound
+# proper nouns built from a brand word plus a place or a series name ("Kestrel
+# Adyar", "Kestrel Lark 3"); they are written the same way in every language in
+# this corpus. emi_tenure_months is numeric. The coverage test knows this list.
+
+country:
+  India: [इंडिया, भारत, இந்தியா, IN, IND]
+  Malaysia: [मलेशिया, மலேசியா, MY, MYS]
+  Singapore: [सिंगापुर, சிங்கப்பூர், SG, SGP]
+  United Arab Emirates: [संयुक्त अरब अमीरात, यूएई, ஐக்கிய அரபு அமீரகம், அமீரகம்]
+  United Kingdom: [यूनाइटेड किंगडम, ब्रिटेन, यूके, ஐக்கிய இராச்சியம், பிரிட்டன்]
+  United States: [संयुक्त राज्य अमेरिका, अमेरिका, यूएस, ஐக்கிய அமெரிக்கா, அமெரிக்கா]
+
+region:
+  Abu Dhabi: [अबू धाबी, அபுதாபி]
+  California: [कैलिफोर्निया, கலிபோர்னியா]
+  Delhi NCR: [दिल्ली एनसीआर, दिल्ली, டெல்லி, டெல்லி என்சிஆர்]
+  Dubai: [दुबई, துபாய்]
+  Gujarat: [गुजरात, குஜராத்]
+  Karnataka: [कर्नाटक, கர்நாடகா, கர்நாடகம்]
+  Kuala Lumpur: [कुआलालंपुर, கோலாலம்பூர்]
+  London: [लंदन, லண்டன்]
+  Maharashtra: [महाराष्ट्र, மகாராஷ்டிரா]
+  Midlands: [मिडलैंड्स, மிட்லாண்ட்ஸ்]
+  New York: [न्यूयॉर्क, நியூயார்க்]
+  North West: [नॉर्थ वेस्ट, வடமேற்கு]
+  Penang: [पेनांग, பினாங்கு]
+  Singapore: [सिंगापुर, சிங்கப்பூர்]
+  Tamil Nadu: [तमिलनाडु, तमिल नाडु, தமிழ்நாடு, தமிழ் நாடு]
+  Telangana: [तेलंगाना, தெலங்கானா]
+  Texas: [टेक्सास, டெக்சாஸ்]
+  West Bengal: [पश्चिम बंगाल, மேற்கு வங்கம்]
+
+city:
+  Abu Dhabi: [अबू धाबी, அபுதாபி]
+  Ahmedabad: [अहमदाबाद, அகமதாபாத்]
+  Al Ain: [अल ऐन, அல் ஐன்]
+  Austin: [ऑस्टिन, ஆஸ்டின்]
+  Bengaluru: [बेंगलुरु, बैंगलोर, பெங்களூரு, Bangalore]
+  Birmingham: [बर्मिंघम, பர்மிங்காம்]
+  Chennai: [चेन्नई, சென்னை, Madras]
+  Coimbatore: [कोयंबटूर, கோயம்புத்தூர்]
+  Dallas: [डलास, டல்லாஸ்]
+  Dubai: [दुबई, துபாய்]
+  George Town: [जॉर्ज टाउन, ஜார்ஜ் டவுன்]
+  Gurugram: [गुरुग्राम, गुड़गांव, குருகிராம், Gurgaon]
+  Howrah: [हावड़ा, ஹவுரா]
+  Hyderabad: [हैदराबाद, ஹைதராபாத்]
+  Kolkata: [कोलकाता, கொல்கத்தா, Calcutta]
+  Kuala Lumpur: [कुआलालंपुर, கோலாலம்பூர்]
+  Leicester: [लेस्टर, லெய்செஸ்டர்]
+  Liverpool: [लिवरपूल, லிவர்பூல்]
+  London: [लंदन, லண்டன்]
+  Los Angeles: [लॉस एंजिल्स, லாஸ் ஏஞ்சல்ஸ்]
+  Madurai: [मदुरै, மதுரை]
+  Manchester: [मैनचेस्टर, மான்செஸ்டர்]
+  Mangaluru: [मंगलुरु, மங்களூரு, Mangalore]
+  Mumbai: [मुंबई, மும்பை, Bombay]
+  Mysuru: [मैसूरु, மைசூரு, Mysore]
+  Nagpur: [नागपुर, நாக்பூர்]
+  New Delhi: [नई दिल्ली, புது டெல்லி]
+  New York: [न्यूयॉर्क, நியூயார்க்]
+  Noida: [नोएडा, நொய்டா]
+  Petaling Jaya: [पेटलिंग जया, பெட்டாலிங் ஜெயா]
+  Pune: [पुणे, புனே]
+  Salem: [सेलम, சேலம்]
+  San Francisco: [सैन फ्रांसिस्को, சான் பிரான்சிஸ்கோ]
+  Singapore: [सिंगापुर, சிங்கப்பூர்]
+  Surat: [सूरत, சூரத்]
+  Trichy: [त्रिची, திருச்சி, Tiruchirappalli]
+  Warangal: [वारंगल, வாரங்கல்]
+
+payment_method:
+  card: [कार्ड, क्रेडिट कार्ड, डेबिट कार्ड, அட்டை, கிரெடிட் கார்டு, டெபிட் கார்டு,
+         credit card, debit card]
+  emi: [ईएमआई, किस्त, किश्त, இஎம்ஐ, தவணை, instalment, installment]
+  netbanking: [नेटबैंकिंग, नेट बैंकिंग, इंटरनेट बैंकिंग, நெட் பேங்கிங், இணைய வங்கி,
+               internet banking, net banking]
+  pay_later: [पे लेटर, बाद में भुगतान, பின்னர் செலுத்து, BNPL, buy now pay later]
+  upi: [यूपीआई, யூபிஐ, யுபிஐ]
+  wallet: [वॉलेट, बटुआ, வாலட், பணப்பை]
+
+channel:
+  in_store: [स्टोर में, दुकान में, शोरूम, கடையில், ஷோரூம், showroom, store, offline,
+             retail, walk-in]
+  online_pickup: [ऑनलाइन, ऑनलाइन पिकअप, ஆன்லைன், ஆன்லைன் பிக்அப், online,
+                  click and collect, pickup]
+
+order_status:
+  abandoned: [छोड़ा गया, परित्यक्त, கைவிடப்பட்ட]
+  cancelled: [रद्द, ரத்து, ரத்துசெய்யப்பட்ட, canceled]
+  paid: [भुगतान किया, भुगतान, செலுத்தப்பட்ட, பணம் செலுத்திய]
+
+card_network:
+  Meridia: [मेरिडिया, மெரிடியா]
+  Northstar: [नॉर्थस्टार, நார்த்ஸ்டார்]
+  Orbit: [ऑर्बिट, ஆர்பிட்]
+  Vantiv: [वैंटिव, வான்டிவ்]
+
+failure_reason:
+  authentication_failed: [प्रमाणीकरण विफल, அங்கீகாரம் தோல்வி, auth failed]
+  expired_card: [समाप्त कार्ड, एक्सपायर्ड कार्ड, காலாவதியான அட்டை]
+  insufficient_funds: [अपर्याप्त धनराशि, पैसे कम, போதிய நிதி இல்லை, low balance]
+  invalid_details: [अमान्य विवरण, தவறான விவரங்கள்]
+  issuer_declined: [जारीकर्ता ने मना किया, வழங்குநர் நிராகரிப்பு]
+  network_timeout: [नेटवर्क टाइमआउट, நெட்வொர்க் காலாவதி]
+  risk_blocked: [जोखिम अवरुद्ध, இடர் தடை]
+
+refund_reason:
+  customer_changed_mind: [ग्राहक ने मन बदला, வாடிக்கையாளர் மனம் மாற்றம்]
+  damaged_in_transit: [परिवहन में क्षतिग्रस्त, பயணத்தில் சேதம்]
+  defective_batch: [दोषपूर्ण बैच, குறைபாடுள்ள தொகுதி]
+  duplicate_capture: [डुप्लिकेट कैप्चर, நகல் பிடிப்பு]
+  duplicate_charge: [डुप्लिकेट शुल्क, நகல் கட்டணம்]
+  faulty_device: [खराब डिवाइस, பழுதான சாதனம்]
+  price_match: [मूल्य मिलान, விலை பொருத்தம்]
+  wrong_item: [गलत वस्तु, தவறான பொருள்]
+
+issuing_bank:
+  Bank of Coromandel: [कोरोमंडल बैंक, கோரமண்டல் வங்கி]
+  Canary Bank: [कैनरी बैंक, கேனரி வங்கி]
+  Cascade Federal: [कैस्केड फेडरल, காஸ்கேட் ஃபெடரல்]
+  Deccan National: [दक्कन नेशनल, தக்காண நேஷனல்]
+  Falcon National: [फाल्कन नेशनल, ஃபால்கன் நேஷனல்]
+  Gulf Union Bank: [गल्फ यूनियन बैंक, குல்ஃப் யூனியன் வங்கி]
+  Konkan Savings: [कोंकण सेविंग्स, கொங்கண் சேமிப்பு]
+  Liberty Plains: [लिबर्टी प्लेन्स, லிபர்ட்டி பிளெய்ன்ஸ்]
+  Merlion Bank: [मर्लियन बैंक, மெர்லயன் வங்கி]
+  Peninsula Bank: [पेनिनसुला बैंक, பெனின்சுலா வங்கி]
+  Pennine Building Society: [पेनाइन बिल्डिंग सोसाइटी, பென்னைன் பில்டிங் சொசைட்டி]
+  Sarasvati Union: [सरस्वती यूनियन, சரஸ்வதி யூனியன்]
+  Selangor National: [सेलांगोर नेशनल, சிலாங்கூர் நேஷனல்]
+  Severn National: [सेवर्न नेशनल, செவர்ன் நேஷனல்]
+  Straits Commercial: [स्ट्रेट्स कमर्शियल, ஸ்ட்ரெய்ட்ஸ் கமர்ஷியல்]
+  Sunbelt Trust: [सनबेल्ट ट्रस्ट, சன்பெல்ட் டிரஸ்ட்]
+  Thameside Bank: [टेम्ससाइड बैंक, தேம்சைட் வங்கி]
+  Vindhya Credit: [विंध्य क्रेडिट, விந்திய கிரெடிட்]
+
+acquiring_bank:
+  Anchor Acquiring: [एंकर एक्वायरिंग, ஆங்கர் அக்வயரிங்]
+  Cobalt Processing: [कोबाल्ट प्रोसेसिंग, கோபால்ட் புராசசிங்]
+  Meridian Acquiring: [मेरिडियन एक्वायरिंग, மெரிடியன் அக்வயரிங்]
+  Northgate Payments: [नॉर्थगेट पेमेंट्स, நார்த்கேட் பேமெண்ட்ஸ்]
+  Solstice Merchant Services: [सोल्स्टिस मर्चेंट सर्विसेज, சோல்ஸ்டிஸ் மெர்ச்சண்ட் சர்வீசஸ்]

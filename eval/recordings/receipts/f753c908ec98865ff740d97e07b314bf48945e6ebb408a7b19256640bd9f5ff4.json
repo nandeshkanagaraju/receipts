@@ -1,0 +1,22 @@
+{
+  "data": {
+    "assumption": "I interpreted “issuing banks did we see in the UK last month” as distinct non-null payment_attempts.issuing_bank values on all non-test payment attempts for UK showrooms during August 2026, using payment_attempts.business_date.",
+    "sql": "SELECT COUNT(DISTINCT pa.issuing_bank) AS different_issuing_banks\nFROM payment_attempts pa\nJOIN orders o ON o.order_id = pa.order_id\nJOIN showrooms s ON s.showroom_id = o.showroom_id\nJOIN countries c ON c.country_code = s.country_code\nWHERE pa.is_test = FALSE\n  AND o.is_test = FALSE\n  AND pa.business_date >= DATE '2026-08-01'\n  AND pa.business_date < DATE '2026-09-01'\n  AND c.name = 'United Kingdom'",
+    "unit": "count",
+    "why_not": ""
+  },
+  "kind": "structured",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "freeform",
+    "provider": "openai",
+    "sha256": "8120a4756391543ca9174f13e3f7e9cb0a45bd4076331e0f96fdd8f0fe4e1d73",
+    "version": 1
+  },
+  "raw": "{\"sql\":\"SELECT COUNT(DISTINCT pa.issuing_bank) AS different_issuing_banks\\nFROM payment_attempts pa\\nJOIN orders o ON o.order_id = pa.order_id\\nJOIN showrooms s ON s.showroom_id = o.showroom_id\\nJOIN countries c ON c.country_code = s.country_code\\nWHERE pa.is_test = FALSE\\n  AND o.is_test = FALSE\\n  AND pa.business_date >= DATE '2026-08-01'\\n  AND pa.business_date < DATE '2026-09-01'\\n  AND c.name = 'United Kingdom'\",\"unit\":\"count\",\"why_not\":\"\",\"assumption\":\"I interpreted “issuing banks did we see in the UK last month” as distinct non-null payment_attempts.issuing_bank values on all non-test payment attempts for UK showrooms during August 2026, using payment_attempts.business_date.\"}",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 711,
+    "output_tokens": 612
+  }
+}

@@ -847,3 +847,62 @@ to `compose.py` (`[IO:llm]`), and the schema became a tuple of columns that the
 DDL is built from — which also let the "session stores no rows" test assert over
 column names instead of parsing a string, after its first version matched
 `CREATE TABLE sessions` and called the table itself a forbidden column.
+
+## §7 — M15: the two named causes, fixed, and what that bought
+
+Feature work stopped after the M14 G2 verdict. This round fixed exactly the two
+causes that round named and re-measured. Nothing else was touched.
+
+### Coverage rose 18.5% → 37.0%. Silent-wrong rose with it, 20.4% → 23.1%.
+
+That second number is the one to keep. **Both fixes worked as intended and the
+system got wronger**, because a question that was abstained on cannot be answered
+wrongly. There is no version of raising coverage that does not also expose the
+answers that were being hidden by refusal — and the M14 report's "raw win is an
+artefact of 18.5% coverage" is now visible from the other side.
+
+### The free-form path contributed nothing to silent-wrong, by construction
+
+18 of the 75 answers came through the free-form path: **8 correct, 10 wrong, and
+all 10 flagged.** Every one of the 25 silent-wrong answers came through the
+*verified* path. That is the architecture doing the thing it claims: the path
+with no governed definition behind it is the path that admits it.
+
+It is worth saying what this does **not** show. A wrong free-form answer still
+costs the asker something; `UNVERIFIED` buys only that they were told. A system
+that answered everything free-form would post excellent coverage and have
+abandoned the thesis, which is why the report splits the two paths.
+
+### A defect that filed twelve right answers as wrong
+
+The first free-form implementation had no naming contract for its output column.
+`classify_column` types a column from the name the compiler emits — anything not
+called `value` is a dimension — so every free-form result came back as a table of
+labels with no measurement in it. The numbers were **right**: 43600, 8135, 363.
+The scorer read "scalar expected 1 row, got 0" and filed all twelve as wrong.
+
+It was found by asking why every single free-form answer was wrong, which is a
+question worth asking whenever a new path scores 0 for 12. The fix is the prompt
+stating the same contract the compiled queries meet, plus an abstention when the
+result has no value column: an answer whose number cannot be identified is not an
+answer, and letting it through would have produced a narration that picked a
+column by position.
+
+### Two pre-existing defects surfaced, not fixed
+
+Both were already being absorbed as `Error` by the harness and neither is in this
+round's scope:
+
+1. **`acquiring_bank` is ambiguous** when the compiler joins `settlements` to
+   `payment_attempts` — both hold that column, and the emitted SQL qualifies
+   neither. One dev trial (DV-046).
+2. **A currency code fails `Column` validation** on three DV-050 trials: the
+   value reaching the typed column is not a 3-letter upper-case code.
+
+### The same fold, in a third place
+
+The value index is built with one folding and matched with another. NFC is the
+part that matters, and this is the third place in the codebase to need it after
+M8's detector and M14's glossary matcher. They are now one function. A second
+subtly different fold does not fail loudly — it makes index entries unreachable,
+and the symptom reads as a missing synonym rather than a mismatched key.

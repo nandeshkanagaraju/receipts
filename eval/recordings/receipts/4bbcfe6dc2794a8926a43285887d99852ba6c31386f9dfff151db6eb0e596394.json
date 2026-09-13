@@ -1,0 +1,16 @@
+{
+  "kind": "text",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "composer",
+    "provider": "openai",
+    "sha256": "b2811b5cadb8075a4cba32008339059d163d0eb918b9b2525bb21fc546e8a498",
+    "version": 1
+  },
+  "text": "2026-08-31 முதல் 2026-09-06 வரை, சென்னை UPI பரிவர்த்தனை முயற்சிகளுக்கான attempt-level payment success rate 64.4%; glossary படி success rate attempt-level ஆக எடுத்துக்கொள்ளப்பட்டது.",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 573,
+    "output_tokens": 305
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "data": {
+    "assumption": "I interpreted “last week” as the previous Monday-through-Sunday business-date week, 2026-08-31 to 2026-09-06, and “card attempts failed in the UK” as non-test payment attempts with method = 'card' and status = 'failed' at UK showrooms.",
+    "sql": "SELECT COUNT(*) AS failed_card_attempts\nFROM payment_attempts pa\nJOIN orders o ON o.order_id = pa.order_id\nJOIN showrooms s ON s.showroom_id = o.showroom_id\nJOIN countries c ON c.country_code = s.country_code\nWHERE pa.is_test = false\n  AND o.is_test = false\n  AND pa.business_date >= DATE '2026-08-31'\n  AND pa.business_date < DATE '2026-09-07'\n  AND c.name = 'United Kingdom'\n  AND pa.method = 'card'\n  AND pa.status = 'failed'",
+    "unit": "count",
+    "why_not": ""
+  },
+  "kind": "structured",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "freeform",
+    "provider": "openai",
+    "sha256": "8120a4756391543ca9174f13e3f7e9cb0a45bd4076331e0f96fdd8f0fe4e1d73",
+    "version": 1
+  },
+  "raw": "{\"sql\":\"SELECT COUNT(*) AS failed_card_attempts\\nFROM payment_attempts pa\\nJOIN orders o ON o.order_id = pa.order_id\\nJOIN showrooms s ON s.showroom_id = o.showroom_id\\nJOIN countries c ON c.country_code = s.country_code\\nWHERE pa.is_test = false\\n  AND o.is_test = false\\n  AND pa.business_date >= DATE '2026-08-31'\\n  AND pa.business_date < DATE '2026-09-07'\\n  AND c.name = 'United Kingdom'\\n  AND pa.method = 'card'\\n  AND pa.status = 'failed'\",\"unit\":\"count\",\"why_not\":\"\",\"assumption\":\"I interpreted “last week” as the previous Monday-through-Sunday business-date week, 2026-08-31 to 2026-09-06, and “card attempts failed in the UK” as non-test payment attempts with method = 'card' and status = 'failed' at UK showrooms.\"}",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 708,
+    "output_tokens": 604
+  }
+}

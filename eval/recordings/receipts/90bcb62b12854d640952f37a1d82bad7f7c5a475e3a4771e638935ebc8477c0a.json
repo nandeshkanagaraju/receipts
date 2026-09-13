@@ -1,0 +1,22 @@
+{
+  "data": {
+    "assumption": "“இந்தியாவில் ஒரு சராசரி order” என்பதைக் இந்திய showroom-களின் non-test orders அனைத்தாகக் கொண்டு, ஒவ்வொரு order-க்கும் உள்ள non-test payment_attempts எண்ணிக்கையின் சராசரியை கணக்கிடுகிறேன்.",
+    "sql": "SELECT AVG(per_order.attempt_count) AS avg_payment_attempts_per_order\nFROM (\n  SELECT o.order_id, COUNT(pa.attempt_id) AS attempt_count\n  FROM orders o\n  JOIN showrooms s ON s.showroom_id = o.showroom_id\n  LEFT JOIN payment_attempts pa\n    ON pa.order_id = o.order_id\n   AND pa.is_test = false\n  WHERE o.is_test = false\n    AND s.country_code = 'IN'\n  GROUP BY o.order_id\n) per_order",
+    "unit": "ratio",
+    "why_not": ""
+  },
+  "kind": "structured",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "freeform",
+    "provider": "openai",
+    "sha256": "8120a4756391543ca9174f13e3f7e9cb0a45bd4076331e0f96fdd8f0fe4e1d73",
+    "version": 1
+  },
+  "raw": "{\"sql\":\"SELECT AVG(per_order.attempt_count) AS avg_payment_attempts_per_order\\nFROM (\\n  SELECT o.order_id, COUNT(pa.attempt_id) AS attempt_count\\n  FROM orders o\\n  JOIN showrooms s ON s.showroom_id = o.showroom_id\\n  LEFT JOIN payment_attempts pa\\n    ON pa.order_id = o.order_id\\n   AND pa.is_test = false\\n  WHERE o.is_test = false\\n    AND s.country_code = 'IN'\\n  GROUP BY o.order_id\\n) per_order\",\"unit\":\"ratio\",\"why_not\":\"\",\"assumption\":\"“இந்தியாவில் ஒரு சராசரி order” என்பதைக் இந்திய showroom-களின் non-test orders அனைத்தாகக் கொண்டு, ஒவ்வொரு order-க்கும் உள்ள non-test payment_attempts எண்ணிக்கையின் சராசரியை கணக்கிடுகிறேன்.\"}",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 758,
+    "output_tokens": 702
+  }
+}

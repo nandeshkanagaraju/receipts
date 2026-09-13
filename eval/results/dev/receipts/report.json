@@ -1,5 +1,5 @@
 {
-  "headline": "receipts on dev: 20 of 108 answerable questions correct; 22 silently wrong; LIVE, WHY untested (feature cut before any run).",
+  "headline": "receipts on dev: 40 of 108 answerable questions correct; 25 silently wrong; LIVE, WHY untested (feature cut before any run).",
   "populations": {
     "AMB": {
       "by_language": {
@@ -56,61 +56,61 @@
     "ANS": {
       "by_language": {
         "en": {
-          "correct_count": 12,
-          "correct_rate": "0.3333",
+          "correct_count": 16,
+          "correct_rate": "0.4444",
           "denominator": 36,
           "outcomes": {
-            "Correct": 12,
+            "Correct": 16,
             "Error": 1,
-            "Over-abstain": 14,
+            "Over-abstain": 8,
             "Silent-wrong": 9,
             "Untested": 0,
-            "Wrong-flagged": 0
+            "Wrong-flagged": 2
           }
         },
         "hi": {
-          "correct_count": 4,
-          "correct_rate": "0.1111",
+          "correct_count": 9,
+          "correct_rate": "0.2500",
           "denominator": 36,
           "outcomes": {
-            "Correct": 4,
+            "Correct": 9,
             "Error": 2,
-            "Over-abstain": 24,
-            "Silent-wrong": 6,
+            "Over-abstain": 13,
+            "Silent-wrong": 8,
             "Untested": 0,
-            "Wrong-flagged": 0
+            "Wrong-flagged": 4
           }
         },
         "ta": {
-          "correct_count": 4,
-          "correct_rate": "0.1111",
+          "correct_count": 15,
+          "correct_rate": "0.4167",
           "denominator": 36,
           "outcomes": {
-            "Correct": 4,
+            "Correct": 15,
             "Error": 1,
-            "Over-abstain": 24,
-            "Silent-wrong": 7,
+            "Over-abstain": 8,
+            "Silent-wrong": 8,
             "Untested": 0,
-            "Wrong-flagged": 0
+            "Wrong-flagged": 4
           }
         }
       },
-      "correct_count": 20,
+      "correct_count": 40,
       "correct_outcome": "Correct",
-      "correct_rate": "0.1852",
+      "correct_rate": "0.3704",
       "denominator": 108,
       "outcomes": {
-        "Correct": 20,
+        "Correct": 40,
         "Error": 4,
-        "Over-abstain": 62,
-        "Silent-wrong": 22,
+        "Over-abstain": 29,
+        "Silent-wrong": 25,
         "Untested": 0,
-        "Wrong-flagged": 0
+        "Wrong-flagged": 10
       },
-      "raw_wrong_count": 22,
-      "raw_wrong_rate": "0.2037",
-      "silent_wrong_count": 22,
-      "silent_wrong_rate": "0.2037",
+      "raw_wrong_count": 35,
+      "raw_wrong_rate": "0.3241",
+      "silent_wrong_count": 25,
+      "silent_wrong_rate": "0.2315",
       "untested_count": 0
     },
     "DENY": {
@@ -140,27 +140,27 @@
           }
         },
         "ta": {
-          "correct_count": 3,
-          "correct_rate": "0.7500",
+          "correct_count": 4,
+          "correct_rate": "1.0000",
           "denominator": 4,
           "outcomes": {
-            "Correct-deny": 3,
+            "Correct-deny": 4,
             "Error": 0,
             "Leak": 0,
-            "Other": 1,
+            "Other": 0,
             "Untested": 0
           }
         }
       },
-      "correct_count": 9,
+      "correct_count": 10,
       "correct_outcome": "Correct-deny",
-      "correct_rate": "0.7500",
+      "correct_rate": "0.8333",
       "denominator": 12,
       "outcomes": {
-        "Correct-deny": 9,
+        "Correct-deny": 10,
         "Error": 0,
         "Leak": 0,
-        "Other": 3,
+        "Other": 2,
         "Untested": 0
       },
       "raw_wrong_count": 0,
@@ -352,7 +352,7 @@
       "measure": "Receipts silent-wrong rate (eval set)",
       "status": "fail",
       "threshold": "0.03",
-      "value": "0.2037"
+      "value": "0.2315"
     },
     "T10": {
       "measure": "Latency, single-metric questions on the full warehouse",
@@ -371,7 +371,7 @@
       "measure": "Accuracy on answerable questions",
       "status": "fail",
       "threshold": "0.85",
-      "value": "0.1852"
+      "value": "0.3704"
     },
     "T4": {
       "measure": "Correct clarify/abstain on Q6/Q7 questions",
@@ -382,7 +382,7 @@
       "measure": "Over-abstention on answerable questions",
       "status": "fail",
       "threshold": "0.10",
-      "value": "0.5741"
+      "value": "0.2685"
     },
     "T6": {
       "measure": "Tamil and Hindi accuracy vs English",

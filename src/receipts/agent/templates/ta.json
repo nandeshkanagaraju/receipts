@@ -1,13 +1,15 @@
 {
   "_note": "Tamil fallbacks. Business nouns stay in English, which is how people actually write Tamil in this setting (M8 measured it: eight of eleven tokens in a real Tanglish question are English).",
-  "scalar": "{window}-க்கான {metric}: {value}.",
-  "scalar_scoped": "{scope}-ல் {window}-க்கான {metric}: {value}.",
+  "abstain": "Kestrel பதிவு செய்யும் தரவிலிருந்து இதற்கு பதில் அளிக்க முடியாது.",
   "breakdown": "{window}-க்கான {metric}, {dimension} வாரியாக: {rows} வரிசைகள், அதிகபட்சம் {top_key} ({top_value}).",
   "breakdown_empty": "{window}-க்கு {metric} இல்லை.",
-  "compare": "{window}-க்கான {metric}: {value}; முந்தைய காலகட்டத்தில் {compare_value}.",
-  "empty": "{window}-க்கு பொருந்தும் வரிசைகள் இல்லை.",
-  "abstain": "Kestrel பதிவு செய்யும் தரவிலிருந்து இதற்கு பதில் அளிக்க முடியாது.",
-  "deny": "இது இந்த role-க்கு அனுமதிக்கப்பட்ட பகுதிகளுக்கு வெளியே உள்ளது.",
   "clarify": "பதில் அளிப்பதற்கு முன்: {question}",
+  "compare": "{window}-க்கான {metric}: {value}; முந்தைய காலகட்டத்தில் {compare_value}.",
+  "deny": "இது இந்த role-க்கு அனுமதிக்கப்பட்ட பகுதிகளுக்கு வெளியே உள்ளது.",
+  "empty": "{window}-க்கு பொருந்தும் வரிசைகள் இல்லை.",
+  "freeform_rows": "{rows} வரிசைகள், அதிகபட்சம் {top_key} — {top_value}. {disclaimer}",
+  "freeform_scalar": "{value}. {disclaimer}",
+  "scalar": "{window}-க்கான {metric}: {value}.",
+  "scalar_scoped": "{scope}-ல் {window}-க்கான {metric}: {value}.",
   "unverified": "Governed metric இல்லாமல், நேரடியாக tables-ல் இருந்து பெறப்பட்டது; இந்த எண் verified இல்லை."
 }

@@ -34,6 +34,7 @@ from typing import Any, Literal
 
 from ..domain.types import Grain, QueryPlan, ResolvedPlan, Scope, WindowSpec
 from ..semantic.catalog import Catalog
+from ..semantic.value_synonyms import fold_value
 
 # Issue codes. A closed vocabulary, because the gate branches on them and the
 # report groups by them: free text would make every failure look different.
@@ -425,7 +426,15 @@ def _implied_currency(plan: QueryPlan, catalog: Catalog) -> str | None:
 
 
 def _normalise(value: str) -> str:
-    return " ".join(value.casefold().split())
+    """The one folding used for both sides of a value match.
+
+    It is imported rather than rewritten because the index is built with it at
+    load time: a second, subtly different fold here would make index entries
+    unreachable, and the failure would look like a missing synonym rather than a
+    mismatched key. NFC is the part that matters -- `சென்னை` typed with a
+    precomposed vowel sign and with a combining one are the same word.
+    """
+    return fold_value(value)
 
 
 def _resolve_filter_value(
@@ -443,7 +452,7 @@ def _resolve_filter_value(
     direct = folded.get(_normalise(value))
     if direct is not None:
         return direct
-    canonical = (synonyms or {}).get(value.casefold())
+    canonical = (synonyms or {}).get(_normalise(value))
     if canonical is not None and _normalise(canonical) in folded:
         return folded[_normalise(canonical)]
     return None
