@@ -1339,3 +1339,24 @@ changing SDD §25.3, which is frozen.
 **3. Hindi retrieval is bounded, not repaired.** See M2_NOTES §9: two questions
 lost accidental retrieval hits that a function-word collision had been supplying.
 `KNOWN_HINDI_MISSES` names three qids; a fourth fails the test.
+
+## M15.2 — the verified path's deficit, diagnosed (no fixes)
+
+35 silent-wrong trials are **13 distinct questions**, failing identically in all
+three languages. Three causes, with buckets as ruled:
+
+| bucket | trials | cause |
+|---|---:|---|
+| layer-contradicts-glossary | 15 | GLOSSARY §1.4 rules 2 and 3: the role's default reporting currency is declared in `roles.yaml` and read by nothing; `_implied_currency` is evaluated against unresolved filter values |
+| layer-contradicts-glossary | 3 | `units_sold`'s handsets-only filter is stated in its `definition` prose and is unrepresentable in any plan |
+| other | 9 | the compiler discards `grain` and `compare_to`, both of which SDD §11.1 requires and the validator resolves correctly |
+| other | 1 | DV-046 now clarifies |
+| planner choice | 7 | DV-009 ordering, DV-021 "across all countries", DV-028 |
+
+**28 of 35 are defects; 7 are the planner reading a question differently from the
+reference and are reported as findings, not bugs.**
+
+The currency cause is the one to note in the README: the answers are
+**arithmetically correct and in the wrong currency**, and the receipt discloses a
+default with a reason that is factually untrue ("no role default") on a role
+whose default is written down in the repository.

@@ -1093,3 +1093,112 @@ that question's slice to empty. The same widening applied to English ("how",
 The rule is **closed-class function words only** — postpositions, auxiliaries,
 pronouns, conjunctions, determiners — which is what the original English list
 already was. Both failure directions are silent.
+
+## §10 — M15.2: the verified path, diagnosed. Thirteen questions, three causes.
+
+No code changed. Every trial traced from question to compiled SQL and compared
+against the hand-written reference.
+
+**35 silent-wrong trials are 13 distinct questions.** 60 dev questions × 3
+languages, and the verified path's entire correctness deficit sits in 13 of them.
+The language columns are near-identical because the same questions fail in all
+three languages — this is not a language problem and never was.
+
+| bucket | trials | share |
+|---|---:|---:|
+| **layer-contradicts-glossary** | **18** | 51% |
+| **other** (a resolved value discarded downstream) | **10** | 29% |
+| **planner choice** | **7** | 20% |
+
+**28 of 35 are fixable defects. 7 are the planner reading a question differently
+from the reference, and those are findings rather than bugs.**
+
+### Cause 1 — the reporting-currency rule (15 trials, 5 questions)
+
+The largest single cause in the system, and it is not arithmetic. Every one of
+these returns the **right number in the wrong currency**: DV-004 answers
+107,381,818 where the reference says 86,894,100 GBP. M11 wrote that exact
+sentence about this exact question, and it is still true.
+
+GLOSSARY §1.4 sets four rules in order. Two are broken:
+
+- **Rule 2 — the role's default currency — is not implemented at all.**
+  `config/roles.yaml` declares `reporting_currency: GBP` for `store_ops_uk` and
+  `INR` for `rm_tamil_nadu`. `config.py` types the field. **Nothing reads it.**
+  `Scope` does not carry it, and the validator looks for a role default in
+  `prefs`, which is the *session*'s currency preference — a thing a user sets
+  mid-conversation, not a property of the role.
+- **Rule 3 — one currency shared by the filtered countries — is evaluated
+  against the unresolved plan.** `_implied_currency` reads `draft_plan.filters`,
+  where the value is still `"UK"`; the synonym pass that turns it into
+  `"United Kingdom"` runs later in the same function and writes to a different
+  variable. The lookup table holds both codes and names, and `"UK"` is neither.
+
+The receipt then discloses the default it chose, and the disclosure is false:
+`reporting currency → USD (no role default and mixed currencies)` — on a
+single-country question asked by a role whose default is written down. §1.4's
+closing line says a currency chosen by default and not disclosed is a wrong
+answer even when the arithmetic is right. This is worse: disclosed, and wrong.
+
+### Cause 2 — the compiler discards grain and compare_to (9 trials, 3 questions)
+
+SDD §11.1 specifies the output shape: "dimension columns, then a time column if
+`grain ≠ NONE`, then `value` (and `compare_value`, `delta`, `delta_pct` when
+comparing)". The adapter's `VALUE_COLUMNS` already reserves all four names.
+
+**The compiler implements neither.** `grep -n "grain\|compare_start\|DATE_TRUNC"
+compile/compiler.py` returns exactly one line, and it is the docstring promising
+the feature.
+
+Everything upstream works. For "Show me our daily order count for the last 7
+days" the planner sets `grain=DAY` and the validator resolves the window; the
+emitted SQL has no `DATE_TRUNC`, no date column and no `GROUP BY`, and returns
+the scalar 4242. For "how did the UK's success rate compare with the week
+before" the planner sets `compare_to='previous_period'` and the validator
+computes an equal-length compare window per §1.6a — `2026-08-24 … 2026-08-31`,
+correct — and the SQL has no second branch. Our current value, 0.945801072067,
+matches the reference exactly. The comparison row simply is not there.
+
+**This is the third instance of one pattern in three rounds**: a value computed
+correctly by one component and thrown away by the next. `Ambiguity.kind` was the
+first, the free-form value column the second, and these two the third. Each time
+the producing side is right, the consuming side never asks, and nothing errors.
+
+### Cause 3 — `units_sold` handsets filter exists only in prose (3 trials)
+
+"Top 10 phone models by units sold" returns Leather Case, Earbuds, Screen Guard.
+The metric's own definition says: *"'Phones', 'handsets' and 'devices' mean
+handsets only and are this metric filtered to non-accessory SKUs, not a separate
+metric."*
+
+That rule is written in the `definition` string, which is prose the compiler
+never reads. `units_sold.allowed_dimensions` is
+`(country, region, city, showroom, model, channel)` — there is no product-type
+dimension and no named predicate a plan can carry, so **"handsets only" is
+unrepresentable.** The planner cannot emit it and the layer cannot enforce it.
+
+The M9 principle — unrepresentable rather than rejected — cuts the other way
+here: a rule the glossary states and the schema cannot express is a rule that
+silently does not apply.
+
+### The 7 that are not defects
+
+- **DV-009 (3)** — "Payment failure rate by reason in Chennai." Our values match
+  the reference exactly; we return them in dimension order (D4) and the
+  reference ranks by value. The question says neither. A scorer expectation, not
+  a wrong answer.
+- **DV-021 (3)** — "Net revenue across all countries in August." We break down
+  by country; the reference totals. "Across all countries" carries both readings
+  and the planner took the other one.
+- **DV-028 (1)** — value agrees to twelve decimal places.
+
+These are **planner choice** and cannot be fixed without fitting the planner to
+this corpus. They are reported as findings.
+
+### What this says about where the deficit is
+
+Not in the gate, the language layer, retrieval, or scope — all of which now do
+what their specs say. It is in **the semantic layer failing to encode two rules
+its own glossary states, and the compiler ignoring two fields its own spec
+requires.** Both are defects of the same class as the ones already fixed, and
+neither is tuning.
