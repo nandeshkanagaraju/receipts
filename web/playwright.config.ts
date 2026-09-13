@@ -1,4 +1,12 @@
+import { existsSync } from "node:fs";
 import { defineConfig, devices } from "@playwright/test";
+
+/** The interpreter that has `receipts` installed.
+ *
+ *  Locally that is the project venv; in CI the package is installed into the
+ *  runner's own Python and there is no venv, which is how this config first
+ *  failed -- exit code 127 from a path that exists on one machine only. */
+const PYTHON = existsSync("../.venv/bin/python") ? "../.venv/bin/python" : "python";
 
 /** The real API, in replay mode, with a fixed as_of. No network (D9): the model
  *  responses come from eval/recordings/receipts and the warehouse is the local
@@ -22,8 +30,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command:
-      "cd .. && RECEIPTS_LLM_MODE=replay .venv/bin/python -m uvicorn --factory receipts.api.app:create_app --host 127.0.0.1 --port 8011",
+    command: `cd .. && RECEIPTS_LLM_MODE=replay ${PYTHON.replace("../", "")} -m uvicorn --factory receipts.api.app:create_app --host 127.0.0.1 --port 8011`,
     url: "http://127.0.0.1:8011/healthz",
     reuseExistingServer: true,
     timeout: 120_000,

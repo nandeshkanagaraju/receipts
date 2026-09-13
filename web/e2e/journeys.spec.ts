@@ -131,11 +131,18 @@ test.describe("PDD §8.3", () => {
     await page.getByTestId("open-catalog").click();
     await expect(page.getByTestId("catalog-drawer")).toBeVisible();
 
-    await page.getByTestId("catalog-metric").selectOption("gmv_captured");
-    await page.getByTestId("catalog-run").click();
-
     const result = page.getByTestId("catalog-result");
-    await expect(result).toBeVisible({ timeout: 30_000 });
+    const failure = page.getByTestId("catalog-error");
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      await page.getByTestId("catalog-metric").selectOption("gmv_captured");
+      await page.getByTestId("catalog-run").click();
+      await expect(result.or(failure)).toBeVisible({ timeout: 30_000 });
+      if ((await failure.count()) === 0) break;
+      // /catalog/run is rate-limited like every other question-shaped route.
+      expect(await failure.getAttribute("data-code")).toBe("RATE_LIMITED");
+      await page.waitForTimeout(61_000 - (Date.now() % 60_000));
+    }
+    await expect(result).toBeVisible();
     await expect(result).toContainText("Receipt");
   });
 

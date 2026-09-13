@@ -31,6 +31,7 @@ export function CatalogDrawer({
   const [chosen, setChosen] = useState<string>("");
   const [result, setResult] = useState<CatalogRunResult | null>(null);
   const [failure, setFailure] = useState<string>("");
+  const [failureCode, setFailureCode] = useState<string>("");
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -49,11 +50,14 @@ export function CatalogDrawer({
     if (!chosen) return;
     setBusy(true);
     setFailure("");
+    setFailureCode("");
     setResult(null);
     try {
       setResult(await catalogRun(token, { metric: chosen, window: {}, grain: "NONE" }));
     } catch (error: unknown) {
-      setFailure(error instanceof ApiError ? error.body.message : copy.errorFallback);
+      const code = error instanceof ApiError ? error.body.code : "INTERNAL";
+      setFailureCode(code);
+      setFailure(copy.errors[code] ?? (error instanceof ApiError ? error.body.message : copy.errorFallback));
     } finally {
       setBusy(false);
     }
@@ -106,7 +110,7 @@ export function CatalogDrawer({
           <p className="mt-2 text-xs text-unverified">{copy.catalogModeBody}</p>
         ) : null}
         {failure ? (
-          <p data-testid="catalog-error" className="mt-2 text-xs text-denied">
+          <p data-testid="catalog-error" data-code={failureCode} className="mt-2 text-xs text-denied">
             {failure}
           </p>
         ) : null}
