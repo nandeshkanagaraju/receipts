@@ -1,26 +1,26 @@
 {
-  "headline": "receipts on dev: 40 of 108 answerable questions correct; 25 silently wrong; LIVE, WHY untested (feature cut before any run).",
+  "headline": "receipts on dev: 53 of 108 answerable questions correct; 35 silently wrong; LIVE, WHY untested (feature cut before any run).",
   "populations": {
     "AMB": {
       "by_language": {
         "en": {
-          "correct_count": 5,
-          "correct_rate": "0.6250",
+          "correct_count": 4,
+          "correct_rate": "0.5000",
           "denominator": 8,
           "outcomes": {
-            "Answered-ambiguous": 2,
-            "Correct-clarify": 5,
+            "Answered-ambiguous": 3,
+            "Correct-clarify": 4,
             "Error": 1,
             "Untested": 0
           }
         },
         "hi": {
-          "correct_count": 4,
-          "correct_rate": "0.5000",
+          "correct_count": 2,
+          "correct_rate": "0.2500",
           "denominator": 8,
           "outcomes": {
-            "Answered-ambiguous": 4,
-            "Correct-clarify": 4,
+            "Answered-ambiguous": 6,
+            "Correct-clarify": 2,
             "Error": 0,
             "Untested": 0
           }
@@ -37,80 +37,80 @@
           }
         }
       },
-      "correct_count": 12,
+      "correct_count": 9,
       "correct_outcome": "Correct-clarify",
-      "correct_rate": "0.5000",
+      "correct_rate": "0.3750",
       "denominator": 24,
       "outcomes": {
-        "Answered-ambiguous": 11,
-        "Correct-clarify": 12,
+        "Answered-ambiguous": 14,
+        "Correct-clarify": 9,
         "Error": 1,
         "Untested": 0
       },
-      "raw_wrong_count": 11,
-      "raw_wrong_rate": "0.4583",
-      "silent_wrong_count": 11,
-      "silent_wrong_rate": "0.4583",
+      "raw_wrong_count": 14,
+      "raw_wrong_rate": "0.5833",
+      "silent_wrong_count": 14,
+      "silent_wrong_rate": "0.5833",
       "untested_count": 0
     },
     "ANS": {
       "by_language": {
         "en": {
-          "correct_count": 16,
-          "correct_rate": "0.4444",
+          "correct_count": 19,
+          "correct_rate": "0.5278",
           "denominator": 36,
           "outcomes": {
-            "Correct": 16,
-            "Error": 1,
-            "Over-abstain": 8,
-            "Silent-wrong": 9,
+            "Correct": 19,
+            "Error": 0,
+            "Over-abstain": 4,
+            "Silent-wrong": 11,
             "Untested": 0,
             "Wrong-flagged": 2
           }
         },
         "hi": {
-          "correct_count": 9,
-          "correct_rate": "0.2500",
+          "correct_count": 16,
+          "correct_rate": "0.4444",
           "denominator": 36,
           "outcomes": {
-            "Correct": 9,
-            "Error": 2,
-            "Over-abstain": 13,
-            "Silent-wrong": 8,
+            "Correct": 16,
+            "Error": 0,
+            "Over-abstain": 2,
+            "Silent-wrong": 12,
             "Untested": 0,
-            "Wrong-flagged": 4
+            "Wrong-flagged": 6
           }
         },
         "ta": {
-          "correct_count": 15,
-          "correct_rate": "0.4167",
+          "correct_count": 18,
+          "correct_rate": "0.5000",
           "denominator": 36,
           "outcomes": {
-            "Correct": 15,
-            "Error": 1,
-            "Over-abstain": 8,
-            "Silent-wrong": 8,
+            "Correct": 18,
+            "Error": 0,
+            "Over-abstain": 3,
+            "Silent-wrong": 12,
             "Untested": 0,
-            "Wrong-flagged": 4
+            "Wrong-flagged": 3
           }
         }
       },
-      "correct_count": 40,
+      "correct_count": 53,
       "correct_outcome": "Correct",
-      "correct_rate": "0.3704",
+      "correct_rate": "0.4907",
       "denominator": 108,
       "outcomes": {
-        "Correct": 40,
-        "Error": 4,
-        "Over-abstain": 29,
-        "Silent-wrong": 25,
+        "Correct": 53,
+        "Error": 0,
+        "Over-abstain": 9,
+        "Silent-wrong": 35,
         "Untested": 0,
-        "Wrong-flagged": 10
+        "Wrong-flagged": 11
       },
-      "raw_wrong_count": 35,
-      "raw_wrong_rate": "0.3241",
-      "silent_wrong_count": 25,
-      "silent_wrong_rate": "0.2315",
+      "raw_wrong_count": 46,
+      "raw_wrong_rate": "0.4259",
+      "silent_wrong_count": 35,
+      "silent_wrong_rate": "0.3241",
       "untested_count": 0
     },
     "DENY": {
@@ -128,39 +128,39 @@
           }
         },
         "hi": {
-          "correct_count": 2,
-          "correct_rate": "0.5000",
+          "correct_count": 1,
+          "correct_rate": "0.2500",
           "denominator": 4,
           "outcomes": {
-            "Correct-deny": 2,
+            "Correct-deny": 1,
             "Error": 0,
             "Leak": 0,
-            "Other": 2,
+            "Other": 3,
             "Untested": 0
           }
         },
         "ta": {
-          "correct_count": 4,
-          "correct_rate": "1.0000",
+          "correct_count": 3,
+          "correct_rate": "0.7500",
           "denominator": 4,
           "outcomes": {
-            "Correct-deny": 4,
+            "Correct-deny": 3,
             "Error": 0,
             "Leak": 0,
-            "Other": 0,
+            "Other": 1,
             "Untested": 0
           }
         }
       },
-      "correct_count": 10,
+      "correct_count": 8,
       "correct_outcome": "Correct-deny",
-      "correct_rate": "0.8333",
+      "correct_rate": "0.6667",
       "denominator": 12,
       "outcomes": {
-        "Correct-deny": 10,
+        "Correct-deny": 8,
         "Error": 0,
         "Leak": 0,
-        "Other": 2,
+        "Other": 4,
         "Untested": 0
       },
       "raw_wrong_count": 0,
@@ -243,42 +243,42 @@
           }
         },
         "hi": {
-          "correct_count": 4,
-          "correct_rate": "0.6667",
+          "correct_count": 6,
+          "correct_rate": "1.0000",
           "denominator": 6,
           "outcomes": {
-            "Answered-unanswerable": 2,
-            "Correct-abstain": 4,
+            "Answered-unanswerable": 0,
+            "Correct-abstain": 6,
             "Error": 0,
             "Untested": 0
           }
         },
         "ta": {
-          "correct_count": 5,
-          "correct_rate": "0.8333",
+          "correct_count": 6,
+          "correct_rate": "1.0000",
           "denominator": 6,
           "outcomes": {
-            "Answered-unanswerable": 1,
-            "Correct-abstain": 5,
+            "Answered-unanswerable": 0,
+            "Correct-abstain": 6,
             "Error": 0,
             "Untested": 0
           }
         }
       },
-      "correct_count": 15,
+      "correct_count": 18,
       "correct_outcome": "Correct-abstain",
-      "correct_rate": "0.8333",
+      "correct_rate": "1.0000",
       "denominator": 18,
       "outcomes": {
-        "Answered-unanswerable": 3,
-        "Correct-abstain": 15,
+        "Answered-unanswerable": 0,
+        "Correct-abstain": 18,
         "Error": 0,
         "Untested": 0
       },
-      "raw_wrong_count": 3,
-      "raw_wrong_rate": "0.1667",
-      "silent_wrong_count": 3,
-      "silent_wrong_rate": "0.1667",
+      "raw_wrong_count": 0,
+      "raw_wrong_rate": "0.0000",
+      "silent_wrong_count": 0,
+      "silent_wrong_rate": "0.0000",
       "untested_count": 0
     },
     "WHY": {
@@ -352,7 +352,7 @@
       "measure": "Receipts silent-wrong rate (eval set)",
       "status": "fail",
       "threshold": "0.03",
-      "value": "0.2315"
+      "value": "0.3241"
     },
     "T10": {
       "measure": "Latency, single-metric questions on the full warehouse",
@@ -371,7 +371,7 @@
       "measure": "Accuracy on answerable questions",
       "status": "fail",
       "threshold": "0.85",
-      "value": "0.3704"
+      "value": "0.4907"
     },
     "T4": {
       "measure": "Correct clarify/abstain on Q6/Q7 questions",
@@ -380,9 +380,9 @@
     "T5": {
       "comparator": "<=",
       "measure": "Over-abstention on answerable questions",
-      "status": "fail",
+      "status": "pass",
       "threshold": "0.10",
-      "value": "0.2685"
+      "value": "0.0833"
     },
     "T6": {
       "measure": "Tamil and Hindi accuracy vs English",

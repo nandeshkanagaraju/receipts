@@ -8,6 +8,7 @@
     "ambiguities": [
       {
         "chosen": "the last 8 complete Monday-to-Sunday weeks",
+        "kind": "window",
         "readings": [
           "the last 8 complete Monday-to-Sunday weeks",
           "the rolling 8 weeks ending yesterday"

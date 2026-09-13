@@ -285,7 +285,7 @@ def gate(
 
     if plan is not None:
         for ambiguity in plan.ambiguities:
-            kind = _kind_of(ambiguity)
+            kind = ambiguity.kind
             key = f"{kind}:{ambiguity.term.casefold()}"
             if kind == "metric_choice" and settled_by_glossary:
                 continue
@@ -387,23 +387,6 @@ def _safe_metric(catalog: Catalog, name: str) -> Any:
         return catalog.metric(name)
     except Exception:
         return None
-
-
-def _kind_of(ambiguity: Any) -> str:
-    """`Ambiguity` has no `kind` field in the domain model; the planner sends one.
-
-    Inferred from the term when absent, so a plan built by hand in a test does
-    not have to carry a field the schema supplies.
-    """
-    kind = getattr(ambiguity, "kind", "")
-    if kind:
-        return str(kind)
-    term = (ambiguity.term or "").casefold()
-    if any(word in term for word in ("quarter", "year", "fiscal", "calendar")):
-        return "calendar"
-    if any(word in term for word in ("rate", "revenue", "best", "performance")):
-        return "metric_choice"
-    return "entity"
 
 
 def _options_for(ambiguity: Any, plan: QueryPlan, catalog: Catalog) -> tuple[ClarifyOption, ...]:

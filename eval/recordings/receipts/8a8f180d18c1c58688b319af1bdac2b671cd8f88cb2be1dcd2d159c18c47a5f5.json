@@ -1,0 +1,16 @@
+{
+  "kind": "text",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "composer",
+    "provider": "openai",
+    "sha256": "b2811b5cadb8075a4cba32008339059d163d0eb918b9b2525bb21fc546e8a498",
+    "version": 1
+  },
+  "text": "2026-08-01 से 2026-08-31 के लिए चेन्नई में UPI की ऑर्डर-स्तर भुगतान सफलता दर जारीकर्ता बैंक के अनुसार: Bank of Coromandel 96.5%, Peninsula Bank 95.7%, Deccan National 95.0%, Vindhya Credit 93.7%, Konkan Savings 93.5%, और Sarasvati Union 89.2%।",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 666,
+    "output_tokens": 508
+  }
+}

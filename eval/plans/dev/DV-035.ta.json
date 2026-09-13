@@ -1,0 +1,7 @@
+{
+  "intent_error": "RecordingMissing: no recording for intent (key e94975974e4d…) in /Users/nandeshjeya/Documents/Receipts/eval/recordings/planner. Replay does not call the network; record the call first, or check whethe",
+  "language": "ta",
+  "outcome": "no_fit (empty slice, no model call)",
+  "qid": "DV-035",
+  "slice": []
+}

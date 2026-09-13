@@ -1,0 +1,48 @@
+{
+  "data": {
+    "result": {
+      "ambiguities": [],
+      "compare_to": null,
+      "dimensions": [],
+      "filters": [
+        {
+          "dimension": "country",
+          "op": "eq",
+          "values": [
+            "UK"
+          ]
+        }
+      ],
+      "grain": "NONE",
+      "kind": "metric",
+      "limit": null,
+      "name": "refunded_amount",
+      "order": null,
+      "reporting_currency": null,
+      "window": {
+        "calendar": "unspecified",
+        "end": null,
+        "kind": "relative",
+        "n": null,
+        "quarter": null,
+        "relative": "last_month",
+        "start": null,
+        "year": null
+      }
+    }
+  },
+  "kind": "structured",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "planner",
+    "provider": "openai",
+    "sha256": "b0b4f239c1e82e040030ab894872875c7b461a9406057341e5278262b3fa74bf",
+    "version": 1
+  },
+  "raw": "{\"result\":{\"kind\":\"metric\",\"name\":\"refunded_amount\",\"dimensions\":[],\"filters\":[{\"dimension\":\"country\",\"op\":\"eq\",\"values\":[\"UK\"]}],\"window\":{\"kind\":\"relative\",\"relative\":\"last_month\",\"start\":null,\"end\":null,\"quarter\":null,\"year\":null,\"n\":null,\"calendar\":\"unspecified\"},\"grain\":\"NONE\",\"compare_to\":null,\"order\":null,\"limit\":null,\"reporting_currency\":null,\"ambiguities\":[]}}",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 2473,
+    "output_tokens": 205
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "kind": "text",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "composer",
+    "provider": "openai",
+    "sha256": "b2811b5cadb8075a4cba32008339059d163d0eb918b9b2525bb21fc546e8a498",
+    "version": 1
+  },
+  "text": "2026-08-01 முதல் 2026-08-31 வரை EMI orders-க்கு acquiring bank வாரியாக சராசரி settlement lag: Anchor Acquiring 2.972618700844742 days, Cobalt Processing 2.0 days, Meridian Acquiring 1.5037270642201834 days, Northgate Payments 2.824343506032647 days, Solstice Merchant Services 3.4982778415614235 days. Default-ஆக “settlement lag” settlement_lag_days ஆகவும், EMI payment_method=emi ஆகவும், reporting currency USD ஆகவும் எடுத்துக்கொள்ளப்பட்டது.",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 621,
+    "output_tokens": 481
+  }
+}

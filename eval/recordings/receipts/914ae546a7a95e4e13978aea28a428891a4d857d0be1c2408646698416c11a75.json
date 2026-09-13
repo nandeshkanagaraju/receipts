@@ -1,0 +1,63 @@
+{
+  "data": {
+    "result": {
+      "ambiguities": [
+        {
+          "chosen": "lowest payment success rate by acquiring bank",
+          "kind": "metric_choice",
+          "readings": [
+            "lowest payment success rate by acquiring bank",
+            "highest failure rate by acquiring bank"
+          ],
+          "term": "performing worst"
+        },
+        {
+          "chosen": null,
+          "kind": "window",
+          "readings": [
+            "today",
+            "last_7_days",
+            "last_month",
+            "another reporting period"
+          ],
+          "term": "time window"
+        }
+      ],
+      "compare_to": null,
+      "dimensions": [
+        "acquiring_bank"
+      ],
+      "filters": [],
+      "grain": "NONE",
+      "kind": "metric",
+      "limit": 1,
+      "name": "payment_success_rate_attempt",
+      "order": "value_asc",
+      "reporting_currency": null,
+      "window": {
+        "calendar": "unspecified",
+        "end": null,
+        "kind": "relative",
+        "n": null,
+        "quarter": null,
+        "relative": null,
+        "start": null,
+        "year": null
+      }
+    }
+  },
+  "kind": "structured",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "planner",
+    "provider": "openai",
+    "sha256": "b0b4f239c1e82e040030ab894872875c7b461a9406057341e5278262b3fa74bf",
+    "version": 1
+  },
+  "raw": "{\"result\":{\"kind\":\"metric\",\"name\":\"payment_success_rate_attempt\",\"dimensions\":[\"acquiring_bank\"],\"filters\":[],\"window\":{\"kind\":\"relative\",\"relative\":null,\"start\":null,\"end\":null,\"quarter\":null,\"year\":null,\"n\":null,\"calendar\":\"unspecified\"},\"grain\":\"NONE\",\"compare_to\":null,\"order\":\"value_asc\",\"limit\":1,\"reporting_currency\":null,\"ambiguities\":[{\"term\":\"performing worst\",\"kind\":\"metric_choice\",\"readings\":[\"lowest payment success rate by acquiring bank\",\"highest failure rate by acquiring bank\"],\"chosen\":\"lowest payment success rate by acquiring bank\"},{\"term\":\"time window\",\"kind\":\"window\",\"readings\":[\"today\",\"last_7_days\",\"last_month\",\"another reporting period\"],\"chosen\":null}]}}",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 2016,
+    "output_tokens": 685
+  }
+}

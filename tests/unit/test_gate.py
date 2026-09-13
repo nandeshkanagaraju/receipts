@@ -21,6 +21,7 @@ from datetime import date, timedelta
 from pathlib import Path
 
 import pytest
+from pydantic import ValidationError
 
 from receipts.agent.gate import ClarifyOption, gate, needs_metric_choice
 from receipts.agent.validate import (
@@ -346,7 +347,11 @@ def test_rule_1_beats_rule_4_scope_before_clarify(catalog) -> None:
     """
     plan = a_plan(
         filters=(Filter(dimension="city", op="eq", values=("Dubai",)),),
-        ambiguities=(Ambiguity(term="success rate", readings=("order-level", "attempt-level")),),
+        ambiguities=(
+            Ambiguity(
+                term="success rate", kind="metric_choice", readings=("order-level", "attempt-level")
+            ),
+        ),
     )
     decision = gate(
         question="Which is the best store in Dubai?",
@@ -452,7 +457,9 @@ def test_rule_3_beats_rule_4_exhausted_repair_before_clarify(catalog) -> None:
 def test_rule_4_beats_rule_5_clarify_before_fallback(catalog) -> None:
     """An ambiguous plan that would also have fallen back is clarified first."""
     plan = a_plan(
-        ambiguities=(Ambiguity(term="best", readings=("by GMV", "by units")),),
+        ambiguities=(
+            Ambiguity(term="best", kind="metric_choice", readings=("by GMV", "by units")),
+        ),
     )
     decision = gate(
         question="Which is our best store?",
@@ -597,7 +604,11 @@ def test_clarify_options_are_plan_patches_not_sentences(catalog) -> None:
     """
     plan = a_plan(
         name="payment_success_rate_order",
-        ambiguities=(Ambiguity(term="success rate", readings=("order-level", "attempt-level")),),
+        ambiguities=(
+            Ambiguity(
+                term="success rate", kind="metric_choice", readings=("order-level", "attempt-level")
+            ),
+        ),
     )
     decision = gate(
         question="What is our success rate?",
@@ -623,6 +634,7 @@ def test_an_answered_ambiguity_is_not_asked_twice(catalog) -> None:
         ambiguities=(
             Ambiguity(
                 term="success rate",
+                kind="metric_choice",
                 readings=("order-level", "attempt-level"),
                 chosen="order-level",
             ),
@@ -976,3 +988,127 @@ def test_the_gate_judges_the_resolved_plan_not_the_draft(catalog) -> None:
     )
     print(f"\nrule {decision.rule}: {decision.decision} -- {decision.reason}")
     assert decision.decision == "DENY" and decision.rule == 1
+
+
+# --------------------------------------------------------------------------- #
+# M15.1 — the ambiguity kind survives parsing, and the gate reads it.
+#
+# For three milestones `planner.v1`'s schema required the model to classify each
+# ambiguity it declared, and the domain model had nowhere to put it. The field
+# was parsed away and the gate re-derived it from keywords in the term text,
+# defaulting to `entity` -- one of the two kinds that force a clarification. 19
+# of 22 dev over-abstentions were a `window`, `metric_choice` or `currency` the
+# model had already resolved, re-guessed into a refusal.
+# --------------------------------------------------------------------------- #
+
+NON_FORCING_KINDS = ("window", "calendar", "currency")
+
+
+@pytest.mark.parametrize("kind", NON_FORCING_KINDS)
+def test_a_declared_non_forcing_ambiguity_proceeds(catalog, kind) -> None:
+    """The headline fix. "August" is a window the model already resolved."""
+    plan = a_plan(
+        ambiguities=(
+            Ambiguity(
+                term="August",
+                kind=kind,
+                readings=("August 2026", "August in another year"),
+                chosen="August 2026",
+            ),
+        ),
+    )
+    decision = gate(
+        question="How much did we capture in August?",
+        intent=Intent.METRIC,
+        validated=None,
+        plan=plan,
+        scope=global_scope(),
+        catalog=catalog,
+    )
+    print(f"\nkind={kind} -> rule {decision.rule} {decision.decision}")
+    assert decision.decision == "PROCEED", f"a {kind} ambiguity forced a clarification"
+    assert decision.rule == 6
+
+
+def test_a_plan_whose_kinds_are_all_non_forcing_proceeds(catalog) -> None:
+    """Several at once: the gate must not force on any of them."""
+    plan = a_plan(
+        ambiguities=(
+            Ambiguity(term="August", kind="window", readings=("2026", "another year")),
+            Ambiguity(term="GMV", kind="currency", readings=("USD", "local")),
+            Ambiguity(term="quarter", kind="calendar", readings=("fiscal", "calendar")),
+        ),
+    )
+    decision = gate(
+        question="GMV for August, by quarter",
+        intent=Intent.METRIC,
+        validated=None,
+        plan=plan,
+        scope=global_scope(),
+        catalog=catalog,
+    )
+    assert decision.decision == "PROCEED" and decision.rule == 6
+
+
+@pytest.mark.parametrize("kind", ("metric_choice", "entity"))
+def test_a_declared_forcing_ambiguity_still_clarifies(catalog, kind) -> None:
+    """The fix must not turn the gate off. These two kinds still ask."""
+    plan = a_plan(
+        ambiguities=(Ambiguity(term="best", kind=kind, readings=("by GMV", "by units")),),
+    )
+    decision = gate(
+        question="Which showroom is best?",
+        intent=Intent.METRIC,
+        validated=None,
+        plan=plan,
+        scope=global_scope(),
+        catalog=catalog,
+    )
+    assert decision.decision == "CLARIFY" and decision.rule == 4
+
+
+def test_meta_dropping_the_kind_field_again_is_refused_at_the_boundary() -> None:
+    """The fault injection: re-introduce the defect and watch it fail loudly.
+
+    The original bug was survivable precisely because nothing objected -- the
+    field went missing and a keyword guess filled in. `kind` is required and has
+    no default, so a plan built without one does not parse, and a model that
+    stops sending it raises here instead of costing a third of the answerable arm
+    in silence.
+    """
+    with pytest.raises(ValidationError):
+        Ambiguity(term="August", readings=("August 2026", "August in another year"))  # type: ignore[call-arg]
+
+
+def test_meta_the_gate_no_longer_re_derives_the_kind() -> None:
+    """`_kind_of` is gone, not improved.
+
+    A re-derivation of a value you already have is the defect, so the test is
+    that the function does not exist rather than that it guesses better.
+    """
+    from receipts.agent import gate as gate_module
+
+    assert not hasattr(gate_module, "_kind_of"), (
+        "the gate re-derives the ambiguity kind again; read the declared field"
+    )
+
+
+def test_every_recorded_dev_plan_carries_a_kind() -> None:
+    """The recordings show the model always sent one. Nothing was inferred."""
+    import json
+    from pathlib import Path
+
+    plans = Path(__file__).resolve().parents[2] / "eval" / "plans" / "dev"
+    ambiguities = [
+        a
+        for path in sorted(plans.glob("*.json"))
+        for a in (json.loads(path.read_text(encoding="utf-8")).get("plan") or {}).get(
+            "ambiguities", ()
+        )
+        or ()
+    ]
+    assert ambiguities, "precondition: no recorded plan declares an ambiguity"
+    missing = [a for a in ambiguities if not a.get("kind")]
+    kinds = sorted({a["kind"] for a in ambiguities if a.get("kind")})
+    print(f"\n{len(ambiguities)} recorded ambiguities, kinds {kinds}")
+    assert not missing, f"{len(missing)} recorded ambiguities carry no kind"

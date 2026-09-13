@@ -8,6 +8,7 @@
     "ambiguities": [
       {
         "chosen": "showroom or branch named Anna Nagar",
+        "kind": "entity",
         "readings": [
           "showroom or branch named Anna Nagar",
           "city/location named Anna Nagar"

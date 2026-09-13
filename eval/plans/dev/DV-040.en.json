@@ -8,6 +8,7 @@
     "ambiguities": [
       {
         "chosen": "failure rate by reason for card payment attempts",
+        "kind": "metric_choice",
         "readings": [
           "failure rate by reason for card payment attempts",
           "count of failed card payment attempts"

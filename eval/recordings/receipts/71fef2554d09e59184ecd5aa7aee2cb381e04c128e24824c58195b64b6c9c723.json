@@ -1,0 +1,16 @@
+{
+  "kind": "text",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "composer",
+    "provider": "openai",
+    "sha256": "b2811b5cadb8075a4cba32008339059d163d0eb918b9b2525bb21fc546e8a498",
+    "version": 1
+  },
+  "text": "अगस्त 2026 (2026-08-01 से 2026-08-31) में, ‘शुद्ध राजस्व’ को net_revenue मानते हुए, USD में देशवार शुद्ध राजस्व था: India 1980071775, Malaysia 210610813, Singapore 319818619, United Arab Emirates 471275976, United Kingdom 416316541, United States 396371180.",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 560,
+    "output_tokens": 347
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "error": "RecordingMissing: no recording for planner (key 8dd8668fcd25…) in /Users/nandeshjeya/Documents/Receipts/eval/recordings/planner. Replay does not call the network; record the call first, or check whether the prompt text changed.",
+  "intent_error": "RecordingMissing: no recording for intent (key edfeb65844bb…) in /Users/nandeshjeya/Documents/Receipts/eval/recordings/planner. Replay does not call the network; record the call first, or check whethe",
+  "language": "ta",
+  "outcome": "error",
+  "qid": "DV-012",
+  "slice": [
+    "orders_count",
+    "units_sold",
+    "avg_order_value",
+    "accessory_attach_rate"
+  ]
+}

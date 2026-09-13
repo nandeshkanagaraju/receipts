@@ -1271,3 +1271,71 @@ blocks it completely.
 **Two open defects** (M2_NOTES §7): an ambiguous `acquiring_bank` reference when
 the compiler joins settlements, and a currency code failing `Column` validation
 on DV-050. Four dev trials, scored as `Error`, unfixed.
+
+## Two of the ten traps do not bite as PDD §6.2 describes
+
+PDD §6.2 lists ten traps. **The README should say eight**, and say which two and
+why. A project that lists ten and can only defend eight should report eight.
+
+### `capture_vs_settlement` correlates with a phrasing, not with the concept
+
+Measured on dev, where it is 0 of 9 against the baseline's 7. **Eight of the nine
+stop at the same place: gate rule 4, on the word "August."** The ninth reached
+the executor and hit an unrelated compiler defect.
+
+Retrieval, planning and validation succeeded on all nine. The metric resolved to
+`settlement_lag_days` or `unsettled_amount` every time and the validator raised
+no issues. Nothing about capture-versus-settlement was being exercised at all.
+
+The reason is that **all three questions carrying this trap happen to say
+"August"**, so the trap and a bare-month time expression are perfectly
+correlated across the dev set. Any defect in bare-month handling — and there was
+one, [M2_NOTES §8] — shows up as this trap failing completely, and any fix to it
+shows up as this trap passing completely. Neither movement is evidence about
+whether the system distinguishes a capture from a settlement.
+
+This is a **question-set** limitation, not a code one. Fixing the clarification
+defect lets these nine questions run, but it does not make the trap discriminate:
+three questions sharing one time expression cannot separate a system that
+understands settlement from one that does not.
+
+### `fiscal_calendar`, already recorded above
+
+Kestrel's fiscal year starts 1 April, so fiscal and calendar quarter boundaries
+coincide. 6 of 11 assessable corpus questions carrying this trap cannot produce a
+wrong number at all — only a wrong decision.
+
+### What the README must say
+
+> Ten traps are defined. **Eight of them can discriminate a wrong answer from a
+> right one on this corpus.** `fiscal_calendar` is partly blunted by Kestrel's
+> own fiscal calendar coinciding with the calendar one, and `capture_vs_settlement`
+> is confounded on dev with a single time expression that all three of its
+> questions share. Results for those two measure less than their names suggest.
+
+## M15.1 — three costs of the four fixes, recorded rather than smoothed over
+
+**1. `_gated_match` lost precision with the noise list.** It is a lexical
+retrieval, so removing Hindi function words from the index changed what it finds.
+It stopped two **false** DENYs (DV-033, DV-049, denied for a finance capability
+they never asked about) and cost three **true** ones: DV-039|hi and DV-056 in
+Hindi and Tamil now ABSTAIN where they used to DENY. DENY falls 10/12 → 8/12.
+
+Nothing leaked — the canary sweep is clean and T7 holds — and the questions are
+still refused. It is a loss of label precision, the same shape as the DV-057
+finding, and the honest reading is that a capability refusal built on lexical
+retrieval is only as good as the lexicon underneath it.
+
+**2. An abstention on an ambiguous question scores as answering it.** SDD §25.3
+gives AMB exactly two outcomes: `Correct-clarify` (CLARIFY) or
+`Answered-ambiguous`. There is no third bucket, so `ABSTAIN` — a refusal —
+counts identically to confidently answering an ambiguous question. 12 of the 24
+AMB trials abstain, and all 12 are scored as though the system answered.
+
+That flatters neither system and the scorer is faithful to the spec, but **the
+AMB column overstates the harm** and the README should say so. Fixing it means
+changing SDD §25.3, which is frozen.
+
+**3. Hindi retrieval is bounded, not repaired.** See M2_NOTES §9: two questions
+lost accidental retrieval hits that a function-word collision had been supplying.
+`KNOWN_HINDI_MISSES` names three qids; a fourth fails the test.

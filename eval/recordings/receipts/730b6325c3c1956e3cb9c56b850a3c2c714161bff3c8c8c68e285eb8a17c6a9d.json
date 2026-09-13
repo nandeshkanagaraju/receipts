@@ -1,0 +1,22 @@
+{
+  "data": {
+    "assumption": "“கடந்த மாத இறுதியில் settle ஆகாத தொகை” என்பதைக் 2026-08-31 அன்று வரை merchant payout/settlement ஆகாமல் இருந்த captured payment amount என்று எடுத்துக்கொண்டேன்.",
+    "sql": null,
+    "unit": "other",
+    "why_not": "The available tables do not include settlement or payout records, settlement status, or settlement dates needed to calculate unsettled amount as of last month end."
+  },
+  "kind": "structured",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "freeform",
+    "provider": "openai",
+    "sha256": "fb698c2a85e957df0a8de83a3ce4c866dbe5bea3e7a1e3fbc16a04bc85d34ed6",
+    "version": 1
+  },
+  "raw": "{\"sql\":null,\"unit\":\"other\",\"why_not\":\"The available tables do not include settlement or payout records, settlement status, or settlement dates needed to calculate unsettled amount as of last month end.\",\"assumption\":\"“கடந்த மாத இறுதியில் settle ஆகாத தொகை” என்பதைக் 2026-08-31 அன்று வரை merchant payout/settlement ஆகாமல் இருந்த captured payment amount என்று எடுத்துக்கொண்டேன்.\"}",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 803,
+    "output_tokens": 411
+  }
+}

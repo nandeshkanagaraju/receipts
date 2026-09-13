@@ -178,8 +178,10 @@ def test_more_than_three_dimensions_is_refused() -> None:
 
 def test_an_ambiguity_needs_two_readings() -> None:
     with pytest.raises(ValidationError):
-        Ambiguity(term="quarter", readings=("fiscal",))
-    assert Ambiguity(term="quarter", readings=("fiscal", "calendar")).chosen is None
+        Ambiguity(term="quarter", kind="calendar", readings=("fiscal",))
+    assert (
+        Ambiguity(term="quarter", kind="calendar", readings=("fiscal", "calendar")).chosen is None
+    )
 
 
 def test_a_quarter_outside_one_to_four_is_refused() -> None:

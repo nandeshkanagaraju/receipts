@@ -480,3 +480,133 @@ def test_join_path_is_shortest_and_stable() -> None:
     first = [c.table for c in join_path("orders", "payment_attempts", CATALOG)]
     second = [c.table for c in join_path("orders", "payment_attempts", CATALOG)]
     assert first == second == ["payment_attempts"]
+
+
+# --------------------------------------------------------------------------- #
+# M15.1 — the two defects that scored Error rather than Silent-wrong.
+#
+# They cost coverage rather than correctness, which is why they were worth
+# fixing: coverage is the constraint PDD §5 fails on. Neither accounted for any
+# of the 25 verified-path wrong answers.
+# --------------------------------------------------------------------------- #
+
+
+def test_group_by_survives_a_column_two_joined_tables_share() -> None:
+    """`settlement_lag_days` by `acquiring_bank` did not bind at all.
+
+    Both `payment_attempts` and `settlements` have that column. The SELECT list
+    was correctly qualified; the GROUP BY named the bare alias, which resolves
+    against the FROM clause first, and DuckDB refused the statement outright.
+    """
+    resolved = _simple("settlement_lag_days", dimensions=("acquiring_bank",))
+    sql = compile_query(resolved, CATALOG, SCOPES["global_finance"], "duckdb").sql
+    group_by = sql[sql.index("GROUP BY") :]
+    print(f"\n{group_by.splitlines()[1].strip()}")
+    assert "payment_attempts.acquiring_bank" in group_by, (
+        "GROUP BY names a bare alias two joined tables both provide"
+    )
+
+
+def test_order_by_still_uses_the_alias_not_the_expression() -> None:
+    """The other half of the asymmetry, and it is not cosmetic.
+
+    ORDER BY can sit outside a wrapping subquery, where the joined tables are
+    not in scope and only the projected alias exists. Compiling both clauses the
+    same way traded one binder error for another:
+    `Referenced table "payment_attempts" not found. Candidate tables: "grouped"`.
+    """
+    resolved = _simple("failure_rate_by_reason", dimensions=("failure_reason",))
+    sql = compile_query(resolved, CATALOG, SCOPES["global_finance"], "duckdb").sql
+    order_by = sql[sql.index("ORDER BY") :]
+    assert "failure_reason" in order_by
+    assert "payment_attempts.failure_reason" not in order_by, (
+        "ORDER BY qualifies a column that may not be in scope there"
+    )
+
+
+def test_last_n_weeks_resolves_to_the_glossary_window() -> None:
+    """GLOSSARY §1.6a, which the validator did not implement.
+
+    The model could not say "last 8 weeks" -- the enum had no member for it --
+    so it returned `relative: null` and the validator called the window
+    unresolvable. The reference for DV-045 expects exactly this range.
+    """
+    from receipts.agent.validate import resolve_relative
+
+    as_of = date(2026, 9, 10)  # a Thursday
+    start, end = resolve_relative("last_n_weeks", as_of, 8)
+    print(f"\nlast 8 weeks -> {start} .. {end - timedelta(days=1)} inclusive")
+    assert (start, end) == (date(2026, 7, 13), date(2026, 9, 7))
+    # The current partial week is excluded, not counted as one of the N.
+    assert end == date(2026, 9, 7), "the partial week starting Monday was included"
+
+
+def test_last_n_weeks_with_n_1_is_exactly_last_week() -> None:
+    """Two spellings of one window must not drift apart."""
+    from receipts.agent.validate import resolve_relative
+
+    as_of = date(2026, 9, 10)
+    assert resolve_relative("last_n_weeks", as_of, 1) == resolve_relative("last_week", as_of)
+
+
+def test_a_currency_name_cannot_be_expressed_at_all() -> None:
+    """ "Net revenue in Malaysia last month, in ringgit" came back with
+    `reporting_currency: "ringgit"`, which reached `Column` and raised.
+
+    Unrepresentable rather than rejected, as with metric names: the schema offers
+    the ISO codes the warehouse actually holds and nothing else.
+    """
+    from receipts.agent.planner import CURRENCIES, plan_schema, window_schema  # noqa: F401
+    from receipts.agent.retrieve import CatalogSlice
+
+    assert "MYR" in CURRENCIES and "ringgit" not in CURRENCIES
+    slice_ = CatalogSlice(
+        metrics=(CATALOG.metric("net_revenue"),), dimensions=CATALOG.dimensions[:2]
+    )
+    schema = plan_schema(slice_)
+    field = _find_property(schema, "reporting_currency")
+    assert field is not None, "reporting_currency is absent from the schema"
+    enum = field.get("enum") or []
+    assert "ringgit" not in enum and "MYR" in enum, enum
+
+
+def test_an_unknown_currency_is_a_typed_issue_not_an_adapter_crash() -> None:
+    """Belt and braces behind the enum.
+
+    A currency name arriving here anyway must become a refusal the asker can
+    read, not an exception that tells them the system broke.
+    """
+    from receipts.agent.validate import validate
+
+    plan = QueryPlan(
+        kind="metric",
+        name="net_revenue",
+        window=WindowSpec(kind="relative", relative="last_month"),
+        grain=Grain("NONE"),
+        reporting_currency="ringgit",
+    )
+    result = validate(
+        plan,
+        CATALOG,
+        SCOPES["global_finance"],
+        date(2026, 9, 10),
+        question="",
+        prefs={},
+        first_date=date(2025, 1, 1),
+        last_date=date(2026, 9, 9),
+    )
+    assert hasattr(result, "issues"), "an unknown currency validated cleanly"
+    assert "UNKNOWN_CURRENCY" in {i.code for i in result.issues}
+
+
+def _find_property(schema: dict, name: str) -> dict | None:
+    """The named property, wherever the anyOf root put it."""
+    if not isinstance(schema, dict):
+        return None
+    if name in (schema.get("properties") or {}):
+        return schema["properties"][name]
+    for branch in schema.get("anyOf") or []:
+        found = _find_property(branch, name)
+        if found is not None:
+            return found
+    return None

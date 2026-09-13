@@ -1,0 +1,16 @@
+{
+  "kind": "text",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "composer",
+    "provider": "openai",
+    "sha256": "b2811b5cadb8075a4cba32008339059d163d0eb918b9b2525bb21fc546e8a498",
+    "version": 1
+  },
+  "text": "Net revenue in Malaysia for 2026-08-01 to 2026-08-31 was MYR 1089211369; “net revenue” was interpreted as net_revenue per the glossary.",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 509,
+    "output_tokens": 46
+  }
+}

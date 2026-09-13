@@ -101,7 +101,12 @@ def rebuild_plan(body: dict[str, Any]) -> QueryPlan:
         limit=body.get("limit"),
         reporting_currency=body.get("reporting_currency"),
         ambiguities=tuple(
-            Ambiguity(term=a["term"], readings=tuple(a["readings"]), chosen=a.get("chosen"))
+            Ambiguity(
+                term=a["term"],
+                kind=a["kind"],
+                readings=tuple(a["readings"]),
+                chosen=a.get("chosen"),
+            )
             for a in body.get("ambiguities", ())
         ),
     )

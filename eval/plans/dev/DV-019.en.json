@@ -8,6 +8,7 @@
     "ambiguities": [
       {
         "chosen": "Use attempt-level failure_rate_by_reason as the diagnostic for why UPI success dropped",
+        "kind": "metric_choice",
         "readings": [
           "Payment success rate could mean order-level success rate",
           "Payment success rate could mean attempt-level success rate; failure reasons are attempt-level diagnostics"

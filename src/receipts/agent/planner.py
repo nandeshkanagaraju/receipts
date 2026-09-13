@@ -33,6 +33,7 @@ from typing import Any
 
 from ..domain.types import Ambiguity, Filter, Grain, QueryPlan, RelativeWindow, WindowSpec
 from ..llm.base import LLM, Msg
+from ..semantic.catalog import COUNTRY_CURRENCY
 from .retrieve import CatalogSlice
 
 PROMPT_ID = "planner"
@@ -40,6 +41,10 @@ PROMPT_ID = "planner"
 RELATIVE_WINDOWS: tuple[str, ...] = tuple(RelativeWindow.__args__)  # type: ignore[attr-defined]
 GRAINS = ("NONE", "DAY", "WEEK", "MONTH", "QUARTER_CAL", "QUARTER_FY", "YEAR_CAL", "YEAR_FY")
 AMBIGUITY_KINDS = ("metric_choice", "entity", "calendar", "window", "currency")
+
+# The ISO codes the warehouse actually holds, from the country table rather than
+# from a list anybody has to maintain here.
+CURRENCIES: tuple[str, ...] = tuple(sorted(set(COUNTRY_CURRENCY.values())))
 
 MAX_DIMENSIONS = 3
 MAX_FILTER_VALUES = 20
@@ -71,9 +76,11 @@ def window_schema() -> dict[str, Any]:
             "end": _nullable("string"),
             "quarter": _nullable("integer"),
             "year": _nullable("integer"),
+            # How many periods, for `last_n_weeks`. Null for every other window.
+            "n": _nullable("integer"),
             "calendar": {"type": "string", "enum": ["fiscal", "calendar", "unspecified"]},
         },
-        "required": ["kind", "relative", "start", "end", "quarter", "year", "calendar"],
+        "required": ["kind", "relative", "start", "end", "quarter", "year", "n", "calendar"],
     }
 
 
@@ -136,7 +143,16 @@ def plan_schema(slice_: CatalogSlice) -> dict[str, Any]:
             "compare_to": _nullable("string", ("previous_period", "same_period_last_year")),
             "order": _nullable("string", ("value_desc", "value_asc", "time_asc")),
             "limit": _nullable("integer"),
-            "reporting_currency": _nullable("string"),
+            # An enum, not a free string. The model answered "Net revenue in
+            # Malaysia last month, in ringgit" with `reporting_currency:
+            # "ringgit"` -- the currency's NAME -- which sailed through the
+            # validator and died at the adapter, where `Column` requires a
+            # 3-letter code. Three dev trials, scored as errors.
+            #
+            # The M9 principle applies here as much as to metric names: a
+            # currency the warehouse does not hold should be unrepresentable
+            # rather than rejected downstream.
+            "reporting_currency": _nullable("string", CURRENCIES),
             "ambiguities": {"type": "array", "items": ambiguity_schema()},
         },
         "required": [
@@ -276,6 +292,12 @@ def parse_draft(payload: dict[str, Any], slice_: CatalogSlice, raw: str = "") ->
     body["ambiguities"] = tuple(
         Ambiguity(
             term=str(a.get("term", "")),
+            # No default. The schema requires `kind`, and defaulting a missing
+            # one to `entity` is precisely the bug this line is fixing: it is the
+            # forcing kind, so the fallback turns every unclassified ambiguity
+            # into a refusal. A model that omits it should fail here, loudly,
+            # rather than quietly cost a third of the answerable arm.
+            kind=a["kind"],
             readings=tuple(a.get("readings", ())),
             chosen=a.get("chosen"),
         )

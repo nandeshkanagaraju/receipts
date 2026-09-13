@@ -33,7 +33,7 @@ from datetime import date, timedelta
 from typing import Any, Literal
 
 from ..domain.types import Grain, QueryPlan, ResolvedPlan, Scope, WindowSpec
-from ..semantic.catalog import Catalog
+from ..semantic.catalog import COUNTRY_CURRENCY, Catalog
 from ..semantic.value_synonyms import fold_value
 
 # Issue codes. A closed vocabulary, because the gate branches on them and the
@@ -48,7 +48,11 @@ IssueCode = Literal[
     "WINDOW_UNRESOLVABLE",
     "WINDOW_EMPTY",
     "CAPABILITY_REQUIRED",
+    "UNKNOWN_CURRENCY",
 ]
+
+# The ISO codes the warehouse keeps money in, from the country table.
+KNOWN_CURRENCIES: frozenset[str] = frozenset(COUNTRY_CURRENCY.values())
 
 FISCAL_START_MONTH = 4  # GLOSSARY §1.5: the fiscal year starts on 1 April.
 
@@ -131,7 +135,7 @@ def _week_start(day: date) -> date:
     return day - timedelta(days=day.weekday())
 
 
-def resolve_relative(name: str, as_of: date) -> tuple[date, date]:
+def resolve_relative(name: str, as_of: date, n: int | None = None) -> tuple[date, date]:
     """A named window, as `[start, end_exclusive)`.
 
     Yesterday is the last complete day, and **today is excluded everywhere**
@@ -152,6 +156,15 @@ def resolve_relative(name: str, as_of: date) -> tuple[date, date]:
     if name == "last_week":
         this_monday = _week_start(as_of)
         return this_monday - timedelta(days=7), this_monday
+    if name == "last_n_weeks":
+        # §1.6a: N complete Monday-Sunday weeks. The current partial week is
+        # excluded rather than counted as one of the N, which is why this ends at
+        # the current Monday and not at yesterday. N=1 is exactly `last_week`,
+        # and a test asserts that so the two definitions cannot drift apart.
+        if n is None or n < 1:
+            raise ValueError("last_n_weeks needs a positive n")
+        this_monday = _week_start(as_of)
+        return this_monday - timedelta(days=7 * n), this_monday
     if name == "this_month":
         return _month_start(as_of), tomorrow_of_yesterday
     if name == "last_month":
@@ -266,7 +279,7 @@ def resolve_window(
             return None, None, applied, issues
         if calendar and spec.calendar == "unspecified":
             applied.append(f"calendar → {calendar} (from preference)")
-        start, end = resolve_relative(spec.relative, as_of)
+        start, end = resolve_relative(spec.relative, as_of, spec.n)
 
     elif spec.kind == "absolute":
         if not spec.start or not spec.end:
@@ -625,6 +638,20 @@ def validate(
     # perfectly plausible answer to "how much did we collect in the UK", and it
     # is 86,894,100 pounds.
     currency = draft_plan.reporting_currency
+    if currency and currency not in KNOWN_CURRENCIES:
+        # Belt and braces behind the schema enum. A currency name that reaches
+        # here would otherwise reach `Column`, which requires a 3-letter code,
+        # and surface as an adapter exception -- an error rather than a refusal,
+        # which tells the asker the system broke.
+        issues.append(
+            Issue(
+                "UNKNOWN_CURRENCY",
+                f"{currency!r} is not a currency the data is kept in",
+                "reporting_currency",
+                tuple(sorted(KNOWN_CURRENCIES)),
+            )
+        )
+        currency = ""
     if not currency:
         currency = prefs.get("reporting_currency") or _implied_currency(draft_plan, catalog)
         if currency:

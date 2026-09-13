@@ -382,7 +382,13 @@ def _one_select(
         select = select.where(predicate)
 
     if selected:
-        select = select.group_by(*[exp.column(name) for name, _ in selected])
+        # GROUP BY the EXPRESSION, not the alias. A bare alias is resolved
+        # against the FROM clause first, so `GROUP BY acquiring_bank` is
+        # ambiguous the moment two joined tables both have that column --
+        # payment_attempts and settlements both do, and settlement_lag_days
+        # broken down by acquiring_bank failed to bind at all. The SELECT list
+        # was correctly qualified; only the grouping was not.
+        select = select.group_by(*[expression for _, expression in selected])
 
     return select, selected, build.tables
 
@@ -710,6 +716,13 @@ def _ordered(
     runs of the same query return the same rows in the same order even when the
     numbers are equal.
     """
+    # Aliases here, and expressions in the GROUP BY above -- the asymmetry is
+    # real. GROUP BY binds in the inner scope where the joined tables are
+    # visible, so it must name the qualified expression to avoid an ambiguous
+    # column. ORDER BY may sit OUTSIDE a wrapping subquery, where those tables
+    # are not in scope at all and only the projected alias exists. Using
+    # expressions in both places traded one binder error for another:
+    # `Referenced table "payment_attempts" not found. Candidate tables: "grouped"`.
     tiebreak = [exp.column(name).asc() for name, _ in selected]
     if order == "value_desc":
         return select.order_by(exp.column(VALUE).desc(), *tiebreak)

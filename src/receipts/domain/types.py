@@ -78,6 +78,12 @@ RelativeWindow = Literal[
     "last_7_days",
     "this_week",
     "last_week",
+    # GLOSSARY §1.6a. N complete Monday-Sunday weeks, current partial week
+    # excluded. It needs `n` on the WindowSpec; without this member the model had
+    # no way to say "last 8 weeks" and returned `relative: null`, which the
+    # validator called WINDOW_UNRESOLVABLE -- a question the glossary defines
+    # exactly, refused for want of a vocabulary word.
+    "last_n_weeks",
     "this_month",
     "last_month",
     "this_quarter",
@@ -97,6 +103,8 @@ class WindowSpec(Strict):
 
     kind: Literal["relative", "absolute", "quarter", "year", "since"]
     relative: RelativeWindow | None = None
+    # How many periods, for the windows that take a count (`last_n_weeks`).
+    n: int | None = None
     start: date | None = None
     end: date | None = None
     quarter: int | None = None
@@ -120,6 +128,17 @@ class Ambiguity(Strict):
     """
 
     term: str
+    # What KIND of thing was ambiguous. Required, and deliberately without a
+    # default: the planner schema has always demanded it, and for three
+    # milestones this class did not carry it. `parse_draft` dropped it, the gate
+    # re-derived it from keywords in `term`, and that re-derivation defaulted to
+    # `entity` -- one of the two kinds that force a clarification. 19 of 22 dev
+    # over-abstentions were a `window` or `metric_choice` or `currency` the model
+    # had already resolved, re-guessed into a refusal.
+    #
+    # A default here would restore exactly that failure quietly, so there is
+    # none. A plan built without a kind does not parse.
+    kind: Literal["metric_choice", "entity", "calendar", "window", "currency"]
     readings: tuple[str, ...]
     chosen: str | None = None
 

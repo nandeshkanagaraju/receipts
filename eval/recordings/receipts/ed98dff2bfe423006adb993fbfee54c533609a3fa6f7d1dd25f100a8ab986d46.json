@@ -1,0 +1,67 @@
+{
+  "data": {
+    "result": {
+      "ambiguities": [
+        {
+          "chosen": "attempt-level payment success rate for card payment attempts",
+          "kind": "metric_choice",
+          "readings": [
+            "attempt-level payment success rate for card payment attempts",
+            "order-level payment success rate for orders with card payment attempts"
+          ],
+          "term": "card success rate"
+        }
+      ],
+      "compare_to": null,
+      "dimensions": [
+        "issuing_bank"
+      ],
+      "filters": [
+        {
+          "dimension": "country",
+          "op": "eq",
+          "values": [
+            "UK"
+          ]
+        },
+        {
+          "dimension": "payment_method",
+          "op": "eq",
+          "values": [
+            "card"
+          ]
+        }
+      ],
+      "grain": "NONE",
+      "kind": "metric",
+      "limit": 10,
+      "name": "payment_success_rate_attempt",
+      "order": "value_desc",
+      "reporting_currency": null,
+      "window": {
+        "calendar": "unspecified",
+        "end": null,
+        "kind": "relative",
+        "n": null,
+        "quarter": null,
+        "relative": "last_month",
+        "start": null,
+        "year": null
+      }
+    }
+  },
+  "kind": "structured",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "planner",
+    "provider": "openai",
+    "sha256": "b0b4f239c1e82e040030ab894872875c7b461a9406057341e5278262b3fa74bf",
+    "version": 1
+  },
+  "raw": "{\"result\":{\"kind\":\"metric\",\"name\":\"payment_success_rate_attempt\",\"dimensions\":[\"issuing_bank\"],\"filters\":[{\"dimension\":\"country\",\"op\":\"eq\",\"values\":[\"UK\"]},{\"dimension\":\"payment_method\",\"op\":\"eq\",\"values\":[\"card\"]}],\"window\":{\"kind\":\"relative\",\"relative\":\"last_month\",\"start\":null,\"end\":null,\"quarter\":null,\"year\":null,\"n\":null,\"calendar\":\"unspecified\"},\"grain\":\"NONE\",\"compare_to\":null,\"order\":\"value_desc\",\"limit\":10,\"reporting_currency\":null,\"ambiguities\":[{\"term\":\"card success rate\",\"kind\":\"metric_choice\",\"readings\":[\"attempt-level payment success rate for card payment attempts\",\"order-level payment success rate for orders with card payment attempts\"],\"chosen\":\"attempt-level payment success rate for card payment attempts\"}]}}",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 2361,
+    "output_tokens": 378
+  }
+}

@@ -8,6 +8,7 @@
     "ambiguities": [
       {
         "chosen": "increase versus the previous month",
+        "kind": "window",
         "readings": [
           "increase versus the previous month",
           "increase versus the same month last year",

@@ -8,6 +8,7 @@
     "ambiguities": [
       {
         "chosen": "payment_success_rate_order",
+        "kind": "metric_choice",
         "readings": [
           "payment_success_rate_order: share of orders with a payment attempt that were eventually paid",
           "payment_success_rate_attempt: share of individual payment attempts that were captured",

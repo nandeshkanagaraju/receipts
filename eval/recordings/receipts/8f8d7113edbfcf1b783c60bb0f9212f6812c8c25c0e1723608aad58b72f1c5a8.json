@@ -1,0 +1,22 @@
+{
+  "data": {
+    "assumption": "“पिछले महीने UK” को August 2026 में GB country_code वाले showrooms के non-test payment attempts में दिखे distinct issuing_bank के रूप में लिया है।",
+    "sql": "SELECT COUNT(DISTINCT pa.issuing_bank) AS value\nFROM payment_attempts pa\nJOIN orders o ON o.order_id = pa.order_id\nJOIN showrooms s ON s.showroom_id = o.showroom_id\nWHERE pa.is_test = false\n  AND o.is_test = false\n  AND s.country_code = 'GB'\n  AND pa.business_date >= DATE '2026-08-01'\n  AND pa.business_date < DATE '2026-09-01'",
+    "unit": "count",
+    "why_not": ""
+  },
+  "kind": "structured",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "freeform",
+    "provider": "openai",
+    "sha256": "fb698c2a85e957df0a8de83a3ce4c866dbe5bea3e7a1e3fbc16a04bc85d34ed6",
+    "version": 1
+  },
+  "raw": "{\"sql\":\"SELECT COUNT(DISTINCT pa.issuing_bank) AS value\\nFROM payment_attempts pa\\nJOIN orders o ON o.order_id = pa.order_id\\nJOIN showrooms s ON s.showroom_id = o.showroom_id\\nWHERE pa.is_test = false\\n  AND o.is_test = false\\n  AND s.country_code = 'GB'\\n  AND pa.business_date >= DATE '2026-08-01'\\n  AND pa.business_date < DATE '2026-09-01'\",\"unit\":\"count\",\"why_not\":\"\",\"assumption\":\"“पिछले महीने UK” को August 2026 में GB country_code वाले showrooms के non-test payment attempts में दिखे distinct issuing_bank के रूप में लिया है।\"}",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 801,
+    "output_tokens": 678
+  }
+}

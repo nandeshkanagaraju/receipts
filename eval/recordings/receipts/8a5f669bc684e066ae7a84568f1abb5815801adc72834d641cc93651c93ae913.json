@@ -1,0 +1,23 @@
+{
+  "data": {
+    "result": {
+      "data_exists": false,
+      "no_fit": true,
+      "reason": "The question asks for sales ranked by marketing campaign, but marketing campaign is not an offered dimension. The available dimensions do not support campaign attribution."
+    }
+  },
+  "kind": "structured",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "planner",
+    "provider": "openai",
+    "sha256": "b0b4f239c1e82e040030ab894872875c7b461a9406057341e5278262b3fa74bf",
+    "version": 1
+  },
+  "raw": "{\"result\":{\"no_fit\":true,\"reason\":\"The question asks for sales ranked by marketing campaign, but marketing campaign is not an offered dimension. The available dimensions do not support campaign attribution.\",\"data_exists\":false}}",
+  "usage": {
+    "cached_input_tokens": 1792,
+    "input_tokens": 1968,
+    "output_tokens": 511
+  }
+}

@@ -53,7 +53,86 @@ TOKEN = re.compile(r"(?:[^\W\d_]|[\u0900-\u097F\u0B80-\u0BFF])+", re.UNICODE)
 # English generally -- "rate" and "total" mean something -- but here they appear
 # in so many metric documents that they separate nothing, and BM25's IDF already
 # discounts them. Listed so the behaviour is visible rather than emergent.
-LOW_SIGNAL = frozenset({"the", "a", "an", "of", "in", "our", "we", "us", "by", "for", "and"})
+#
+# All three languages, not one. The English-only version of this set cost two
+# dev questions: `settlement_lag_days` carries the Hindi phrase "निपटान में कितने
+# दिन", so `में` ("in") and `कितने` ("how many") were indexed as metric terms, and
+# any Hindi question shaped "how many ... in ..." scored 4.08 against a
+# finance-gated metric -- higher than any score the same question got in English
+# or Tamil, on entirely the wrong metric. `_gated_match` took the top hit and the
+# gate DENIED, naming a capability the question had never asked about.
+#
+# This was the third instance of one pattern: M8's tokeniser split combining
+# marks, M14's glossary matcher split matras, and this list was written in
+# English. Each time the English path worked and nothing raised an error.
+# `test_no_index_step_is_english_only` is the check that generalises it.
+#
+# COMPOSITION RULE, because getting it wrong fails in both directions.
+# Closed-class function words only: postpositions, auxiliaries, pronouns,
+# conjunctions, determiners. **No interrogatives.** "how much" and "कितना" carry
+# real signal here -- `gmv_captured`'s Hindi phrase is "कितना पैसा वसूल", and a
+# list that swallowed "कितना" dropped that question's slice to empty. Widening
+# the English half the same way ("how", "many", "what") emptied two English
+# slices that had been retrieving correctly. Too narrow admits false matches;
+# too wide erases true ones, and both are silent.
+LOW_SIGNAL = frozenset(
+    {
+        # English -- the original list, unchanged.
+        "the",
+        "a",
+        "an",
+        "of",
+        "in",
+        "our",
+        "we",
+        "us",
+        "by",
+        "for",
+        "and",
+        # Hindi: postpositions, auxiliaries, pronouns, conjunctions.
+        "में",
+        "का",
+        "की",
+        "के",
+        "को",
+        "से",
+        "है",
+        "था",
+        "थी",
+        "थे",
+        "हैं",
+        "हमें",
+        "हम",
+        "हमारा",
+        "हमारी",
+        "और",
+        "पर",
+        "तक",
+        "लिए",
+        "किया",
+        "हुए",
+        "हुआ",
+        "गया",
+        # Tamil: case suffixes written separately, auxiliaries, pronouns,
+        # conjunctions, determiners.
+        "இல்",
+        "இன்",
+        "ஆக",
+        "ஆன",
+        "நமது",
+        "நம்",
+        "எங்கள்",
+        "மற்றும்",
+        "ஒரு",
+        "அந்த",
+        "இந்த",
+        "ஆகும்",
+        "இருந்து",
+        "வரை",
+        "உள்ள",
+        "செய்த",
+    }
+)
 
 
 def tokenize(text: str) -> list[str]:

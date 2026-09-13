@@ -1,0 +1,59 @@
+{
+  "data": {
+    "result": {
+      "ambiguities": [
+        {
+          "chosen": "net_revenue",
+          "kind": "metric_choice",
+          "readings": [
+            "net_revenue: captured GMV minus refunds processed in the same window",
+            "gmv_captured: total captured sales value before refunds"
+          ],
+          "term": "revenue"
+        },
+        {
+          "chosen": "Leave reporting currency unspecified",
+          "kind": "currency",
+          "readings": [
+            "Report in a specific currency such as USD, GBP, INR, etc.",
+            "Leave reporting currency unspecified"
+          ],
+          "term": "currency"
+        }
+      ],
+      "compare_to": null,
+      "dimensions": [],
+      "filters": [],
+      "grain": "NONE",
+      "kind": "metric",
+      "limit": null,
+      "name": "net_revenue",
+      "order": null,
+      "reporting_currency": null,
+      "window": {
+        "calendar": "unspecified",
+        "end": null,
+        "kind": "relative",
+        "n": null,
+        "quarter": null,
+        "relative": "last_month",
+        "start": null,
+        "year": null
+      }
+    }
+  },
+  "kind": "structured",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "planner",
+    "provider": "openai",
+    "sha256": "b0b4f239c1e82e040030ab894872875c7b461a9406057341e5278262b3fa74bf",
+    "version": 1
+  },
+  "raw": "{\"result\":{\"kind\":\"metric\",\"name\":\"net_revenue\",\"dimensions\":[],\"filters\":[],\"window\":{\"kind\":\"relative\",\"relative\":\"last_month\",\"start\":null,\"end\":null,\"quarter\":null,\"year\":null,\"n\":null,\"calendar\":\"unspecified\"},\"grain\":\"NONE\",\"compare_to\":null,\"order\":null,\"limit\":null,\"reporting_currency\":null,\"ambiguities\":[{\"term\":\"revenue\",\"kind\":\"metric_choice\",\"readings\":[\"net_revenue: captured GMV minus refunds processed in the same window\",\"gmv_captured: total captured sales value before refunds\"],\"chosen\":\"net_revenue\"},{\"term\":\"currency\",\"kind\":\"currency\",\"readings\":[\"Report in a specific currency such as USD, GBP, INR, etc.\",\"Leave reporting currency unspecified\"],\"chosen\":\"Leave reporting currency unspecified\"}]}}",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 2150,
+    "output_tokens": 372
+  }
+}

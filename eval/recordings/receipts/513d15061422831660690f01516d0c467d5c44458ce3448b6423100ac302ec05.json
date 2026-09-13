@@ -1,0 +1,16 @@
+{
+  "kind": "text",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "composer",
+    "provider": "openai",
+    "sha256": "b2811b5cadb8075a4cba32008339059d163d0eb918b9b2525bb21fc546e8a498",
+    "version": 1
+  },
+  "text": "पिछले हफ़्ते (2026-08-31 से 2026-09-06) United Kingdom में ऑर्डर-स्तर की भुगतान सफलता दर 94.6% रही; पिछले हफ़्ते की तुलना का अलग आंकड़ा इस परिणाम में नहीं है। UK को United Kingdom माना गया और भुगतान सफलता दर को ऑर्डर-स्तर पर लिया गया।",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 572,
+    "output_tokens": 602
+  }
+}

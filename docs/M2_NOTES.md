@@ -1030,3 +1030,66 @@ raises. **0 of 25.**
 
 The 25 silent-wrong answers are wrong for reasons that have nothing to do with
 either defect, and fixing them would not move the silent-wrong figure at all.
+
+## §9 — M15.1: the four fixes, and a prop that came away with them
+
+All four were components discarding or mis-deriving something another component
+had already computed correctly. None is tuning.
+
+1. **`Ambiguity.kind` survives parsing and the gate reads it.** `_kind_of` is
+   deleted rather than improved: a re-derivation of a value you already have is
+   the defect. The field is required and has **no default** — a default would
+   restore the failure quietly, and `entity` is exactly the wrong thing to
+   default to because it forces a clarification. A plan built without a kind no
+   longer parses, which is the fault injection.
+2. **The retriever's noise list covers all three languages.** See below.
+3. **GLOSSARY §1.6a "last N weeks"** is implemented, and the vocabulary gained
+   `last_n_weeks` with an `n` — the model previously had no way to *say* it and
+   returned `relative: null`, which the validator called unresolvable.
+4. **Both compiler defects.** `GROUP BY` now names the qualified expression;
+   `reporting_currency` is an enum of the ISO codes the warehouse holds, so
+   "ringgit" is unrepresentable rather than fatal three joins later.
+
+### The asymmetry in fix 4 is real and cost a round trip
+
+`GROUP BY` must name the **expression**: it binds in the inner scope where the
+joined tables are visible, and a bare alias two joined tables both provide does
+not resolve. `ORDER BY` must name the **alias**: it can sit outside a wrapping
+subquery where those tables are not in scope at all. Compiling both the same way
+traded one binder error for another — `Referenced table "payment_attempts" not
+found. Candidate tables: "grouped"`. Two clauses that look alike, opposite rules.
+
+### Fix 2 removed a prop, and the hit rate fell because of it
+
+Extending `LOW_SIGNAL` to Hindi and Tamil moved Hindi's top-8 retrieval hit rate
+**96.6% → 89.7%**. That looks like a regression and is the opposite.
+
+Both new misses are `settlement_lag_days`, whose Hindi phrase is "निपटान में
+कितने दिन". `में` ("in") and `कितने` ("how many") were indexed as metric terms,
+so the metric was being retrieved by two of the commonest function words in the
+language. Those were never real hits — the same collision made it the **top**
+match at 4.08 for two questions about issuing banks and failed card attempts,
+which is how gate rule 1 came to DENY them for want of a finance capability.
+
+So 96.6% was partly earned by the defect, and removing the defect removed the
+accidental hits. The metric's real Hindi vocabulary is thin: it offers the
+Sanskritic register ("निपटान विलंब") where the questions use the loanword one
+("सेटलमेंट देरी"). Widening it is a change to the **semantic layer**, not to
+retrieval, and was out of scope this round. Bounded as `KNOWN_HINDI_MISSES` with
+the three qids named, so a fourth fails the test rather than being absorbed.
+
+**The general lesson for the README: a guard that passes because of a bug is
+worse than a guard that fails.** Nobody would have found this by reading the
+retriever; it took removing the bug and watching a healthy-looking number drop.
+
+### The composition rule for a noise list is two-sided
+
+Too narrow admits false matches — `में` indexed as a metric term. Too wide erases
+true ones: an early version of this fix also stripped interrogatives, and
+`gmv_captured`'s Hindi phrase is "कितना पैसा वसूल", so swallowing `कितना` dropped
+that question's slice to empty. The same widening applied to English ("how",
+"many", "what") emptied two English slices that had been retrieving correctly.
+
+The rule is **closed-class function words only** — postpositions, auxiliaries,
+pronouns, conjunctions, determiners — which is what the original English list
+already was. Both failure directions are silent.

@@ -8,6 +8,7 @@
     "ambiguities": [
       {
         "chosen": "gmv_captured",
+        "kind": "metric_choice",
         "readings": [
           "captured GMV",
           "net revenue"
@@ -16,6 +17,7 @@
       },
       {
         "chosen": "city",
+        "kind": "entity",
         "readings": [
           "city",
           "region/emirate"

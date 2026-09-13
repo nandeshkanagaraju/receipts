@@ -1,0 +1,67 @@
+{
+  "data": {
+    "result": {
+      "ambiguities": [
+        {
+          "chosen": "gmv_captured",
+          "kind": "metric_choice",
+          "readings": [
+            "Captured GMV / gross sales captured from customers",
+            "Net revenue after refunds processed in the same window"
+          ],
+          "term": "बिक्री"
+        },
+        {
+          "chosen": "showroom named Dubai",
+          "kind": "entity",
+          "readings": [
+            "showroom named Dubai",
+            "showrooms located in the city Dubai"
+          ],
+          "term": "दुबई शोरूम"
+        }
+      ],
+      "compare_to": null,
+      "dimensions": [],
+      "filters": [
+        {
+          "dimension": "showroom",
+          "op": "eq",
+          "values": [
+            "दुबई"
+          ]
+        }
+      ],
+      "grain": "NONE",
+      "kind": "metric",
+      "limit": null,
+      "name": "gmv_captured",
+      "order": null,
+      "reporting_currency": null,
+      "window": {
+        "calendar": "unspecified",
+        "end": null,
+        "kind": "relative",
+        "n": null,
+        "quarter": null,
+        "relative": "last_week",
+        "start": null,
+        "year": null
+      }
+    }
+  },
+  "kind": "structured",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "planner",
+    "provider": "openai",
+    "sha256": "b0b4f239c1e82e040030ab894872875c7b461a9406057341e5278262b3fa74bf",
+    "version": 1
+  },
+  "raw": "{\"result\":{\"kind\":\"metric\",\"name\":\"gmv_captured\",\"dimensions\":[],\"filters\":[{\"dimension\":\"showroom\",\"op\":\"eq\",\"values\":[\"दुबई\"]}],\"window\":{\"kind\":\"relative\",\"relative\":\"last_week\",\"start\":null,\"end\":null,\"quarter\":null,\"year\":null,\"n\":null,\"calendar\":\"unspecified\"},\"grain\":\"NONE\",\"compare_to\":null,\"order\":null,\"limit\":null,\"reporting_currency\":null,\"ambiguities\":[{\"term\":\"बिक्री\",\"kind\":\"metric_choice\",\"readings\":[\"Captured GMV / gross sales captured from customers\",\"Net revenue after refunds processed in the same window\"],\"chosen\":\"gmv_captured\"},{\"term\":\"दुबई शोरूम\",\"kind\":\"entity\",\"readings\":[\"showroom named Dubai\",\"showrooms located in the city Dubai\"],\"chosen\":\"showroom named Dubai\"}]}}",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 1863,
+    "output_tokens": 634
+  }
+}

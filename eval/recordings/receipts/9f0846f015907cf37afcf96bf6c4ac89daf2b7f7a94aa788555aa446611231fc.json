@@ -1,0 +1,16 @@
+{
+  "kind": "text",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "composer",
+    "provider": "openai",
+    "sha256": "b2811b5cadb8075a4cba32008339059d163d0eb918b9b2525bb21fc546e8a498",
+    "version": 1
+  },
+  "text": "2026-09-01 से 2026-09-09 तक कैप्चर किया गया GMV USD 149643371 है; मीट्रिक डिफ़ॉल्ट के अनुसार gmv_captured और रिपोर्टिंग मुद्रा USD ली गई है। पिछले महीने/पिछली अवधि की तुलना का अलग आंकड़ा तालिका में उपलब्ध नहीं है।",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 545,
+    "output_tokens": 216
+  }
+}

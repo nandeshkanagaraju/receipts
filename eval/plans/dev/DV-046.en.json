@@ -8,6 +8,7 @@
     "ambiguities": [
       {
         "chosen": "August 2026",
+        "kind": "window",
         "readings": [
           "August 2026, the most recent August before today",
           "August in another year"

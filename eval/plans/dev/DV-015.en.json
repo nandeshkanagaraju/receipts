@@ -8,6 +8,7 @@
     "ambiguities": [
       {
         "chosen": "net_revenue",
+        "kind": "metric_choice",
         "readings": [
           "net_revenue (captured GMV minus refunds processed in the same window)",
           "gmv_captured (total money captured from customers in the window, before subtracting refunds)"

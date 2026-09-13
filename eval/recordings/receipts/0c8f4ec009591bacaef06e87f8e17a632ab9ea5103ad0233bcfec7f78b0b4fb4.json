@@ -1,0 +1,22 @@
+{
+  "data": {
+    "assumption": "“अगस्त में औसत सेटलमेंट देरी” को अगस्त 2026 में हुए भुगतान प्रयासों के business_date से उनके settled_on तक के औसत दिनों के रूप में माना गया है।",
+    "sql": "SELECT AVG(s.settled_on - pa.business_date) AS value\nFROM settlement_items si\nJOIN settlements s ON s.settlement_id = si.settlement_id\nJOIN payment_attempts pa ON pa.attempt_id = si.attempt_id\nJOIN orders o ON o.order_id = pa.order_id\nWHERE pa.business_date >= DATE '2026-08-01'\n  AND pa.business_date < DATE '2026-09-01'\n  AND pa.is_test = FALSE\n  AND o.is_test = FALSE\n  AND s.settled_on IS NOT NULL",
+    "unit": "other",
+    "why_not": ""
+  },
+  "kind": "structured",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "freeform",
+    "provider": "openai",
+    "sha256": "fb698c2a85e957df0a8de83a3ce4c866dbe5bea3e7a1e3fbc16a04bc85d34ed6",
+    "version": 1
+  },
+  "raw": "{\"sql\":\"SELECT AVG(s.settled_on - pa.business_date) AS value\\nFROM settlement_items si\\nJOIN settlements s ON s.settlement_id = si.settlement_id\\nJOIN payment_attempts pa ON pa.attempt_id = si.attempt_id\\nJOIN orders o ON o.order_id = pa.order_id\\nWHERE pa.business_date >= DATE '2026-08-01'\\n  AND pa.business_date < DATE '2026-09-01'\\n  AND pa.is_test = FALSE\\n  AND o.is_test = FALSE\\n  AND s.settled_on IS NOT NULL\",\"unit\":\"other\",\"why_not\":\"\",\"assumption\":\"“अगस्त में औसत सेटलमेंट देरी” को अगस्त 2026 में हुए भुगतान प्रयासों के business_date से उनके settled_on तक के औसत दिनों के रूप में माना गया है।\"}",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 840,
+    "output_tokens": 702
+  }
+}

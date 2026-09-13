@@ -42,6 +42,11 @@ is `{"kind": "relative", "relative": "last_month"}`, not a pair of dates.
 - `last_week` means the most recent complete Monday-to-Sunday week.
   `last_7_days` means the seven days ending yesterday. **They are different
   windows** and a question that says one does not mean the other.
+- "the last N weeks" is `{"kind": "relative", "relative": "last_n_weeks", "n": N}`
+  — N **complete** Monday-to-Sunday weeks, with the current partial week
+  excluded rather than counted as one of the N. Use it for "last 8 weeks",
+  "past six weeks", and the same phrasing in Tamil or Hindi. Do not write it as
+  a pair of dates and do not approximate it with `last_7_days`.
 - A named month or an explicit date range is `kind: "absolute"` with `start` and
   `end` as ISO dates.
 - A quarter or a year is `kind: "quarter"` or `kind: "year"`.

@@ -8,6 +8,7 @@
     "ambiguities": [
       {
         "chosen": "previous complete week",
+        "kind": "window",
         "readings": [
           "high compared with the previous complete week",
           "high compared with a longer-term norm or target"
@@ -16,6 +17,7 @@
       },
       {
         "chosen": null,
+        "kind": "currency",
         "readings": [
           "report monetary values in local currencies",
           "convert monetary values to a single reporting currency"
