@@ -64,21 +64,29 @@ fi
 log "Building linux/amd64 (pip layer caches; only changed source rebuilds)"
 docker buildx build --platform linux/amd64 -t "${NAME}:${TAG}" --load "${STAGING}"
 
-log "Adding the Lambda Web Adapter"
-docker buildx build --platform linux/amd64 \
-  --build-arg "BASE=${NAME}:${TAG}" \
-  -t "${NAME}:lambda-${TAG}" --load \
-  -f deploy/aws/Dockerfile.lambda deploy/aws
-
 # --------------------------------------------------------------------------- #
-# 2. ECR.
+# 2. ECR, and the Lambda layer pushed straight to it.
 # --------------------------------------------------------------------------- #
 log "Pushing to ECR"
 aws ecr describe-repositories --repository-names "${NAME}" --region "${REGION}" >/dev/null 2>&1 || \
   aws ecr create-repository --repository-name "${NAME}" --region "${REGION}" >/dev/null
 aws ecr get-login-password --region "${REGION}" | docker login --username AWS --password-stdin "${ECR}"
-docker tag "${NAME}:lambda-${TAG}" "${ECR}/${NAME}:${TAG}"
-docker push "${ECR}/${NAME}:${TAG}"
+
+# `--provenance=false --sbom=false` and `oci-mediatypes=false` are not tuning.
+# buildx defaults to OCI manifests and adds an attestation manifest, which turns
+# the push into a manifest LIST -- and Lambda answers
+#
+#   InvalidParameterValueException: The image manifest, config or layer media
+#   type for the source image ... is not supported
+#
+# Lambda takes Docker v2 schema 2 and nothing else. Built and pushed in one
+# step so the thing that lands in ECR is the thing that was built.
+docker buildx build --platform linux/amd64 \
+  --provenance=false --sbom=false \
+  --build-arg "BASE=${NAME}:${TAG}" \
+  -f deploy/aws/Dockerfile.lambda \
+  --output "type=image,name=${ECR}/${NAME}:${TAG},push=true,oci-mediatypes=false" \
+  deploy/aws
 
 # --------------------------------------------------------------------------- #
 # 3. Role, function, URL.
