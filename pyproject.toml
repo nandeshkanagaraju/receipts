@@ -51,7 +51,7 @@ where = ["src"]
 # always-on suite still runs every test in it.
 testpaths = [
   "tests/unit", "tests/charter", "tests/injection",
-  "tests/integration", "tests/property", "tests/e2e", "tests/api",
+  "tests/integration", "tests/property", "tests/e2e", "tests/api", "tests/mcp",
 ]
 pythonpath = ["src", "."]
 addopts = "-q --strict-markers --strict-config"

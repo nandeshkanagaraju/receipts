@@ -19,7 +19,8 @@ from __future__ import annotations
 import json
 import time
 import uuid
-from collections.abc import Iterator
+from collections.abc import AsyncIterator, Iterator
+from contextlib import asynccontextmanager
 from typing import Any
 
 from fastapi import APIRouter, FastAPI, Request
@@ -80,13 +81,40 @@ def new_session_id() -> str:
 
 
 def create_app(runtime: Runtime | None = None) -> FastAPI:
+    state = runtime or build_runtime()
+
+    # The MCP app is built BEFORE the FastAPI app so its lifespan can be chained
+    # into the parent's. The SDK's Streamable HTTP transport starts a task group
+    # in its own lifespan, and a mounted sub-app's lifespan is never run by
+    # Starlette -- mount it naively and the first request dies with "Task group
+    # is not initialized". This is the brittleness SDD §20 anticipated; chaining
+    # is the fix, and ADR-021 records the separate-process fallback that was not
+    # needed.
+    mcp_app: Any = None
+    mcp_error: str = ""
+    try:
+        from ..mcp_server.server import streamable_app
+
+        mcp_app = streamable_app(state)
+    except Exception as exc:  # pragma: no cover - fallback path, see ADR-021
+        mcp_error = str(exc)
+
+    @asynccontextmanager
+    async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+        if mcp_app is None:
+            yield
+            return
+        async with mcp_app.inner.router.lifespan_context(mcp_app.inner):
+            yield
+
     app = FastAPI(
         title="Receipts",
         version="1.0.0",
         openapi_url=f"{API_PREFIX}/openapi.json",
         docs_url=f"{API_PREFIX}/docs",
+        lifespan=lifespan,
     )
-    state = runtime or build_runtime()
+    app.state.mcp_error = mcp_error
     app.state.runtime = state
     router = APIRouter(prefix=API_PREFIX)
 
@@ -304,6 +332,10 @@ def create_app(runtime: Runtime | None = None) -> FastAPI:
         )
 
     app.include_router(router)
+    if mcp_app is not None:
+        from ..mcp_server.server import MOUNT_PATH
+
+        app.mount(MOUNT_PATH, mcp_app)
     return app
 
 
