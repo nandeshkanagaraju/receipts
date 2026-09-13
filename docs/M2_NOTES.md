@@ -906,3 +906,127 @@ part that matters, and this is the third place in the codebase to need it after
 M8's detector and M14's glossary matcher. They are now one function. A second
 subtly different fold does not fail loudly — it makes index entries unreachable,
 and the symptom reads as a missing synonym rather than a mismatched key.
+
+## §8 — M14.5: one diagnostic round, and three questions with one answer
+
+No code changed. Every trial below was traced through the real pipeline under
+replay to its exact stopping point.
+
+### The finding: one dropped field explains 19 of 22 clarifications
+
+`planner.v1`'s JSON schema **requires** the model to classify every ambiguity it
+declares — `kind` is a required enum of `metric_choice | entity | calendar |
+window | currency` (planner.py:104,108). The domain type `Ambiguity`
+(types.py:114) has **no `kind` field**. So `parse_draft` reads `term`, `readings`
+and `chosen`, and drops the classification on the floor.
+
+The gate then needs that classification back, so `_kind_of` re-derives it by
+looking for keywords in the *term text*: "quarter/year/fiscal/calendar" →
+`calendar`, "rate/revenue/best/performance" → `metric_choice`, **and everything
+else → `entity`**. `entity` is one of the two forcing kinds.
+
+So the default branch of a guess is the branch that refuses to answer.
+
+Measured across the 22 CLARIFY over-abstentions on the dev answerable arm:
+
+| model said | re-guessed as | n |
+|---|---|---|
+| `window` | `entity` | 13 |
+| `metric_choice` | `entity` | 4 |
+| `currency` | `entity` | 2 |
+| `entity` | `entity` | 3 ✓ |
+
+**19 of 22 are misclassifications, and none of the misclassified kinds is
+forcing.** Had `kind` survived parsing, all 19 would have reached rule 6 and
+proceeded.
+
+The model had usually already done the work. For "How much captured money was
+still unsettled at the end of August?" it returned:
+
+```json
+{"term": "August", "kind": "window", "chosen": "August 2026",
+ "readings": ["August 2026", "August in another year"]}
+```
+
+with `window: {kind: absolute, start: 2026-08-01, end: 2026-08-31}`. The plan is
+complete and correct. The system discards the classification, re-guesses
+`entity`, and asks the asker a question the model had already answered.
+
+### 1. capture_vs_settlement, 0 of 9 — one cause, not nine
+
+Eight of the nine stop at **gate rule 4 on the word "August"**, by the mechanism
+above. The ninth (DV-046|hi) reaches the executor and hits the known ambiguous
+`acquiring_bank` join. Retrieval, planning and validation succeeded on all nine:
+the metric resolved to `settlement_lag_days` or `unsettled_amount` every time and
+the validator raised no issues.
+
+The trap correlates perfectly with the phrasing, not with the concept — all three
+questions in this trap happen to say "August". Nothing about capture versus
+settlement is failing. **This trap is not currently measuring anything.**
+
+### 2. Hindi 25.0% vs Tamil 41.7% — two causes, both language-shaped
+
+**(a) All four `metric_choice` → `entity` misclassifications are Hindi**
+(DV-001, DV-010, DV-043, DV-048), every one on "सफलता दर" (success rate). The
+gate has a bypass for exactly this: a metric choice the glossary already settled
+under §6.1 is not a question. That bypass tests `kind == "metric_choice"` — which
+the dropped field makes permanently false. So the §6.1 default is applied by the
+validator, recorded in `defaults_applied`, and then the asker is asked about it
+anyway. The model declares this ambiguity in Hindi and not in the other two
+languages, so Hindi pays for the bug alone.
+
+**(b) `LOW_SIGNAL` is English-only, and it costs two DENYs.** The retriever's
+noise-word list is `{the, a, an, of, in, our, we, us, by, for, and}`. There are no
+Hindi or Tamil entries. `settlement_lag_days` carries the Hindi `default_for`
+phrase "निपटान में कितने दिन", which tokenises to `['निपटान','में','कितने','दिन']` —
+and **में** ("in") and **कितने** ("how many") are ordinary Hindi function words.
+
+Any Hindi question of the form "how many … in …" therefore scores against a
+finance-gated metric. Measured, on two questions with nothing to do with
+settlement:
+
+| question | en | ta | hi |
+|---|---|---|---|
+| DV-033 "how many different issuing banks…" | `units_sold` 3.98 | `orders_count` 2.04 | **`settlement_lag_days` 4.08** |
+| DV-049 "how many card attempts failed…" | `orders_count` 2.78 | `orders_count` 2.04 | **`settlement_lag_days` 4.08** |
+
+`_gated_match` takes the top match, finds it gated, and rule 1 DENIES — naming a
+capability the question never asked for. English and Tamil return an ungated top
+match and proceed to free-form, where both answer correctly.
+
+This is the third instance of one pattern: **a facility built for English and
+never extended to the Indic scripts.** M8 was the combining-mark tokeniser, M14
+was the glossary-default matcher, this is the noise-word list. In each case the
+English path worked, nothing raised an error, and the cost was visible only as a
+language gap in the eval.
+
+### 3. The 22 clarifications — 3 right, 19 over-cautious
+
+| verdict | n | what fired |
+|---|---|---|
+| **right** | 3 | DV-027 ×3, "UK showrooms" — model classified it `entity` itself, and it genuinely is: UK *market* or the in-store *channel*? |
+| **over-cautious** | 13 | `window` → `entity`. 11 on a bare month ("August"), 2 on "last 8 weeks" |
+| **over-cautious** | 4 | `metric_choice` → `entity` on "success rate", which GLOSSARY §6.1 gives an official default for |
+| **over-cautious** | 2 | `currency` → `entity` on "GMV", which GLOSSARY §1.4 gives a resolution rule for |
+
+**This is a defect, not a finding about the question set.** In 19 of 22 cases the
+company's own glossary or the model's own resolution already settled the question,
+and the asker was asked anyway. Only DV-027 is a clarification a careful analyst
+would also have raised.
+
+A second, independent defect sits under the two "last 8 weeks" trials: GLOSSARY
+§1.6a defines "last N weeks" exactly (`2026-07-13` … `2026-09-06` for N=8, N
+complete Monday–Sunday weeks, current partial week excluded), and the validator
+returns `WINDOW_UNRESOLVABLE`. The reference for DV-045 expects precisely the
+§1.6a window — the M15 scorer's complaint was `missing ['2026-07-13',
+'2026-07-20', '2026-07-27']`.
+
+### The two compiler defects account for none of the 25 silent-wrong answers
+
+Stated plainly, because it was asked plainly. The four trials that hit them
+(DV-046|hi, and DV-050 in all three languages) are scored **`Error`**, which is a
+disjoint outcome from `Silent-wrong`. Re-running all 25 silent-wrong trials, none
+raises. **0 of 25.**
+
+The 25 silent-wrong answers are wrong for reasons that have nothing to do with
+either defect, and fixing them would not move the silent-wrong figure at all.
