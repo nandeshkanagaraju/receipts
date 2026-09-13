@@ -1,4 +1,4 @@
-# ADR-022 — Fly.io for the demo, in replay mode
+# ADR-022 — AWS EC2 for the demo, in replay mode
 
 Status: accepted
 Date: 2026-09-14
@@ -14,7 +14,40 @@ Two decisions were needed: where, and whether the deployed demo calls a model.
 
 ## Decision — where
 
-**Fly.io**, one machine, one volume.
+**AWS EC2**, one `t3.micro` in `ap-south-1`, after four other hosts refused.
+
+Recorded as a list because the reasons differ and each one is a fact about the
+platform rather than about this project:
+
+| host | why not |
+|---|---|
+| Fly.io | refuses to create an app without a card on file |
+| Hugging Face Spaces | Docker Spaces now require PRO; only static Spaces are free, and a static Space cannot run FastAPI |
+| AWS App Runner | `SubscriptionRequiredException` on this account |
+| AWS Lightsail containers | quota-blocked at zero on this account |
+| AWS Lambda | `Runtime.InvalidEntrypoint: ProcessPermissionDenied`, through four fixes |
+
+The Lambda attempt is worth its own line because it was the best option on the
+merits — HTTPS free, about two cents for a four-day demo, and the only free tier
+of the five that is perpetual rather than promotional. Four candidate causes
+were fixed and each was *ruled out by inspecting the built image* rather than
+guessed at: OCI manifests (Lambda takes Docker v2 schema 2 only), the web
+adapter's file mode, the non-root user, and a PATH-resolved entrypoint symlink.
+The error did not move. It is left in the repository as `deploy/aws/lambda.sh`
+and `Dockerfile.lambda`, working up to the point it stops working, rather than
+deleted — the next person to try will get four hours back.
+
+EC2 is the dull answer and it took ten minutes. One instance, port 80 open and
+nothing else, no SSH, the image pulled from ECR by an instance role so no
+credential sits on the box.
+
+**HTTP, not HTTPS.** A certificate needs a domain name, and this is a demo
+measured in days. Stated here and in the report rather than left for the browser
+to announce.
+
+The original choice was Fly, and `fly.toml` remains in the repository for
+whenever a card exists. Nothing about the artifact changed across five hosts:
+it is one container, and that was the point of ADR-008.
 
 The artifact is a single container (ADR-008: the SPA ships inside the API
 image), so the requirements are narrow: run one container, give it a few GB of

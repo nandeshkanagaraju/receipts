@@ -1551,18 +1551,25 @@ Stated here rather than adjusted in the pass count, because a journey listed as
 covered and half-covered is exactly the shape of claim this project exists to
 avoid making.
 
-## M20: on the deployed demo, the audit log does not survive a restart
+## M20: the deployed demo is HTTP, and its audit log does not survive a restart
 
-The demo runs on a Hugging Face Space with an **ephemeral filesystem**. The
-append-only audit log lives in `data/audit.sqlite` inside the container, so a
-restart — which a free Space does after 48 hours of no traffic — starts it
-empty.
+**HTTP, not HTTPS.** The demo is one EC2 instance with no domain name, and a
+certificate needs one. A browser will call it "Not secure" and will be right:
+the traffic is in the clear. Nothing secret crosses it — the demo login mints a
+token for a named role with no credential, by design, and the data is synthetic
+— but it is stated here rather than left for the address bar to announce.
+
+The container filesystem is **ephemeral**. The append-only audit log lives
+inside the container, so a restart — a redeploy, or the instance being replaced
+— starts it empty.
 
 **What that scopes.** The PDD observability bar is *"any receipt ID reconstructs
 the full trace, plan, SQL and row count"*, and `/api/v1/receipts/{id}` serves it
 from the audit log. On the deployed demo that holds **for the life of the
 current container**, not forever. A receipt id from before a restart returns
-`NOT_FOUND`.
+`NOT_FOUND`. `RECEIPTS_AUDIT_PATH` points it anywhere writable, so a deployment
+that wants the log to persist mounts a volume and sets that variable; this one
+does not.
 
 **What it does not scope.** The receipt itself is carried by the answer, is
 deterministic, and is reproducible from the repository: the same question, the
@@ -1579,7 +1586,8 @@ Two smaller properties of the same deployment, for completeness:
 
 - **The daily spend cap resets on restart**, because it is in-memory and per
   process (`observability/spend.py` says so in its own docstring). On a replay
-  deployment it can never be reached anyway; it matters only if the demo is ever
-  switched to live.
+  deployment it can never be reached anyway — the live check confirmed
+  `spend_remaining_micro_usd: 5000000`, the full allowance, after a real
+  question — and it matters only if the demo is ever switched to live.
 - **Rate-limit counters are per process** and likewise reset. One container, so
   no divergence — but a second replica would each keep their own.
