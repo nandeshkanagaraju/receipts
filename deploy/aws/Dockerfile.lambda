@@ -36,6 +36,15 @@ ENV AWS_LWA_PORT=7860 \
     RECEIPTS_AUDIT_PATH=/tmp/audit.sqlite \
     HOME=/tmp
 
-USER receipts
-CMD ["python", "-m", "uvicorn", "--factory", "receipts.api.app:create_app", \
-     "--host", "0.0.0.0", "--port", "7860"]
+# Root, and ENTRYPOINT rather than CMD.
+#
+# Lambda refused the non-root image with `Runtime.InvalidEntrypoint:
+# ProcessPermissionDenied` even with the adapter executable and owned by that
+# user -- verified by inspecting the built image. Lambda's own sandbox is the
+# isolation boundary here, and the read-only guarantees this project cares about
+# are not the OS user's doing: the warehouse is opened `read_only=True` (D8), the
+# AST guard rejects writes before SQL is ever sent, and the database role is
+# read-only. Dropping to `receipts` bought nothing Lambda was not already
+# providing, and cost the deployment.
+ENTRYPOINT ["python", "-m", "uvicorn", "--factory", "receipts.api.app:create_app", \
+            "--host", "0.0.0.0", "--port", "7860"]
