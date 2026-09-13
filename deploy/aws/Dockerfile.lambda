@@ -46,5 +46,10 @@ ENV AWS_LWA_PORT=7860 \
 # AST guard rejects writes before SQL is ever sent, and the database role is
 # read-only. Dropping to `receipts` bought nothing Lambda was not already
 # providing, and cost the deployment.
-ENTRYPOINT ["python", "-m", "uvicorn", "--factory", "receipts.api.app:create_app", \
-            "--host", "0.0.0.0", "--port", "7860"]
+# The ABSOLUTE path to the real binary. `python` is a symlink to `python3`
+# resolved through PATH, and Lambda execs the entrypoint directly rather than
+# through a shell -- which is the remaining candidate for
+# `Runtime.InvalidEntrypoint: ProcessPermissionDenied` after root and the
+# extension's file mode were both ruled out by inspecting the built image.
+ENTRYPOINT ["/usr/local/bin/python3", "-m", "uvicorn", "--factory", \
+            "receipts.api.app:create_app", "--host", "0.0.0.0", "--port", "7860"]
