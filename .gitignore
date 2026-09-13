@@ -56,3 +56,13 @@ eval/sealed/*
 # ---- generator output (rebuilt by `make data`) ----
 truth/
 .make/
+
+# M17 front end. `dist/` is a build artifact: CI builds it before the tests that
+# assert it is served, and the Docker image builds it from source. A committed
+# bundle would let the page and the code it was built from drift apart.
+web/node_modules/
+web/dist/
+web/test-results/
+web/playwright-report/
+web/.vite/
+web/tsconfig.tsbuildinfo

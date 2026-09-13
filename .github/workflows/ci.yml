@@ -1,5 +1,7 @@
 # SDD §28. Jobs added as their modules land; every job prints its duration.
-# Remaining jobs (data, eval-dev, semantic, web, images) arrive with M2+.
+# Remaining jobs (eval-dev, images) arrive with M20+. The web bundle is built
+# inside the test job rather than as its own, because the tests that assert it
+# is served need it in the same workspace.
 name: ci
 
 on:
@@ -89,6 +91,11 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
       - name: Install
         run: |
           python -m pip install --upgrade pip
@@ -116,8 +123,27 @@ jobs:
             echo "sealed questions reached the test job; they must never travel" >&2
             exit 1
           fi
+      - name: Build the front end (SDD §22 — one deployable)
+        # Before pytest, not after: the SPA guard fails rather than skips when
+        # web/dist is missing, so the artifact has to be here for the assertion
+        # "FastAPI serves the built files at /" to be about anything.
+        run: |
+          set -o pipefail
+          cd web
+          npm ci --no-audit --no-fund
+          npx tsc -b
+          npm run build
       - name: pytest (socket guard active, zero network calls)
         run: pytest
+      - name: Playwright journeys (J1, J3, J4, J5, J7, J10) + axe-core
+        # The real API in replay mode against the built bundle. No network: the
+        # model responses come from eval/recordings and the warehouse is the
+        # DuckDB file the data job produced.
+        run: |
+          set -o pipefail
+          cd web
+          npx playwright install --with-deps chromium
+          npx playwright test e2e/journeys.spec.ts
       - name: Canary sweep — zero RBAC leaks (T7, ship-blocking)
         # T7 has no tolerance, so it runs where nobody can skip it. The sweep
         # needs the recorded plans and the artifact, both of which are in the

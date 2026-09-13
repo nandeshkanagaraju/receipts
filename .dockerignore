@@ -1,0 +1,14 @@
+# The warehouse is generated and mounted, never baked in.
+data/
+web/node_modules/
+web/dist/
+web/test-results/
+.venv/
+.git/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.hypothesis/
+_reports/
+eval/sealed/
+eval/results/

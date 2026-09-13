@@ -1,0 +1,633 @@
+{
+  "components": {
+    "schemas": {
+      "AskBody": {
+        "properties": {
+          "question": {
+            "title": "Question",
+            "type": "string"
+          },
+          "session_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Session Id"
+          }
+        },
+        "required": [
+          "question"
+        ],
+        "title": "AskBody",
+        "type": "object"
+      },
+      "CatalogRunBody": {
+        "description": "A hand-built plan, for catalog mode: no model anywhere in this path.",
+        "properties": {
+          "dimensions": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Dimensions",
+            "type": "array"
+          },
+          "grain": {
+            "default": "NONE",
+            "title": "Grain",
+            "type": "string"
+          },
+          "limit": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Limit"
+          },
+          "metric": {
+            "title": "Metric",
+            "type": "string"
+          },
+          "session_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Session Id"
+          },
+          "window": {
+            "additionalProperties": true,
+            "default": {},
+            "title": "Window",
+            "type": "object"
+          }
+        },
+        "required": [
+          "metric"
+        ],
+        "title": "CatalogRunBody",
+        "type": "object"
+      },
+      "ClarifyBody": {
+        "description": "Answering a clarification.\n\n`question` is the ORIGINAL question, resent. The API keeps no session state,\nso the alternative is storing the pending clarification server-side; resending\nthe asker's own sentence is the smaller change and keeps the route stateless.\n`option_id` is matched against the options the gate derives on this run, so\nnothing the client sends can become a plan change of its own.",
+        "properties": {
+          "clarification_id": {
+            "title": "Clarification Id",
+            "type": "string"
+          },
+          "option_id": {
+            "title": "Option Id",
+            "type": "string"
+          },
+          "question": {
+            "title": "Question",
+            "type": "string"
+          },
+          "session_id": {
+            "title": "Session Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "session_id",
+          "clarification_id",
+          "option_id",
+          "question"
+        ],
+        "title": "ClarifyBody",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "LoginBody": {
+        "properties": {
+          "role": {
+            "title": "Role",
+            "type": "string"
+          }
+        },
+        "required": [
+          "role"
+        ],
+        "title": "LoginBody",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      },
+      "WhyBody": {
+        "properties": {
+          "receipt_id": {
+            "title": "Receipt Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "receipt_id"
+        ],
+        "title": "WhyBody",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "title": "Receipts",
+    "version": "1.0.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/api/v1/ask": {
+      "post": {
+        "operationId": "ask_api_v1_ask_post",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "stream",
+            "required": false,
+            "schema": {
+              "default": true,
+              "title": "Stream",
+              "type": "boolean"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AskBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Ask Api V1 Ask Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Ask"
+      }
+    },
+    "/api/v1/audit": {
+      "get": {
+        "operationId": "audit_page_api_v1_audit_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "before",
+            "required": false,
+            "schema": {
+              "default": "",
+              "title": "Before",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Audit Page Api V1 Audit Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Audit Page"
+      }
+    },
+    "/api/v1/auth/demo-login": {
+      "post": {
+        "operationId": "demo_login_api_v1_auth_demo_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Demo Login Api V1 Auth Demo Login Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Demo Login"
+      }
+    },
+    "/api/v1/catalog/metrics": {
+      "get": {
+        "operationId": "catalog_metrics_api_v1_catalog_metrics_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Catalog Metrics Api V1 Catalog Metrics Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Catalog Metrics"
+      }
+    },
+    "/api/v1/catalog/metrics/{name}": {
+      "get": {
+        "operationId": "catalog_metric_api_v1_catalog_metrics__name__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "title": "Name",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Catalog Metric Api V1 Catalog Metrics  Name  Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Catalog Metric"
+      }
+    },
+    "/api/v1/catalog/run": {
+      "post": {
+        "description": "J7: answers with no model in the path at all.\n\nThis route exists so that \"the model is down\" and \"the product is down\"\nare different sentences. It runs validate -> compile -> guard -> execute\non a plan the caller hand-built; nothing here can reach an LLM.",
+        "operationId": "catalog_run_api_v1_catalog_run_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CatalogRunBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Catalog Run Api V1 Catalog Run Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Catalog Run"
+      }
+    },
+    "/api/v1/clarify": {
+      "post": {
+        "description": "The asker's choice, applied to the plan (M17.1).\n\nThis route used to re-ask `body.option_id` as though it were the question\nand mark the ambiguity answered. That let the DEFAULT win: both options of\na two-option clarification returned the same metric and the same number,\nVERIFIED, with a receipt. The choice is now carried as an id and applied\nby the orchestrator to the plan the gate was asking about.",
+        "operationId": "clarify_api_v1_clarify_post",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "stream",
+            "required": false,
+            "schema": {
+              "default": true,
+              "title": "Stream",
+              "type": "boolean"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClarifyBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Clarify Api V1 Clarify Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Clarify"
+      }
+    },
+    "/api/v1/evals/summary": {
+      "get": {
+        "operationId": "evals_summary_api_v1_evals_summary_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Evals Summary Api V1 Evals Summary Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Evals Summary"
+      }
+    },
+    "/api/v1/receipts/{receipt_id}": {
+      "get": {
+        "operationId": "receipt_api_v1_receipts__receipt_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "receipt_id",
+            "required": true,
+            "schema": {
+              "title": "Receipt Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Receipt Api V1 Receipts  Receipt Id  Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Receipt"
+      }
+    },
+    "/api/v1/why": {
+      "post": {
+        "operationId": "why_api_v1_why_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WhyBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Why Api V1 Why Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Why"
+      }
+    },
+    "/healthz": {
+      "get": {
+        "operationId": "healthz_healthz_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Healthz Healthz Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Healthz"
+      }
+    },
+    "/readyz": {
+      "get": {
+        "description": "Per dependency, separately: \"not ready\" without saying which is noise.",
+        "operationId": "readyz_readyz_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Readyz"
+      }
+    }
+  }
+}

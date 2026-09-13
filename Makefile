@@ -98,6 +98,12 @@ eval-holdout:
 	fi
 	CONFIRM_HOLDOUT=yes $(PY) -m receipts.evalkit.harness --system $${SYSTEM:-oracle} --set holdout
 
+web:                     ## Build the front end into web/dist (SDD §22).
+	cd web && npm ci --no-audit --no-fund && npm run build
+
+web-e2e:                 ## Playwright journeys against the API in replay mode.
+	cd web && npx playwright test
+
 up:
 	$(call NOT_BUILT,up,M20 — deploy/compose)
 

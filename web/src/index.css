@@ -1,0 +1,55 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+  body {
+    @apply bg-surface text-ink font-sans antialiased;
+  }
+  /* Visible focus everywhere, never removed. The quality floor (SDD §22) is
+     "keyboard-complete with visible focus", and the commonest way that is lost
+     is a reset that hides the ring for mouse users and takes it from everyone. */
+  :focus-visible {
+    outline: 2px solid #2e5aac;
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+}
+
+@layer components {
+  /* The receipt's torn edge. Two rows of Surface-coloured half-discs masked
+     into the top and bottom borders -- background-image only, so the card needs
+     no extra DOM and the perforation cannot be read out by a screen reader. */
+  .perforated {
+    --tooth: 12px;
+    background-image:
+      radial-gradient(circle at var(--tooth) 0, #f6f7f9 6px, transparent 6.5px),
+      radial-gradient(circle at var(--tooth) 100%, #f6f7f9 6px, transparent 6.5px);
+    background-size: calc(var(--tooth) * 2) 100%;
+    background-repeat: repeat-x;
+    background-position:
+      0 -6px,
+      0 calc(100% + 6px);
+  }
+}
+
+/* prefers-reduced-motion: honoured globally rather than per component, so a
+   component added later cannot forget it. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

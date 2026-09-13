@@ -34,7 +34,7 @@ from ..domain.types import Grain, QueryPlan, Status, WindowSpec
 from ..observability.audit import AuditEvent
 from . import sse
 from .auth import AuthError, bearer_token, issue, principal_from
-from .deps import Runtime, build_runtime
+from .deps import REPO, Runtime, build_runtime
 from .errors import EXCEPTION_CODES, MESSAGES, ApiError, ErrorBody, body_for, status_for
 
 API_PREFIX = "/api/v1"
@@ -312,8 +312,6 @@ def create_app(runtime: Runtime | None = None) -> FastAPI:
 
     @router.get("/evals/summary")
     def evals_summary() -> dict[str, Any]:
-        from .deps import REPO
-
         out: dict[str, Any] = {}
         for system in ("baseline", "receipts"):
             path = REPO / "eval" / "results" / "dev" / system / "report.json"
@@ -353,6 +351,20 @@ def create_app(runtime: Runtime | None = None) -> FastAPI:
         from ..mcp_server.server import MOUNT_PATH
 
         app.mount(MOUNT_PATH, mcp_app)
+
+    # The built front end, served at "/" so the demo is ONE deployable (§22).
+    # Mounted last: a StaticFiles mount at "/" swallows everything under it, so
+    # it must be registered after every API route or it shadows them.
+    #
+    # Absent in a source checkout that has not run `npm run build`, and that is
+    # not an error -- the API is complete without it. `/` then 404s with the
+    # typed body every other route uses, rather than a stack trace.
+    web = REPO / "web" / "dist"
+    if (web / "index.html").is_file():
+        from fastapi.staticfiles import StaticFiles
+
+        app.mount("/", StaticFiles(directory=str(web), html=True), name="web")
+    app.state.web_dist = web
     return app
 
 
