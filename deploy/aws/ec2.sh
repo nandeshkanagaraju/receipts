@@ -1,0 +1,126 @@
+#!/usr/bin/env bash
+# Deploy the demo on a single EC2 instance (ADR-022).
+#
+#   deploy/aws/ec2.sh            # launch, run the container, print the URL
+#   deploy/aws/ec2.sh --teardown # terminate and delete everything it made
+#
+# The fifth host attempted, and the one that worked. In order: Fly wanted a
+# card; Hugging Face now wants PRO for Docker Spaces; App Runner answers
+# SubscriptionRequiredException on this account; Lightsail container services
+# are quota-blocked at zero; Lambda refused the image with
+# `Runtime.InvalidEntrypoint: ProcessPermissionDenied` through four fixes --
+# root, the extension's file mode, an absolute entrypoint and Docker v2
+# manifests -- each ruled out by inspecting the built image rather than guessed.
+#
+# The image is the one already in ECR. Nothing is rebuilt.
+#
+# HTTP, not HTTPS: a certificate needs a domain, and this is a demo that will be
+# torn down in days. Said plainly rather than left for the browser to announce.
+set -euo pipefail
+
+REGION="${AWS_REGION:-ap-south-1}"
+NAME="${EC2_NAME:-receipts-demo}"
+TYPE="${EC2_TYPE:-t3.micro}"
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+ACCOUNT="$(aws sts get-caller-identity --query Account --output text)"
+ECR="${ACCOUNT}.dkr.ecr.${REGION}.amazonaws.com"
+
+log() { printf '\n\033[1m==> %s\033[0m\n' "$*"; }
+q() { aws "$@" --region "${REGION}"; }
+
+teardown() {
+  log "Tearing down"
+  ids=$(q ec2 describe-instances --filters "Name=tag:Name,Values=${NAME}" \
+        "Name=instance-state-name,Values=pending,running,stopping,stopped" \
+        --query 'Reservations[].Instances[].InstanceId' --output text)
+  [[ -n "${ids}" ]] && { q ec2 terminate-instances --instance-ids ${ids} >/dev/null
+    echo "terminating ${ids}"; q ec2 wait instance-terminated --instance-ids ${ids}; }
+  q ec2 delete-security-group --group-name "${NAME}-sg" 2>/dev/null || true
+  aws iam remove-role-from-instance-profile --instance-profile-name "${NAME}-profile" \
+    --role-name "${NAME}-ec2-role" 2>/dev/null || true
+  aws iam delete-instance-profile --instance-profile-name "${NAME}-profile" 2>/dev/null || true
+  aws iam detach-role-policy --role-name "${NAME}-ec2-role" \
+    --policy-arn arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly 2>/dev/null || true
+  aws iam delete-role --role-name "${NAME}-ec2-role" 2>/dev/null || true
+  echo "done. Nothing is running."
+  exit 0
+}
+[[ "${1:-}" == "--teardown" ]] && teardown
+
+TAG="$(git -C "${REPO_ROOT}" rev-parse --short=12 HEAD)"
+IMAGE="${ECR}/${NAME}:${TAG}"
+q ecr describe-images --repository-name "${NAME}" --image-ids "imageTag=${TAG}" >/dev/null 2>&1 \
+  || { echo "no image ${IMAGE}; run deploy/aws/lambda.sh first (it builds and pushes)" >&2; exit 1; }
+log "Using ${IMAGE}"
+
+# --------------------------------------------------------------------------- #
+# Instance profile, so the box can pull from ECR without a key on it.
+# --------------------------------------------------------------------------- #
+if ! aws iam get-role --role-name "${NAME}-ec2-role" >/dev/null 2>&1; then
+  log "Creating the instance role"
+  aws iam create-role --role-name "${NAME}-ec2-role" --assume-role-policy-document \
+    '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":{"Service":"ec2.amazonaws.com"},"Action":"sts:AssumeRole"}]}' >/dev/null
+  aws iam attach-role-policy --role-name "${NAME}-ec2-role" \
+    --policy-arn arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
+  aws iam create-instance-profile --instance-profile-name "${NAME}-profile" >/dev/null
+  aws iam add-role-to-instance-profile --instance-profile-name "${NAME}-profile" \
+    --role-name "${NAME}-ec2-role"
+  echo "waiting for IAM to propagate"; sleep 20
+fi
+
+# --------------------------------------------------------------------------- #
+# Security group: 80 in, from anywhere. Nothing else, and no SSH -- there is
+# nothing to log in to and an open 22 is a standing invitation.
+# --------------------------------------------------------------------------- #
+if ! q ec2 describe-security-groups --group-names "${NAME}-sg" >/dev/null 2>&1; then
+  log "Creating the security group"
+  VPC=$(q ec2 describe-vpcs --filters Name=isDefault,Values=true --query 'Vpcs[0].VpcId' --output text)
+  q ec2 create-security-group --group-name "${NAME}-sg" --vpc-id "${VPC}" \
+    --description "Receipts demo, HTTP only" >/dev/null
+  q ec2 authorize-security-group-ingress --group-name "${NAME}-sg" \
+    --protocol tcp --port 80 --cidr 0.0.0.0/0 >/dev/null
+fi
+
+AMI=$(q ssm get-parameters --names \
+  /aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64 \
+  --query 'Parameters[0].Value' --output text)
+log "AMI ${AMI}"
+
+cat > "${REPO_ROOT}/.make/userdata.sh" <<UD
+#!/bin/bash
+set -x
+dnf install -y docker
+systemctl enable --now docker
+aws ecr get-login-password --region ${REGION} | docker login --username AWS --password-stdin ${ECR}
+docker pull ${IMAGE}
+docker run -d --restart always --name receipts -p 80:7860 \
+  -e RECEIPTS_LLM_MODE=replay -e DEMO_MODE=true -e RECEIPTS_AUDIT_PATH=/tmp/audit.sqlite \
+  ${IMAGE}
+UD
+
+log "Launching ${TYPE}"
+IID=$(q ec2 run-instances --image-id "${AMI}" --instance-type "${TYPE}" \
+  --security-groups "${NAME}-sg" \
+  --iam-instance-profile "Name=${NAME}-profile" \
+  --user-data "file://${REPO_ROOT}/.make/userdata.sh" \
+  --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=${NAME}}]" \
+  --query 'Instances[0].InstanceId' --output text)
+echo "instance ${IID}"
+q ec2 wait instance-running --instance-ids "${IID}"
+
+HOST=$(q ec2 describe-instances --instance-ids "${IID}" \
+  --query 'Reservations[0].Instances[0].PublicDnsName' --output text)
+URL="http://${HOST}"
+log "Waiting for the container (docker install + a 437MB pull)"
+for i in $(seq 1 60); do
+  code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 "${URL}/healthz" || echo 000)
+  echo "  ${i}: ${code}"
+  [[ "${code}" == "200" ]] && break
+  sleep 15
+done
+
+log "Live"
+echo "${URL}"
+echo "${URL}/?role=rm_tamil_nadu   <- try as the Chennai manager"
+echo
+echo "Tear it down with:  deploy/aws/ec2.sh --teardown"
