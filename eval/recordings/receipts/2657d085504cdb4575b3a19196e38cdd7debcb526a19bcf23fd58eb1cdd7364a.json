@@ -1,0 +1,16 @@
+{
+  "kind": "text",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "composer",
+    "provider": "openai",
+    "sha256": "b2811b5cadb8075a4cba32008339059d163d0eb918b9b2525bb21fc546e8a498",
+    "version": 1
+  },
+  "text": "अगस्त 2026 में UK कार्ड भुगतानों के लिए जारीकर्ता बैंक के अनुसार शीर्ष 10 ऑर्डर-स्तर सफलता दरें: Pennine Building Society 82.7%, Severn National 81.9%, और Thameside Bank 80.4%। डिफ़ॉल्ट के रूप में “सफलता दर” को ऑर्डर-स्तर payment success rate माना गया, UK को United Kingdom और रिपोर्टिंग मुद्रा को GBP माना गया।",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 609,
+    "output_tokens": 517
+  }
+}

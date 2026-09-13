@@ -1,0 +1,67 @@
+{
+  "data": {
+    "result": {
+      "ambiguities": [
+        {
+          "chosen": "payment_success_rate_attempt",
+          "kind": "metric_choice",
+          "readings": [
+            "payment_success_rate_attempt: share of UPI payment attempts captured",
+            "payment_success_rate_order: share of orders with a UPI payment attempt that were eventually paid"
+          ],
+          "term": "सफलता दर"
+        }
+      ],
+      "compare_to": null,
+      "dimensions": [
+        "issuing_bank"
+      ],
+      "filters": [
+        {
+          "dimension": "city",
+          "op": "eq",
+          "values": [
+            "चेन्नई"
+          ]
+        },
+        {
+          "dimension": "payment_method",
+          "op": "eq",
+          "values": [
+            "UPI"
+          ]
+        }
+      ],
+      "grain": "NONE",
+      "kind": "metric",
+      "limit": 10,
+      "name": "payment_success_rate_attempt",
+      "order": "value_desc",
+      "reporting_currency": null,
+      "window": {
+        "calendar": "unspecified",
+        "end": null,
+        "kind": "relative",
+        "n": null,
+        "quarter": null,
+        "relative": "last_month",
+        "start": null,
+        "year": null
+      }
+    }
+  },
+  "kind": "structured",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "planner",
+    "provider": "openai",
+    "sha256": "b0b4f239c1e82e040030ab894872875c7b461a9406057341e5278262b3fa74bf",
+    "version": 1
+  },
+  "raw": "{\"result\":{\"kind\":\"metric\",\"name\":\"payment_success_rate_attempt\",\"dimensions\":[\"issuing_bank\"],\"filters\":[{\"dimension\":\"city\",\"op\":\"eq\",\"values\":[\"चेन्नई\"]},{\"dimension\":\"payment_method\",\"op\":\"eq\",\"values\":[\"UPI\"]}],\"window\":{\"kind\":\"relative\",\"relative\":\"last_month\",\"start\":null,\"end\":null,\"quarter\":null,\"year\":null,\"n\":null,\"calendar\":\"unspecified\"},\"grain\":\"NONE\",\"compare_to\":null,\"order\":\"value_desc\",\"limit\":10,\"reporting_currency\":null,\"ambiguities\":[{\"term\":\"सफलता दर\",\"kind\":\"metric_choice\",\"readings\":[\"payment_success_rate_attempt: share of UPI payment attempts captured\",\"payment_success_rate_order: share of orders with a UPI payment attempt that were eventually paid\"],\"chosen\":\"payment_success_rate_attempt\"}]}}",
+  "usage": {
+    "cached_input_tokens": 1792,
+    "input_tokens": 2390,
+    "output_tokens": 312
+  }
+}

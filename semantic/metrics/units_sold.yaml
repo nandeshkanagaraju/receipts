@@ -13,7 +13,18 @@ aggregate: {agg: sum, expr: order_items.qty, where: "orders.status = 'paid'"}
 time_dimension: orders.business_date
 money: false
 unit: count
-allowed_dimensions: [country, region, city, showroom, model, channel]
+allowed_dimensions: [country, region, city, showroom, model, channel, product_type]
+# The handsets-only rule from this metric's own definition, as DATA the compiler
+# can act on rather than prose it cannot read. A question that says "phones",
+# "handsets" or "devices" filters to non-accessory SKUs, and the receipt says so.
+implied_filters:
+  - when:
+      en: [phone, phones, handset, handsets, device, devices]
+      ta: [போன், போன்கள், ஹேண்ட்செட்]
+      hi: [फोन, फ़ोन, हैंडसेट, डिवाइस]
+    dimension: product_type
+    values: [handset]
+    because: "\"phones\" means handsets only (GLOSSARY §2.2)"
 default_for:
   en: [units sold, how many did we sell, volume, units]
   ta: [விற்பனையான யூனிட்டுகள், எத்தனை விற்றோம்]

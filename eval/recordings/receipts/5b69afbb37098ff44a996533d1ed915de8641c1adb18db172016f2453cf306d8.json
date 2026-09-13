@@ -1,0 +1,16 @@
+{
+  "kind": "text",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "composer",
+    "provider": "openai",
+    "sha256": "b2811b5cadb8075a4cba32008339059d163d0eb918b9b2525bb21fc546e8a498",
+    "version": 1
+  },
+  "text": "अगस्त 2026 में कैप्चर किया गया GMV अमेरिकी डॉलर में देशवार था: India 2080409597 बनाम पिछले साल 2017265699, Malaysia 221607466 बनाम 241864019, और Singapore 332934836 बनाम 282937307। United Arab Emirates 491379908 बनाम 487586669, United Kingdom 440181333 बनाम 502996851, और United States 414264400 बनाम 399826300 रहा; यहाँ “कैप्चर किया गया GMV” के लिए glossary के अनुसार gmv_captured चुना गया।",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 691,
+    "output_tokens": 484
+  }
+}

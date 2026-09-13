@@ -31,6 +31,7 @@ from .catalog import (
     Catalog,
     Dimension,
     Entity,
+    ImpliedFilter,
     Metric,
 )
 from .value_synonyms import load_curated, synonyms_for
@@ -311,6 +312,18 @@ def load_metrics(
                 default_for={
                     str(lang): _as_tuple(v) for lang, v in (raw.get("default_for") or {}).items()
                 },
+                implied_filters=tuple(
+                    ImpliedFilter(
+                        when={
+                            str(lang): _as_tuple(words)
+                            for lang, words in (entry.get("when") or {}).items()
+                        },
+                        dimension=str(entry.get("dimension") or ""),
+                        values=_as_tuple(entry.get("values")),
+                        because=str(entry.get("because") or ""),
+                    )
+                    for entry in (raw.get("implied_filters") or ())
+                ),
                 siblings=_as_tuple(raw.get("siblings")),
                 excludes=_as_tuple(raw.get("excludes")),
                 required_capability=raw.get("required_capability"),

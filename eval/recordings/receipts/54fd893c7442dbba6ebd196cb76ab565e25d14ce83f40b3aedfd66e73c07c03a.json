@@ -1,0 +1,16 @@
+{
+  "kind": "text",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "composer",
+    "provider": "openai",
+    "sha256": "b2811b5cadb8075a4cba32008339059d163d0eb918b9b2525bb21fc546e8a498",
+    "version": 1
+  },
+  "text": "கடந்த மாதம் United Kingdom-யில் நமது average order value GBP 54718; UK என்பது United Kingdom ஆகவும், reporting currency GBP ஆகவும் எடுத்துக்கொள்ளப்பட்டது.",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 544,
+    "output_tokens": 212
+  }
+}

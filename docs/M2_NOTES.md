@@ -1202,3 +1202,65 @@ what their specs say. It is in **the semantic layer failing to encode two rules
 its own glossary states, and the compiler ignoring two fields its own spec
 requires.** Both are defects of the same class as the ones already fixed, and
 neither is tuning.
+
+## §11 — M15.3: for the README
+
+### Three of ten traps measure something other than their name
+
+PDD §6.2 lists ten traps. On dev, three do not discriminate what they are named
+for, and the README should say **seven or eight**, not ten:
+
+1. **`capture_vs_settlement`** — all three questions carrying it say "August", so
+   the trap is perfectly confounded with a bare-month time expression. Its 0/9
+   was a clarification defect and its recovery is that defect fixed. Nothing
+   about capture-versus-settlement was ever exercised.
+2. **`fiscal_calendar`** — Kestrel's fiscal year starts 1 April, so fiscal and
+   calendar quarter boundaries coincide. 6 of 11 assessable questions cannot
+   produce a wrong *number* at all, only a wrong decision.
+3. **`authorised_vs_captured`** — six trials, two questions. One failed on the
+   reporting currency and one has no governed metric. Neither failure had
+   anything to do with authorisation versus capture.
+
+A trap whose questions share an unrelated defect measures that defect. **A
+project that lists ten traps and can defend seven should say seven.**
+
+### The pattern behind 28 of 35 wrong answers
+
+**A value computed correctly by one component and discarded by the next.** Five
+instances in three rounds:
+
+| produced by | discarded by | cost |
+|---|---|---|
+| planner: `Ambiguity.kind` | `parse_draft` — the field did not exist | 19 of 22 clarifications |
+| free-form SQL: its measure column | `classify_column` — no naming contract | 12 right answers filed wrong |
+| validator: `grain` | the compiler never read it | a series answered as a scalar |
+| validator: the compare window | the compiler never read it | comparisons with nothing to compare |
+| `roles.yaml`: the role's currency | nothing read it, ever | 15 right numbers in the wrong currency |
+
+Every one is silent. The producing side is correct, the consuming side never
+asks, and nothing raises — so the failure surfaces as a plausible wrong answer
+rather than an error. **This is the single most productive defect class in the
+project**, and `test_every_resolved_decision_field_is_read_somewhere` now guards
+the shape rather than the five instances.
+
+### The sharpest instance: a receipt that explains a decision from information it never read
+
+For three milestones, `store_ops_uk` asking "how much did we collect in the UK"
+got **107,381,818** — the right number, in dollars, where the answer is
+86,894,100 pounds. The receipt disclosed:
+
+> `reporting currency → USD (no role default and mixed currencies)`
+
+`config/roles.yaml` declares `reporting_currency: GBP` for that role, and has
+from the beginning. **The receipt asserted the absence of a fact that was written
+down in the repository.**
+
+This is the worst failure this project can have, and it is worth stating plainly
+in the README because the whole thesis is that a receipt makes an answer
+checkable. A receipt that confidently describes a process that did not happen is
+worse than no receipt: it converts a wrong answer into a *justified* wrong
+answer, and a reader who checks the reasoning is reassured by it.
+
+It is now a test rather than a fix — `test_the_receipt_never_claims_there_is_no_role_default`
+asserts, for every role in `roles.yaml` that declares a currency, that no answer
+ever discloses "no role default".

@@ -57,6 +57,23 @@ DIALECTS = ("duckdb", "postgres")
 DEFAULT_ROW_LIMIT = 500
 
 VALUE = "value"
+PERIOD = "period"
+COMPARE_VALUE = "compare_value"
+DELTA = "delta"
+DELTA_PCT = "delta_pct"
+
+# SDD §11.1 fixes the output shape: dimension columns, then a time column when
+# `grain != NONE`, then `value`. The time column had never been emitted. The
+# planner set `grain=DAY`, the validator resolved the window, and the compiler
+# -- whose own docstring promised "a time column if the grain asks for" one --
+# produced a scalar. "Daily order count for the last 7 days" answered 4242.
+GRAIN_UNITS: dict[str, str] = {
+    "DAY": "day",
+    "WEEK": "week",
+    "MONTH": "month",
+    "QUARTER_CAL": "quarter",
+    "YEAR_CAL": "year",
+}
 COMPARE_VALUE = "compare_value"
 DELTA = "delta"
 DELTA_PCT = "delta_pct"
@@ -251,6 +268,28 @@ def _window_on(qualified: str, start: Any, end_exclusive: Any) -> exp.Expression
     )
 
 
+def _grain_expression(metric: Metric, grain: str) -> exp.Expression | None:
+    """The truncated time column for a grain, or None for `NONE`.
+
+    Fiscal grains are deliberately absent from `GRAIN_UNITS`: truncating to a
+    fiscal quarter is not `DATE_TRUNC`, it is an offset calendar (§1.5), and
+    emitting a calendar quarter under a fiscal name would be a wrong answer that
+    looks right. A grain this cannot express produces no time column, which the
+    guard below turns into a refusal rather than a silent scalar.
+    """
+    unit = GRAIN_UNITS.get(str(grain))
+    if unit is None:
+        return None
+    column = _col(metric.time_dimension or f"{metric.entity}.business_date")
+    return cast(
+        exp.Expression,
+        exp.cast(
+            exp.func("DATE_TRUNC", exp.Literal.string(unit), column),
+            exp.DataType.build("DATE"),
+        ),
+    )
+
+
 def _window_predicate(metric: Metric, start: Any, end_exclusive: Any) -> exp.Expression:
     """Half-open, always: `>= start AND < end`.
 
@@ -331,6 +370,20 @@ def _one_select(
         dimension = catalog.dimension(name)
         build.need(_dimension_joins(dimension, catalog, build))
         selected.append((name, _dimension_expression(dimension)))
+
+    # The time column goes after the dimensions and before `value` (§11.1).
+    grain_expression = _grain_expression(metric, str(plan.grain))
+    if grain_expression is not None:
+        selected.append((PERIOD, grain_expression))
+    elif str(plan.grain) != "NONE":
+        # A grain the compiler cannot express must not quietly become a scalar.
+        # That is exactly how "daily order count for the last 7 days" came back
+        # as 4242: one number, no error, and nothing in the answer to say a
+        # whole dimension had been dropped.
+        raise CompileError(
+            f"grain {plan.grain} has no expression; refusing to return a total "
+            "where a series was asked for"
+        )
 
     for filter_ in plan.filters:
         if filter_.dimension not in metric.allowed_dimensions:
@@ -615,6 +668,83 @@ def _derived_select(
     return combined, dims, left_tables | right_tables
 
 
+def _with_comparison(
+    current: exp.Select,
+    selected: list[tuple[str, exp.Expression]],
+    metric: Metric,
+    resolved: ResolvedPlan,
+    catalog: Catalog,
+    scope: Scope,
+    build_for: Any,
+) -> tuple[exp.Select, list[tuple[str, exp.Expression]], set[str]]:
+    """The same query over the comparison window, joined on the shared keys.
+
+    A FULL OUTER join rather than an inner one: a country that traded in one
+    window and not the other belongs in the answer with a NULL on the missing
+    side. An inner join would silently drop exactly the rows a comparison exists
+    to surface.
+    """
+    compare_plan = resolved.model_copy(
+        update={
+            "start": resolved.compare_start,
+            "end_exclusive": resolved.compare_end_exclusive,
+            "compare_start": None,
+            "compare_end_exclusive": None,
+        }
+    )
+    other, other_selected, other_tables = build_for(compare_plan)
+    keys = [name for name, _ in selected if name in {n for n, _ in other_selected}]
+
+    combined = exp.Select().with_("current_window", as_=current).with_("compare_window", as_=other)
+    projections: list[exp.Expression] = []
+    for name in keys:
+        merged = exp.func(
+            "COALESCE", exp.column(name, "current_window"), exp.column(name, "compare_window")
+        )
+        projections.append(cast(exp.Expression, exp.alias_(merged, name)))
+
+    value_now = exp.column(VALUE, "current_window")
+    value_then = exp.column(VALUE, "compare_window")
+    delta = exp.Sub(this=value_now, expression=value_then)
+    projections.append(cast(exp.Expression, exp.alias_(value_now, VALUE)))
+    projections.append(cast(exp.Expression, exp.alias_(value_then, COMPARE_VALUE)))
+    projections.append(cast(exp.Expression, exp.alias_(delta, DELTA)))
+    projections.append(
+        cast(
+            exp.Expression,
+            exp.alias_(
+                exp.Div(
+                    this=exp.paren(delta.copy()),
+                    expression=exp.func("NULLIF", value_then.copy(), exp.Literal.number(0)),
+                ),
+                DELTA_PCT,
+            ),
+        )
+    )
+    combined = combined.select(*projections).from_("current_window")
+    if keys:
+        condition = cast(
+            exp.Expression,
+            exp.and_(
+                *[
+                    exp.EQ(
+                        this=exp.column(name, "current_window"),
+                        expression=exp.column(name, "compare_window"),
+                    )
+                    for name in keys
+                ]
+            ),
+        )
+        combined = combined.join(
+            exp.to_table("compare_window"), on=condition, join_type="FULL OUTER"
+        )
+    else:
+        combined = combined.join(exp.to_table("compare_window"), join_type="CROSS")
+
+    dims = [(name, cast(exp.Expression, exp.column(name))) for name in keys]
+    return combined, dims, other_tables
+
+
 def compile_query(
     resolved: ResolvedPlan,
     catalog: Catalog,
@@ -635,12 +765,26 @@ def compile_query(
             f"{metric.name} requires the {metric.required_capability} capability"
         )
 
-    if metric.type == "derived" and metric.derived_from:
-        select, selected, tables = _derived_select(metric, resolved, catalog, scope)
-    elif _needs_two_scans(metric):
-        select, selected, tables = _two_scan_ratio(metric, resolved, catalog, scope)
-    else:
-        select, selected, tables = _one_select(metric, resolved, catalog, scope)
+    def build_for(
+        target: ResolvedPlan,
+    ) -> tuple[exp.Select, list[tuple[str, exp.Expression]], set[str]]:
+        if metric.type == "derived" and metric.derived_from:
+            return _derived_select(metric, target, catalog, scope)
+        if _needs_two_scans(metric):
+            return _two_scan_ratio(metric, target, catalog, scope)
+        return _one_select(metric, target, catalog, scope)
+
+    select, selected, tables = build_for(resolved)
+
+    # §11.1: `compare_value`, `delta` and `delta_pct` when comparing. The
+    # validator has been resolving an equal-length comparison window since M10
+    # (§9.1 rule 5) and the compiler never read it, so "how did last week compare
+    # with the week before" returned last week and nothing to compare it against.
+    if resolved.compare_start is not None and resolved.compare_end_exclusive is not None:
+        select, selected, compare_tables = _with_comparison(
+            select, selected, metric, resolved, catalog, scope, build_for
+        )
+        tables |= compare_tables
 
     # A required dimension whose value is NULL is not a group anyone asked for.
     # Dropped by WRAPPING the grouped select rather than by adding a WHERE: a
@@ -685,6 +829,13 @@ def _dimension_joins(dimension: Dimension, catalog: Catalog, build: _Build) -> l
                 known.add(clause.table)
                 clauses.append(clause)
     for text in dimension.join_via:
+        # A join_via clause whose tables are both already present adds nothing.
+        # Two dimensions may legitimately need the same join -- `model` and
+        # `product_type` both reach `products` -- and before this check the
+        # second one raised `introduces 0 new tables`, so a metric could offer
+        # both dimensions and compile with neither.
+        if all(side.strip().split(".")[0] in known for side in text.split("=")):
+            continue
         parsed = parse_clause(text, known)
         known.add(parsed.table)
         clauses.append(parsed)

@@ -1,0 +1,23 @@
+{
+  "data": {
+    "result": {
+      "data_exists": true,
+      "no_fit": true,
+      "reason": "The question asks for the number of distinct issuing banks seen, but none of the offered metrics is a distinct count of issuing banks."
+    }
+  },
+  "kind": "structured",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "planner",
+    "provider": "openai",
+    "sha256": "b0b4f239c1e82e040030ab894872875c7b461a9406057341e5278262b3fa74bf",
+    "version": 1
+  },
+  "raw": "{\"result\":{\"no_fit\":true,\"reason\":\"The question asks for the number of distinct issuing banks seen, but none of the offered metrics is a distinct count of issuing banks.\",\"data_exists\":true}}",
+  "usage": {
+    "cached_input_tokens": 1792,
+    "input_tokens": 2027,
+    "output_tokens": 121
+  }
+}

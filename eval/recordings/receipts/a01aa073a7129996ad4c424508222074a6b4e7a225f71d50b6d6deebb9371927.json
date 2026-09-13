@@ -1,0 +1,16 @@
+{
+  "kind": "text",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "composer",
+    "provider": "openai",
+    "sha256": "b2811b5cadb8075a4cba32008339059d163d0eb918b9b2525bb21fc546e8a498",
+    "version": 1
+  },
+  "text": "Using glossary metric gmv_captured for captured GMV, 2026-08-01 to 2026-08-31 versus the same period last year: India USD 2080409597 vs USD 2017265699, delta USD 63143898; Malaysia USD 221607466 vs USD 241864019, delta USD -20256553; Singapore USD 332934836 vs USD 282937307, delta USD 49997529. United Arab Emirates was USD 491379908 vs USD 487586669, delta USD 3793239; United Kingdom USD 440181333 vs USD 502996851, delta USD -62815518; United States USD 414264400 vs USD 399826300, delta USD 14438100.",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 671,
+    "output_tokens": 488
+  }
+}

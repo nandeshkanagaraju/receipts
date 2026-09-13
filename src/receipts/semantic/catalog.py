@@ -94,6 +94,18 @@ class Dimension:
 
     @property
     def table(self) -> str:
+        """The table this dimension's expression reads from.
+
+        Parsed rather than string-split. `expr.split(".")[0]` works for a plain
+        `products.model_name` and returns `"CASE WHEN products"` for a computed
+        one, which made a computed dimension fail the joinability lint and so
+        made computed dimensions impossible to add. GLOSSARY §2.2's handsets-only
+        rule needs one, and a layer that cannot express a rule it states is the
+        defect this parsing exists to remove.
+        """
+        qualifiers = _expression_tables(self.expr)
+        if qualifiers:
+            return qualifiers[0]
         return self.expr.split(".")[0] if "." in self.expr else self.entity
 
 
@@ -105,6 +117,39 @@ class Aggregate:
     expr: str
     where: str | None = None
     time_dimension: str | None = None
+
+
+def _expression_tables(expression: str) -> tuple[str, ...]:
+    """Table qualifiers named in a SQL expression, in order of appearance."""
+    import sqlglot
+    from sqlglot import expressions as sqlexp
+
+    try:
+        parsed = sqlglot.parse_one(expression, read="duckdb")
+    except Exception:
+        return ()
+    seen: list[str] = []
+    for column in parsed.find_all(sqlexp.Column):
+        name = column.table
+        if name and name not in seen:
+            seen.append(name)
+    return tuple(seen)
+
+
+@dataclass(frozen=True, slots=True)
+class ImpliedFilter:
+    """A filter a metric's own definition implies when the question uses certain words.
+
+    Data rather than prose, so the compiler can act on it. GLOSSARY §2.2 says
+    "phones", "handsets" and "devices" mean handsets only; that sentence lived in
+    `units_sold.definition`, which nothing downstream reads, and "top 10 phone
+    models by units sold" duly answered with phone cases.
+    """
+
+    when: dict[str, tuple[str, ...]]
+    dimension: str
+    values: tuple[str, ...]
+    because: str
 
 
 @dataclass(frozen=True, slots=True)
@@ -145,6 +190,10 @@ class Metric:
     snapshot_boundary: str | None = None
     row_level: bool = False
     dev_questions: tuple[str, ...] = ()
+    # Filters this metric's own definition implies (GLOSSARY §2.2). See
+    # `ImpliedFilter`: a rule the layer states in prose and cannot express is a
+    # rule that silently does not apply.
+    implied_filters: tuple[ImpliedFilter, ...] = ()
 
     @property
     def is_ratio(self) -> bool:

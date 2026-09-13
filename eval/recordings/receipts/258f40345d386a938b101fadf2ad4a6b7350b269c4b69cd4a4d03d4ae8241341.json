@@ -1,0 +1,58 @@
+{
+  "data": {
+    "result": {
+      "ambiguities": [
+        {
+          "chosen": "order-level payment success rate",
+          "kind": "metric_choice",
+          "readings": [
+            "order-level payment success rate",
+            "attempt-level payment success rate"
+          ],
+          "term": "भुगतान सफलता दर"
+        }
+      ],
+      "compare_to": "previous_period",
+      "dimensions": [],
+      "filters": [
+        {
+          "dimension": "country",
+          "op": "eq",
+          "values": [
+            "UK"
+          ]
+        }
+      ],
+      "grain": "NONE",
+      "kind": "metric",
+      "limit": null,
+      "name": "payment_success_rate_order",
+      "order": null,
+      "reporting_currency": null,
+      "window": {
+        "calendar": "unspecified",
+        "end": null,
+        "kind": "relative",
+        "n": null,
+        "quarter": null,
+        "relative": "last_week",
+        "start": null,
+        "year": null
+      }
+    }
+  },
+  "kind": "structured",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "planner",
+    "provider": "openai",
+    "sha256": "b0b4f239c1e82e040030ab894872875c7b461a9406057341e5278262b3fa74bf",
+    "version": 1
+  },
+  "raw": "{\"result\":{\"kind\":\"metric\",\"name\":\"payment_success_rate_order\",\"dimensions\":[],\"filters\":[{\"dimension\":\"country\",\"op\":\"eq\",\"values\":[\"UK\"]}],\"window\":{\"kind\":\"relative\",\"relative\":\"last_week\",\"start\":null,\"end\":null,\"quarter\":null,\"year\":null,\"n\":null,\"calendar\":\"unspecified\"},\"grain\":\"NONE\",\"compare_to\":\"previous_period\",\"order\":null,\"limit\":null,\"reporting_currency\":null,\"ambiguities\":[{\"term\":\"भुगतान सफलता दर\",\"kind\":\"metric_choice\",\"readings\":[\"order-level payment success rate\",\"attempt-level payment success rate\"],\"chosen\":\"order-level payment success rate\"}]}}",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 2492,
+    "output_tokens": 364
+  }
+}

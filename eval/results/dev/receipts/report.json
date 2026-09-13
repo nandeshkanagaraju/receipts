@@ -1,5 +1,5 @@
 {
-  "headline": "receipts on dev: 53 of 108 answerable questions correct; 35 silently wrong; LIVE, WHY untested (feature cut before any run).",
+  "headline": "receipts on dev: 77 of 108 answerable questions correct; 12 silently wrong; LIVE, WHY untested (feature cut before any run).",
   "populations": {
     "AMB": {
       "by_language": {
@@ -56,61 +56,61 @@
     "ANS": {
       "by_language": {
         "en": {
-          "correct_count": 19,
-          "correct_rate": "0.5278",
+          "correct_count": 27,
+          "correct_rate": "0.7500",
           "denominator": 36,
           "outcomes": {
-            "Correct": 19,
+            "Correct": 27,
             "Error": 0,
-            "Over-abstain": 4,
-            "Silent-wrong": 11,
+            "Over-abstain": 3,
+            "Silent-wrong": 4,
             "Untested": 0,
             "Wrong-flagged": 2
           }
         },
         "hi": {
-          "correct_count": 16,
-          "correct_rate": "0.4444",
+          "correct_count": 24,
+          "correct_rate": "0.6667",
           "denominator": 36,
           "outcomes": {
-            "Correct": 16,
+            "Correct": 24,
             "Error": 0,
             "Over-abstain": 2,
-            "Silent-wrong": 12,
+            "Silent-wrong": 4,
             "Untested": 0,
             "Wrong-flagged": 6
           }
         },
         "ta": {
-          "correct_count": 18,
-          "correct_rate": "0.5000",
+          "correct_count": 26,
+          "correct_rate": "0.7222",
           "denominator": 36,
           "outcomes": {
-            "Correct": 18,
+            "Correct": 26,
             "Error": 0,
             "Over-abstain": 3,
-            "Silent-wrong": 12,
+            "Silent-wrong": 4,
             "Untested": 0,
             "Wrong-flagged": 3
           }
         }
       },
-      "correct_count": 53,
+      "correct_count": 77,
       "correct_outcome": "Correct",
-      "correct_rate": "0.4907",
+      "correct_rate": "0.7130",
       "denominator": 108,
       "outcomes": {
-        "Correct": 53,
+        "Correct": 77,
         "Error": 0,
-        "Over-abstain": 9,
-        "Silent-wrong": 35,
+        "Over-abstain": 8,
+        "Silent-wrong": 12,
         "Untested": 0,
         "Wrong-flagged": 11
       },
-      "raw_wrong_count": 46,
-      "raw_wrong_rate": "0.4259",
-      "silent_wrong_count": 35,
-      "silent_wrong_rate": "0.3241",
+      "raw_wrong_count": 23,
+      "raw_wrong_rate": "0.2130",
+      "silent_wrong_count": 12,
+      "silent_wrong_rate": "0.1111",
       "untested_count": 0
     },
     "DENY": {
@@ -352,7 +352,7 @@
       "measure": "Receipts silent-wrong rate (eval set)",
       "status": "fail",
       "threshold": "0.03",
-      "value": "0.3241"
+      "value": "0.1111"
     },
     "T10": {
       "measure": "Latency, single-metric questions on the full warehouse",
@@ -371,7 +371,7 @@
       "measure": "Accuracy on answerable questions",
       "status": "fail",
       "threshold": "0.85",
-      "value": "0.4907"
+      "value": "0.7130"
     },
     "T4": {
       "measure": "Correct clarify/abstain on Q6/Q7 questions",
@@ -382,7 +382,7 @@
       "measure": "Over-abstention on answerable questions",
       "status": "pass",
       "threshold": "0.10",
-      "value": "0.0833"
+      "value": "0.0741"
     },
     "T6": {
       "measure": "Tamil and Hindi accuracy vs English",

@@ -1,0 +1,16 @@
+{
+  "kind": "text",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "composer",
+    "provider": "openai",
+    "sha256": "b2811b5cadb8075a4cba32008339059d163d0eb918b9b2525bb21fc546e8a498",
+    "version": 1
+  },
+  "text": "Using United Kingdom for UK and GBP as the reporting currency, weekly captured GMV was GBP 102606733 on 2026-07-13, GBP 88208700 on 2026-07-20, GBP 92079200 on 2026-07-27, GBP 77522100 on 2026-08-03, GBP 80762100 on 2026-08-10, GBP 80370300 on 2026-08-17, GBP 77237600 on 2026-08-24, and GBP 86894100 on 2026-08-31.",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 638,
+    "output_tokens": 303
+  }
+}

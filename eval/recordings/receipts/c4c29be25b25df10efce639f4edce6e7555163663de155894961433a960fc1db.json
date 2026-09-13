@@ -1,0 +1,16 @@
+{
+  "kind": "text",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "composer",
+    "provider": "openai",
+    "sha256": "b2811b5cadb8075a4cba32008339059d163d0eb918b9b2525bb21fc546e8a498",
+    "version": 1
+  },
+  "text": "For EMI orders in August 2026, average settlement lag was 2.972618700844742 days for Anchor Acquiring, 2.0 for Cobalt Processing, 1.5037270642201834 for Meridian Acquiring, 2.824343506032647 for Northgate Payments, and 3.4982778415614235 for Solstice Merchant Services. Defaults applied: “EMI” was treated as payment_method emi, settlement lag used settlement_lag_days, and reporting currency was USD.",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 605,
+    "output_tokens": 297
+  }
+}

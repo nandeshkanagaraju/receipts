@@ -32,7 +32,7 @@ from dataclasses import dataclass, field
 from datetime import date, timedelta
 from typing import Any, Literal
 
-from ..domain.types import Grain, QueryPlan, ResolvedPlan, Scope, WindowSpec
+from ..domain.types import Filter, Grain, QueryPlan, ResolvedPlan, Scope, WindowSpec
 from ..semantic.catalog import COUNTRY_CURRENCY, Catalog
 from ..semantic.value_synonyms import fold_value
 
@@ -422,6 +422,27 @@ def _subsequence(needle: list[str], haystack: list[str]) -> bool:
     return True
 
 
+def _with_resolved_filters(
+    plan: QueryPlan, resolved_filters: dict[str, tuple[str, ...]]
+) -> QueryPlan:
+    """The plan with synonym-resolved filter values substituted in.
+
+    Used twice, and that is the point: the reporting-currency rule and the final
+    plan must see the same values. When only the final plan got them, rule 3 was
+    deciding from what the model wrote rather than from what it meant.
+    """
+    if not resolved_filters:
+        return plan
+    return plan.model_copy(
+        update={
+            "filters": tuple(
+                f.model_copy(update={"values": resolved_filters.get(f.dimension, f.values)})
+                for f in plan.filters
+            )
+        }
+    )
+
+
 def _implied_currency(plan: QueryPlan, catalog: Catalog) -> str | None:
     """The one currency the filtered countries share, or None if they do not.
 
@@ -628,6 +649,29 @@ def validate(
             )
             compare_start = first_date
 
+    # 5b. Filters the metric's own definition implies (GLOSSARY §2.2).
+    #
+    # "Top 10 phone models by units sold" returned Leather Case, Earbuds and
+    # Screen Guard. The rule that "phones" means handsets only was written in
+    # `units_sold.definition` -- prose the compiler never reads -- and there was
+    # no dimension a plan could carry to express it. The rule is now data on the
+    # metric, applied here, and disclosed in the receipt.
+    #
+    # An explicit filter from the asker wins: if they said `product_type =
+    # accessory`, they meant it, and a definition should not overrule a question.
+    already_filtered = {f.dimension for f in draft_plan.filters}
+    implied_applied: list[Filter] = []
+    for rule in metric.implied_filters:
+        if rule.dimension in already_filtered:
+            continue
+        if rule.dimension not in metric.allowed_dimensions:
+            continue
+        words = {fold_value(w) for phrases in rule.when.values() for w in phrases}
+        if not (set(_words(question)) & words):
+            continue
+        implied_applied.append(Filter(dimension=rule.dimension, op="eq", values=rule.values))
+        applied.append(f"{rule.dimension} → {', '.join(rule.values)}: {rule.because}")
+
     # 6. Reporting currency, in the order SDD §9.1 rule 6 gives:
     #    explicit -> the role's default -> the single currency of the countries
     #    filtered to -> USD.
@@ -653,9 +697,32 @@ def validate(
         )
         currency = ""
     if not currency:
-        currency = prefs.get("reporting_currency") or _implied_currency(draft_plan, catalog)
-        if currency:
-            applied.append(f"reporting currency → {currency} (not stated in the question)")
+        # The four rules of §1.4, each tried in order and each able to answer on
+        # its own. They are written as separate expressions rather than one
+        # `or`-chain so that the disclosure can say WHICH rule decided -- a
+        # receipt that explains a choice it did not make is worse than one that
+        # says nothing.
+        #
+        # Rule 3 resolves against the RESOLVED filter values, not the draft. The
+        # draft holds what the model wrote ("UK"); the synonym pass that turns
+        # that into "United Kingdom" runs above and writes to `resolved_filters`.
+        # Reading the draft here meant rule 3 looked up "UK" in a table holding
+        # "GB" and "United Kingdom", found neither, and fell through silently.
+        resolved_so_far = _with_resolved_filters(draft_plan, resolved_filters)
+        session_default = prefs.get("reporting_currency")
+        role_default = scope.reporting_currency
+        implied = _implied_currency(resolved_so_far, catalog)
+        if session_default:
+            currency = session_default
+            applied.append(f"reporting currency → {currency} (this session's preference)")
+        elif role_default:
+            currency = role_default
+            applied.append(f"reporting currency → {currency} (the {scope.role} default)")
+        elif implied:
+            currency = implied
+            applied.append(
+                f"reporting currency → {currency} (the one currency of the countries asked about)"
+            )
         else:
             currency = "USD"
             applied.append("reporting currency → USD (no role default and mixed currencies)")
@@ -669,15 +736,10 @@ def validate(
     if issues:
         return Issues(tuple(issues))
     assert start is not None and end is not None
-    final_plan = draft_plan
-    if resolved_filters:
-        final_plan = draft_plan.model_copy(
-            update={
-                "filters": tuple(
-                    f.model_copy(update={"values": resolved_filters.get(f.dimension, f.values)})
-                    for f in draft_plan.filters
-                )
-            }
+    final_plan = _with_resolved_filters(draft_plan, resolved_filters)
+    if implied_applied:
+        final_plan = final_plan.model_copy(
+            update={"filters": (*final_plan.filters, *implied_applied)}
         )
     resolved = ResolvedPlan(
         plan=final_plan,

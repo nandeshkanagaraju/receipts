@@ -220,6 +220,14 @@ class Scope(Strict):
     role: str
     region_ids: tuple[str, ...] | Literal["ALL"]
     capabilities: tuple[str, ...] = ()
+    # GLOSSARY §1.4 rule 2. The role's default reporting currency, recomputed
+    # server-side with the rest of the scope. `config/roles.yaml` has declared
+    # this from the beginning and nothing read it: the validator looked for a
+    # role default in the SESSION's preferences, which is a thing a user sets
+    # mid-conversation, not a property of the role. Every UK question came back
+    # in dollars -- arithmetically right, in the wrong currency -- and the
+    # receipt explained the choice with "no role default", which was false.
+    reporting_currency: str = ""
     scope_hash: str = ""
 
     def with_hash(self) -> Scope:

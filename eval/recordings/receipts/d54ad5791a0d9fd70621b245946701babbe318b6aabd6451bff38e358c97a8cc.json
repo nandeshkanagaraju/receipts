@@ -1,0 +1,16 @@
+{
+  "kind": "text",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "composer",
+    "provider": "openai",
+    "sha256": "b2811b5cadb8075a4cba32008339059d163d0eb918b9b2525bb21fc546e8a498",
+    "version": 1
+  },
+  "text": "2026-08-01 से 2026-08-31 के बिज़नेस दिनों में तमिलनाडु में डुप्लिकेट कैप्चर की संख्या 40 थी; ‘डुप्लिकेट कैप्चर’ को duplicate_capture_count माना गया, ‘तमिलनाडु’ को Tamil Nadu से मैप किया गया, और मुद्रा INR रही।",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 556,
+    "output_tokens": 471
+  }
+}

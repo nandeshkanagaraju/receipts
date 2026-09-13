@@ -1360,3 +1360,47 @@ The currency cause is the one to note in the README: the answers are
 **arithmetically correct and in the wrong currency**, and the receipt discloses a
 default with a reason that is factually untrue ("no role default") on a role
 whose default is written down in the repository.
+
+## M15.3 — seven wrong answers that are not defects
+
+These are the planner reading a question differently from the reference. The plan
+is defensible, it differs, and closing the gap would mean fitting the planner to
+this corpus. **They are findings and they stay.**
+
+### DV-021 — "Net revenue across all countries in August." (3 trials)
+
+The reference returns **one number**, 3,794,464,904: net revenue totalled over
+every country. Receipts returns **six rows**, one per country, and the six sum to
+the reference.
+
+"Across all countries" carries both readings. *Covering* all countries — a total
+— and *across* as in broken down across them. An analyst handed this question
+would plausibly produce either, and the one Receipts produced is the more
+informative of the two. It is scored wrong because the shape differs from the
+reference, not because a number is wrong.
+
+Making this "correct" means teaching the planner that this phrasing means a
+total. There is no rule in GLOSSARY.md that says so, so the teaching would come
+from the eval set, which is the definition of tuning.
+
+### DV-009 — "Payment failure rate by reason in Chennai over the last 7 days." (3 trials)
+
+**Every value matches the reference exactly.** `authentication_failed` is
+0.036477987421 on both sides. The rows come back in dimension order, which is
+what D4 requires when no order is asked for; the reference ranks them by value
+descending.
+
+The question says neither "top" nor "ranked". The reference made a choice, D4
+made a different one, and the scorer compares ranked keys. Ordering by value
+whenever a metric is broken down would be fitting the compiler to this scorer.
+
+### DV-028 (1 trial)
+
+Agrees with the reference to twelve decimal places.
+
+### Why this matters for reading the headline
+
+**7 of the 35 silent-wrong trials on the verified path are of this kind.** A
+ceiling exists that is not a defect: some questions have more than one defensible
+answer and the reference picked one. Any report of Receipts' silent-wrong rate
+should say that roughly a fifth of it is this, not arithmetic.

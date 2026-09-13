@@ -1,0 +1,16 @@
+{
+  "kind": "text",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "composer",
+    "provider": "openai",
+    "sha256": "b2811b5cadb8075a4cba32008339059d163d0eb918b9b2525bb21fc546e8a498",
+    "version": 1
+  },
+  "text": "पिछले महीने (2026-08-01 से 2026-08-31) का नेट राजस्व 3793887920 USD था; रिपोर्टिंग मुद्रा के लिए USD डिफ़ॉल्ट लागू हुआ और राजस्व के लिए net_revenue चुना गया।",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 491,
+    "output_tokens": 195
+  }
+}

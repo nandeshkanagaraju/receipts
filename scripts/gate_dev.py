@@ -78,7 +78,12 @@ def scope_for(role: str, roles: dict[str, Any], places: dict[str, tuple[str, ...
         regions = tuple(sorted(r for r, names in places.items() if wanted & set(names)))
     else:
         regions = "ALL"
-    return Scope(role=role, region_ids=regions, capabilities=caps).with_hash()
+    return Scope(
+        role=role,
+        region_ids=regions,
+        capabilities=caps,
+        reporting_currency=str(spec.get("reporting_currency") or ""),
+    ).with_hash()
 
 
 def rebuild_plan(body: dict[str, Any]) -> QueryPlan:

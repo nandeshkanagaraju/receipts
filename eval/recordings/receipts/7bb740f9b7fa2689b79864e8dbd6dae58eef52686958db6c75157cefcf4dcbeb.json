@@ -1,0 +1,16 @@
+{
+  "kind": "text",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "composer",
+    "provider": "openai",
+    "sha256": "b2811b5cadb8075a4cba32008339059d163d0eb918b9b2525bb21fc546e8a498",
+    "version": 1
+  },
+  "text": "UK என்பது United Kingdom ஆகவும், reporting currency GBP ஆகவும், GMV என்பது captured GMV ஆகவும் எடுத்துக்கொள்ளப்பட்டது. வாரந்தோறும் captured GMV: 2026-07-13: 102606733, 2026-07-20: 88208700, 2026-07-27: 92079200, 2026-08-03: 77522100, 2026-08-10: 80762100, 2026-08-17: 80370300, 2026-08-24: 77237600, 2026-08-31: 86894100 GBP.",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 640,
+    "output_tokens": 285
+  }
+}

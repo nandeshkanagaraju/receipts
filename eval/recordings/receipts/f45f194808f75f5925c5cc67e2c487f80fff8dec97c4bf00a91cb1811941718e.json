@@ -1,0 +1,16 @@
+{
+  "kind": "text",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "composer",
+    "provider": "openai",
+    "sha256": "b2811b5cadb8075a4cba32008339059d163d0eb918b9b2525bb21fc546e8a498",
+    "version": 1
+  },
+  "text": "Glossary default-ஆக GMV என்பது gmv_captured என எடுத்துக்கொள்ளப்பட்டது; 2026-08-01 முதல் 2026-08-31 வரை captured GMV (USD) கடந்த ஆண்டின் அதே காலத்துடன் ஒப்பிடுகையில்: India 2080409597 vs 2017265699 (delta 63143898), Malaysia 221607466 vs 241864019 (delta -20256553), Singapore 332934836 vs 282937307 (delta 49997529), United Arab Emirates 491379908 vs 487586669 (delta 3793239), United Kingdom 440181333 vs 502996851 (delta -62815518), United States 414264400 vs 399826300 (delta 14438100).",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 694,
+    "output_tokens": 684
+  }
+}

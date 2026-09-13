@@ -1,0 +1,16 @@
+{
+  "kind": "text",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "composer",
+    "provider": "openai",
+    "sha256": "b2811b5cadb8075a4cba32008339059d163d0eb918b9b2525bb21fc546e8a498",
+    "version": 1
+  },
+  "text": "கடந்த 7 நாட்களுக்கான daily order count: 2026-09-03: 561, 2026-09-04: 688, 2026-09-05: 750, 2026-09-06: 665, 2026-09-07: 526, 2026-09-08: 493, 2026-09-09: 559; reporting currency default INR பயன்படுத்தப்பட்டது.",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 573,
+    "output_tokens": 265
+  }
+}

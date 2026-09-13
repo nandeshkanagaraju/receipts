@@ -128,6 +128,25 @@ dimensions:
       ta: [காரணம், failure reason, reason]
       hi: [कारण, विफलता का कारण, reason]
 
+  # GLOSSARY §2.2 says "phones", "handsets" and "devices" mean handsets only.
+  # That rule lived in the units_sold definition's prose, which the compiler
+  # never reads, and there was no dimension a plan could carry to express it --
+  # so "top 10 phone models by units sold" answered with phone cases. A rule the
+  # layer states and cannot express is a rule that silently does not apply.
+  - name: product_type
+    entity: order_items
+    expr: "CASE WHEN products.is_accessory THEN 'accessory' ELSE 'handset' END"
+    join_via: ["products.sku = order_items.sku"]
+    type: string
+    label: {en: Product type, ta: பொருள் வகை, hi: उत्पाद प्रकार}
+    value_synonyms:
+      handset: [phone, phones, handsets, device, devices, போன், போன்கள், फोन, हैंडसेट]
+      accessory: [accessories, case, charger, துணைக்கருவி, सहायक उपकरण]
+    synonyms:
+      en: [product type, phone or accessory, handset or accessory]
+      ta: [பொருள் வகை, product type, phone, accessory]
+      hi: [उत्पाद प्रकार, product type, phone, accessory]
+
   - name: model
     entity: order_items
     expr: products.model_name

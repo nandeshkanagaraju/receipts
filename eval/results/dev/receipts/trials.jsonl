@@ -7,9 +7,9 @@
 {"detail": "", "language": "en", "outcome": "Correct", "population": "ANS", "qid": "DV-003", "trial_id": "DV-003|en|global_finance"}
 {"detail": "", "language": "hi", "outcome": "Correct", "population": "ANS", "qid": "DV-003", "trial_id": "DV-003|hi|global_finance"}
 {"detail": "", "language": "ta", "outcome": "Correct", "population": "ANS", "qid": "DV-003", "trial_id": "DV-003|ta|global_finance"}
-{"detail": "currency is USD, reference is GBP", "language": "en", "outcome": "Silent-wrong", "population": "ANS", "qid": "DV-004", "trial_id": "DV-004|en|store_ops_uk"}
-{"detail": "currency is USD, reference is GBP", "language": "hi", "outcome": "Silent-wrong", "population": "ANS", "qid": "DV-004", "trial_id": "DV-004|hi|store_ops_uk"}
-{"detail": "currency is USD, reference is GBP", "language": "ta", "outcome": "Silent-wrong", "population": "ANS", "qid": "DV-004", "trial_id": "DV-004|ta|store_ops_uk"}
+{"detail": "", "language": "en", "outcome": "Correct", "population": "ANS", "qid": "DV-004", "trial_id": "DV-004|en|store_ops_uk"}
+{"detail": "", "language": "hi", "outcome": "Correct", "population": "ANS", "qid": "DV-004", "trial_id": "DV-004|hi|store_ops_uk"}
+{"detail": "", "language": "ta", "outcome": "Correct", "population": "ANS", "qid": "DV-004", "trial_id": "DV-004|ta|store_ops_uk"}
 {"detail": "", "language": "en", "outcome": "Correct", "population": "ANS", "qid": "DV-005", "trial_id": "DV-005|en|global_finance"}
 {"detail": "scalar value differs", "language": "hi", "outcome": "Wrong-flagged", "population": "ANS", "qid": "DV-005", "trial_id": "DV-005|hi|global_finance"}
 {"detail": "", "language": "ta", "outcome": "Correct", "population": "ANS", "qid": "DV-005", "trial_id": "DV-005|ta|global_finance"}
@@ -67,9 +67,9 @@
 {"detail": "", "language": "en", "outcome": "Correct", "population": "ANS", "qid": "DV-023", "trial_id": "DV-023|en|global_finance"}
 {"detail": "", "language": "hi", "outcome": "Correct", "population": "ANS", "qid": "DV-023", "trial_id": "DV-023|hi|global_finance"}
 {"detail": "", "language": "ta", "outcome": "Correct", "population": "ANS", "qid": "DV-023", "trial_id": "DV-023|ta|global_finance"}
-{"detail": "currency is USD, reference is GBP", "language": "en", "outcome": "Silent-wrong", "population": "ANS", "qid": "DV-024", "trial_id": "DV-024|en|store_ops_uk"}
-{"detail": "currency is USD, reference is GBP", "language": "hi", "outcome": "Silent-wrong", "population": "ANS", "qid": "DV-024", "trial_id": "DV-024|hi|store_ops_uk"}
-{"detail": "currency is USD, reference is GBP", "language": "ta", "outcome": "Silent-wrong", "population": "ANS", "qid": "DV-024", "trial_id": "DV-024|ta|store_ops_uk"}
+{"detail": "", "language": "en", "outcome": "Correct", "population": "ANS", "qid": "DV-024", "trial_id": "DV-024|en|store_ops_uk"}
+{"detail": "", "language": "hi", "outcome": "Correct", "population": "ANS", "qid": "DV-024", "trial_id": "DV-024|hi|store_ops_uk"}
+{"detail": "", "language": "ta", "outcome": "Correct", "population": "ANS", "qid": "DV-024", "trial_id": "DV-024|ta|store_ops_uk"}
 {"detail": "", "language": "en", "outcome": "Correct", "population": "ANS", "qid": "DV-025", "trial_id": "DV-025|en|rm_tamil_nadu"}
 {"detail": "", "language": "hi", "outcome": "Correct", "population": "ANS", "qid": "DV-025", "trial_id": "DV-025|hi|rm_tamil_nadu"}
 {"detail": "", "language": "ta", "outcome": "Correct", "population": "ANS", "qid": "DV-025", "trial_id": "DV-025|ta|rm_tamil_nadu"}
@@ -82,12 +82,12 @@
 {"detail": "", "language": "en", "outcome": "Correct", "population": "ANS", "qid": "DV-028", "trial_id": "DV-028|en|rm_tamil_nadu"}
 {"detail": "scalar value differs", "language": "hi", "outcome": "Silent-wrong", "population": "ANS", "qid": "DV-028", "trial_id": "DV-028|hi|rm_tamil_nadu"}
 {"detail": "", "language": "ta", "outcome": "Correct", "population": "ANS", "qid": "DV-028", "trial_id": "DV-028|ta|rm_tamil_nadu"}
-{"detail": "ranked keys differ or are out of order", "language": "en", "outcome": "Silent-wrong", "population": "ANS", "qid": "DV-029", "trial_id": "DV-029|en|global_finance"}
-{"detail": "ranked keys differ or are out of order", "language": "hi", "outcome": "Silent-wrong", "population": "ANS", "qid": "DV-029", "trial_id": "DV-029|hi|global_finance"}
-{"detail": "ranked keys differ or are out of order", "language": "ta", "outcome": "Silent-wrong", "population": "ANS", "qid": "DV-029", "trial_id": "DV-029|ta|global_finance"}
-{"detail": "currency is USD, reference is GBP", "language": "en", "outcome": "Silent-wrong", "population": "ANS", "qid": "DV-030", "trial_id": "DV-030|en|store_ops_uk"}
-{"detail": "currency is USD, reference is GBP", "language": "hi", "outcome": "Silent-wrong", "population": "ANS", "qid": "DV-030", "trial_id": "DV-030|hi|store_ops_uk"}
-{"detail": "currency is USD, reference is GBP", "language": "ta", "outcome": "Silent-wrong", "population": "ANS", "qid": "DV-030", "trial_id": "DV-030|ta|store_ops_uk"}
+{"detail": "", "language": "en", "outcome": "Correct", "population": "ANS", "qid": "DV-029", "trial_id": "DV-029|en|global_finance"}
+{"detail": "", "language": "hi", "outcome": "Correct", "population": "ANS", "qid": "DV-029", "trial_id": "DV-029|hi|global_finance"}
+{"detail": "", "language": "ta", "outcome": "Correct", "population": "ANS", "qid": "DV-029", "trial_id": "DV-029|ta|global_finance"}
+{"detail": "", "language": "en", "outcome": "Correct", "population": "ANS", "qid": "DV-030", "trial_id": "DV-030|en|store_ops_uk"}
+{"detail": "", "language": "hi", "outcome": "Correct", "population": "ANS", "qid": "DV-030", "trial_id": "DV-030|hi|store_ops_uk"}
+{"detail": "", "language": "ta", "outcome": "Correct", "population": "ANS", "qid": "DV-030", "trial_id": "DV-030|ta|store_ops_uk"}
 {"detail": "", "language": "en", "outcome": "Correct", "population": "ANS", "qid": "DV-031", "trial_id": "DV-031|en|rm_tamil_nadu"}
 {"detail": "", "language": "hi", "outcome": "Correct", "population": "ANS", "qid": "DV-031", "trial_id": "DV-031|hi|rm_tamil_nadu"}
 {"detail": "", "language": "ta", "outcome": "Correct", "population": "ANS", "qid": "DV-031", "trial_id": "DV-031|ta|rm_tamil_nadu"}
@@ -118,22 +118,22 @@
 {"detail": "feature cut before any system ran", "language": "en", "outcome": "Untested", "population": "WHY", "qid": "DV-040", "trial_id": "DV-040|en|store_ops_uk"}
 {"detail": "feature cut before any system ran", "language": "hi", "outcome": "Untested", "population": "WHY", "qid": "DV-040", "trial_id": "DV-040|hi|store_ops_uk"}
 {"detail": "feature cut before any system ran", "language": "ta", "outcome": "Untested", "population": "WHY", "qid": "DV-040", "trial_id": "DV-040|ta|store_ops_uk"}
-{"detail": "currency is USD, reference is INR", "language": "en", "outcome": "Silent-wrong", "population": "ANS", "qid": "DV-041", "trial_id": "DV-041|en|rm_tamil_nadu"}
-{"detail": "currency is USD, reference is INR", "language": "hi", "outcome": "Silent-wrong", "population": "ANS", "qid": "DV-041", "trial_id": "DV-041|hi|rm_tamil_nadu"}
-{"detail": "currency is USD, reference is INR", "language": "ta", "outcome": "Silent-wrong", "population": "ANS", "qid": "DV-041", "trial_id": "DV-041|ta|rm_tamil_nadu"}
-{"detail": "keys differ (missing ['ae|comparison', 'ae|current', 'gb|comparison'], extra ['india', 'malaysia', 'singapore'])", "language": "en", "outcome": "Silent-wrong", "population": "ANS", "qid": "DV-042", "trial_id": "DV-042|en|global_finance"}
-{"detail": "keys differ (missing ['ae|comparison', 'ae|current', 'gb|comparison'], extra ['india', 'malaysia', 'singapore'])", "language": "hi", "outcome": "Silent-wrong", "population": "ANS", "qid": "DV-042", "trial_id": "DV-042|hi|global_finance"}
-{"detail": "keys differ (missing ['ae|comparison', 'ae|current', 'gb|comparison'], extra ['india', 'malaysia', 'singapore'])", "language": "ta", "outcome": "Silent-wrong", "population": "ANS", "qid": "DV-042", "trial_id": "DV-042|ta|global_finance"}
-{"detail": "keys differ (missing ['comparison', 'current'], extra ['None'])", "language": "en", "outcome": "Silent-wrong", "population": "ANS", "qid": "DV-043", "trial_id": "DV-043|en|store_ops_uk"}
-{"detail": "keys differ (missing ['comparison', 'current'], extra ['None'])", "language": "hi", "outcome": "Silent-wrong", "population": "ANS", "qid": "DV-043", "trial_id": "DV-043|hi|store_ops_uk"}
-{"detail": "keys differ (missing ['comparison', 'current'], extra ['None'])", "language": "ta", "outcome": "Silent-wrong", "population": "ANS", "qid": "DV-043", "trial_id": "DV-043|ta|store_ops_uk"}
-{"detail": "keys differ (missing ['2026-09-03', '2026-09-04', '2026-09-05'], extra ['None'])", "language": "en", "outcome": "Silent-wrong", "population": "ANS", "qid": "DV-044", "trial_id": "DV-044|en|rm_tamil_nadu"}
-{"detail": "keys differ (missing ['2026-09-03', '2026-09-04', '2026-09-05'], extra ['None'])", "language": "hi", "outcome": "Silent-wrong", "population": "ANS", "qid": "DV-044", "trial_id": "DV-044|hi|rm_tamil_nadu"}
-{"detail": "keys differ (missing ['2026-09-03', '2026-09-04', '2026-09-05'], extra ['None'])", "language": "ta", "outcome": "Silent-wrong", "population": "ANS", "qid": "DV-044", "trial_id": "DV-044|ta|rm_tamil_nadu"}
-{"detail": "currency is USD, reference is GBP", "language": "en", "outcome": "Silent-wrong", "population": "ANS", "qid": "DV-045", "trial_id": "DV-045|en|store_ops_uk"}
-{"detail": "currency is USD, reference is GBP", "language": "hi", "outcome": "Silent-wrong", "population": "ANS", "qid": "DV-045", "trial_id": "DV-045|hi|store_ops_uk"}
-{"detail": "currency is USD, reference is GBP", "language": "ta", "outcome": "Silent-wrong", "population": "ANS", "qid": "DV-045", "trial_id": "DV-045|ta|store_ops_uk"}
-{"detail": "status CLARIFY", "language": "en", "outcome": "Over-abstain", "population": "ANS", "qid": "DV-046", "trial_id": "DV-046|en|global_finance"}
+{"detail": "", "language": "en", "outcome": "Correct", "population": "ANS", "qid": "DV-041", "trial_id": "DV-041|en|rm_tamil_nadu"}
+{"detail": "", "language": "hi", "outcome": "Correct", "population": "ANS", "qid": "DV-041", "trial_id": "DV-041|hi|rm_tamil_nadu"}
+{"detail": "", "language": "ta", "outcome": "Correct", "population": "ANS", "qid": "DV-041", "trial_id": "DV-041|ta|rm_tamil_nadu"}
+{"detail": "keys differ (missing ['ae|comparison', 'ae|current', 'gb|comparison'], extra ['india|comparison', 'india|current', 'malaysia|comparison'])", "language": "en", "outcome": "Silent-wrong", "population": "ANS", "qid": "DV-042", "trial_id": "DV-042|en|global_finance"}
+{"detail": "keys differ (missing ['ae|comparison', 'ae|current', 'gb|comparison'], extra ['india|comparison', 'india|current', 'malaysia|comparison'])", "language": "hi", "outcome": "Silent-wrong", "population": "ANS", "qid": "DV-042", "trial_id": "DV-042|hi|global_finance"}
+{"detail": "keys differ (missing ['ae|comparison', 'ae|current', 'gb|comparison'], extra ['india|comparison', 'india|current', 'malaysia|comparison'])", "language": "ta", "outcome": "Silent-wrong", "population": "ANS", "qid": "DV-042", "trial_id": "DV-042|ta|global_finance"}
+{"detail": "", "language": "en", "outcome": "Correct", "population": "ANS", "qid": "DV-043", "trial_id": "DV-043|en|store_ops_uk"}
+{"detail": "", "language": "hi", "outcome": "Correct", "population": "ANS", "qid": "DV-043", "trial_id": "DV-043|hi|store_ops_uk"}
+{"detail": "", "language": "ta", "outcome": "Correct", "population": "ANS", "qid": "DV-043", "trial_id": "DV-043|ta|store_ops_uk"}
+{"detail": "", "language": "en", "outcome": "Correct", "population": "ANS", "qid": "DV-044", "trial_id": "DV-044|en|rm_tamil_nadu"}
+{"detail": "", "language": "hi", "outcome": "Correct", "population": "ANS", "qid": "DV-044", "trial_id": "DV-044|hi|rm_tamil_nadu"}
+{"detail": "", "language": "ta", "outcome": "Correct", "population": "ANS", "qid": "DV-044", "trial_id": "DV-044|ta|rm_tamil_nadu"}
+{"detail": "", "language": "en", "outcome": "Correct", "population": "ANS", "qid": "DV-045", "trial_id": "DV-045|en|store_ops_uk"}
+{"detail": "", "language": "hi", "outcome": "Correct", "population": "ANS", "qid": "DV-045", "trial_id": "DV-045|hi|store_ops_uk"}
+{"detail": "", "language": "ta", "outcome": "Correct", "population": "ANS", "qid": "DV-045", "trial_id": "DV-045|ta|store_ops_uk"}
+{"detail": "ranked keys differ or are out of order", "language": "en", "outcome": "Silent-wrong", "population": "ANS", "qid": "DV-046", "trial_id": "DV-046|en|global_finance"}
 {"detail": "ranked keys differ or are out of order", "language": "hi", "outcome": "Wrong-flagged", "population": "ANS", "qid": "DV-046", "trial_id": "DV-046|hi|global_finance"}
 {"detail": "ranked keys differ or are out of order", "language": "ta", "outcome": "Silent-wrong", "population": "ANS", "qid": "DV-046", "trial_id": "DV-046|ta|global_finance"}
 {"detail": "status ABSTAIN", "language": "en", "outcome": "Over-abstain", "population": "ANS", "qid": "DV-047", "trial_id": "DV-047|en|global_finance"}

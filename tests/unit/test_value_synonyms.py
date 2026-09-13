@@ -30,6 +30,10 @@ UNCOVERED = {
     "showroom": "263 compound proper nouns ('Kestrel Adyar'), written alike in every language",
     "model": "46 compound proper nouns ('Kestrel Lark 3'), written alike in every language",
     "emi_tenure_months": "numeric",
+    "product_type": (
+        "two values, and its aliases live on the dimension itself because they "
+        "are what the WORD means ('phone' -> handset), not what a place is called"
+    ),
 }
 
 

@@ -41,21 +41,40 @@ def as_pairs(table: ResultTable | None) -> tuple[tuple[str | None, Decimal], ...
     """
     if table is None or not table.columns:
         return ()
+    by_name = {c.name: i for i, c in enumerate(table.columns)}
     value_index = next((i for i, c in enumerate(table.columns) if c.kind == "value"), None)
     if value_index is None:
         return ()
     key_index = next((i for i, c in enumerate(table.columns) if c.kind == "dim"), None)
+    # §11.1 puts a comparison in COLUMNS -- `value` beside `compare_value`. The
+    # reference SQL puts it in ROWS, keyed `current` and `comparison`. Both are
+    # reasonable and they are not the same shape, so the translation belongs
+    # here: this function is the boundary between what the product returns and
+    # what the scorer reads, and bending either side to match the other would
+    # have meant fitting the compiler to the reference's key convention.
+    compare_index = by_name.get("compare_value")
+
+    def decimal(raw: object) -> Decimal | None:
+        if raw is None:
+            return None
+        try:
+            return Decimal(str(raw))
+        except Exception:
+            return None
+
     out: list[tuple[str | None, Decimal]] = []
     for row in table.rows:
-        raw = row[value_index]
-        if raw is None:
+        base = None if key_index is None or row[key_index] is None else str(row[key_index])
+        value = decimal(row[value_index])
+        if compare_index is None:
+            if value is not None:
+                out.append((base, value))
             continue
-        try:
-            value = Decimal(str(raw))
-        except Exception:
-            continue
-        key = None if key_index is None or row[key_index] is None else str(row[key_index])
-        out.append((key, value))
+        comparison = decimal(row[compare_index])
+        for label, number in (("current", value), ("comparison", comparison)):
+            if number is None:
+                continue
+            out.append((label if base is None else f"{base}|{label}", number))
     return tuple(out)
 
 
