@@ -1458,3 +1458,58 @@ at `specs-frozen`, the rule was written before any system ran, and changing a
 scoring rule once you know which way it cuts is how a thesis stops being one. The
 number stands as measured and the reason it understates the system is recorded
 here instead.
+
+---
+
+## M17.1: every clarification was answered with the default, and it had no test
+
+Found in the M17 design pass by running the API; fixed in the same round. Written
+up in full in `docs/M2_NOTES.md` §11 as the sixth instance of the
+discarded-value class. What belongs *here* is what the project cannot claim
+because of it.
+
+`POST /api/v1/clarify` re-asked the user's question with the ambiguity marked
+answered and threw the chosen option away, so **both options of a two-option
+clarification returned the same metric and the same number** — `VERIFIED`, with
+an accurate receipt. Measured before the fix:
+
+```
+   patch: {"name": "net_revenue"}  -> metric=net_revenue  value=42245747825
+   patch: {"name": "gmv_captured"} -> metric=net_revenue  value=42245747825
+```
+
+**What this costs the record.** PDD J3 — *"Best store last quarter?" → one
+clarifying question, then answer* — has been listed as a working journey since
+M15. The first half worked: the system asked. The second half returned the
+default and was never checked, at any level, by any test. `option_id` appeared
+twice in `src/` and never in `tests/`.
+
+No eval number moves. The dev and eval harnesses score a `CLARIFY` as
+`Correct-clarify` at the point the clarification is *asked* (SDD §25.3), and
+never answer one, so the broken half was outside every measurement this project
+has published. That is the uncomfortable part and the reason it is recorded
+rather than quietly repaired: **the defect was invisible to the eval by
+construction, not by accident.** A journey listed in the PDD was half-built for
+three milestones, and the thing that found it was a person clicking the second
+option.
+
+It also says something about the AMB arm that is worth stating plainly. AMB is
+already the weakest result in the report (below), and the argument offered for it
+is that Receipts declines to answer ambiguous questions and is scored as though
+it had answered. That argument is unaffected — AMB is scored on the *asking* —
+but "the system knows when to ask" was only ever half of the claim. Until this
+round, what happened after the asking was not something anybody had measured.
+
+## M17: "Ask why" is rendered disabled — the one documented SDD §22 deviation
+
+SDD §22's component table requires `AnswerCanvas` to offer *"Ask why" (renders
+the drill path as a small tree)*. The why-agent is M18, which is **cut** (see
+above), and `POST /api/v1/why` returns a typed `404 NOT_FOUND` naming the cut.
+
+The control is rendered **disabled, with the reason named on it**, rather than
+omitted. Omitting it would silently drop a row from a frozen spec; showing it
+live would promise something that returns 404. Neither the SDD nor the cut is
+edited to make them agree — the disagreement is real, and this is where it is
+recorded.
+
+This is the only place the front end departs from the §22 table.

@@ -1226,8 +1226,8 @@ project that lists ten traps and can defend seven should say seven.**
 
 ### The pattern behind 28 of 35 wrong answers
 
-**A value computed correctly by one component and discarded by the next.** Five
-instances in three rounds:
+**A value computed correctly by one component and discarded by the next.** Six
+instances in four rounds:
 
 | produced by | discarded by | cost |
 |---|---|---|
@@ -1236,12 +1236,71 @@ instances in three rounds:
 | validator: `grain` | the compiler never read it | a series answered as a scalar |
 | validator: the compare window | the compiler never read it | comparisons with nothing to compare |
 | `roles.yaml`: the role's currency | nothing read it, ever | 15 right numbers in the wrong currency |
+| gate: `ClarifyOption.patch` | `POST /clarify` re-asked the question instead | **every** clarification answered with the default |
 
 Every one is silent. The producing side is correct, the consuming side never
 asks, and nothing raises — so the failure surfaces as a plausible wrong answer
 rather than an error. **This is the single most productive defect class in the
 project**, and `test_every_resolved_decision_field_is_read_somewhere` now guards
 the shape rather than the five instances.
+
+### The sixth instance (M17.1): the choice the asker made never reached the plan
+
+Found in the M17 design pass, by running the API rather than by reading it.
+
+`ClarifyOption` carries a concrete plan patch — `{"name": "gmv_captured"}` — and
+an `apply` method to put it on the plan. `apply` was called by one unit test and
+by nothing in the product. `POST /api/v1/clarify` took the option the user
+picked, passed it as the **question text**, and marked the ambiguity answered:
+
+```python
+events = list(_answer_events(state, who.role, body.option_id, body.session_id,
+                             answered={body.clarification_id}))
+```
+
+With the ambiguity marked answered the gate stops asking, the planner's default
+wins, and the choice is gone. Measured on both options of a real clarification:
+
+```
+   patch: {"name": "net_revenue"}  -> metric=net_revenue  value=42245747825
+   patch: {"name": "gmv_captured"} -> metric=net_revenue  value=42245747825
+```
+
+`ClarifyChoice` also had **no `option_id` at all**, so there was nothing a client
+could legitimately send; the label and the `patch_json` both returned 503, and
+only re-sending the original question worked — by letting the default win.
+
+Three things make this the sharpest instance so far, and they are why it is
+written up rather than merely fixed:
+
+1. **The docstring predicted it.** `ClarifyOption` says, in the file: *"an option
+   that was only prose would have to be re-planned after they answered, which is
+   a second chance to pick something nobody chose."* The design was written down
+   correctly and the route did the thing it warns against. A rule stated at the
+   producing end does not reach the consuming end.
+2. **It fails with a receipt.** The wrong answer is `VERIFIED`, carries a
+   receipt, and the receipt is *accurate* — it truthfully says the metric was
+   `net_revenue`. Nothing on the page is false. The lie is that the user asked
+   for the other one.
+3. **Nothing tested it.** `option_id` appeared twice in `src/` and never in
+   `tests/`. The clarify round trip — the whole of PDD J3 — had no test at any
+   level, so the API could return the same number for both branches of a
+   two-branch question and the suite stayed green.
+
+Fixed by carrying only an id, and matching it against the options **this run of
+the gate produced**: the server applies a patch it offered itself, so a client
+can pick an option but cannot invent one. The patched plan then goes back through
+validate *and* gate, because a changed plan has to face rule 1 again — answering
+a clarification is not a way round scope (D7).
+
+Guarded by `tests/unit/test_clarify_choice_is_applied.py`: the injection names
+the metric each choice must return (`gmv_captured`, not merely "different"), the
+meta-test reproduces the old route and asserts the default wins, and
+`test_every_clarify_choice_field_is_consumed_not_decoration` generalises the
+class — every field a `ClarifyChoice` publishes must either change its identity
+hash or be read by name in a consuming module, walked as an AST rather than
+grepped. Its own fault injection adds a decorative field and asserts it is
+caught.
 
 ### The sharpest instance: a receipt that explains a decision from information it never read
 

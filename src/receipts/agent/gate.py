@@ -31,6 +31,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Literal
 
+from ..domain.ids import content_hash
 from ..domain.types import Intent, QueryPlan, Scope
 from ..semantic.catalog import Catalog
 from .validate import Issues, Validated
@@ -68,7 +69,26 @@ class ClarifyOption:
     label: str
     patch: dict[str, Any]
 
+    def option_id(self, ambiguity_key: str) -> str:
+        """A deterministic name for this choice (D3, D5).
+
+        A content hash rather than a counter, so the id survives the options
+        being reordered and so the same choice is the same id on every run --
+        which is what lets the server re-derive its options and match a returned
+        id against them instead of trusting a patch the client sent.
+        """
+        return content_hash(
+            {"ambiguity_key": ambiguity_key, "label": self.label, "patch": self.patch},
+            length=12,
+        )
+
     def apply(self, plan: QueryPlan) -> QueryPlan:
+        """The chosen plan. Re-validated by the caller, never trusted raw.
+
+        `model_copy` does not re-run validation, so every caller must revalidate
+        the result. The alternative -- validating here -- would make a pure
+        dataclass depend on the catalogue.
+        """
         return plan.model_copy(update=self.patch)
 
 

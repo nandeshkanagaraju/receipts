@@ -356,6 +356,15 @@ class Receipt(Strict):
 
 
 class ClarifyChoice(Strict):
+    """One choice the asker can take, and the plan change it stands for.
+
+    `option_id` is what a client sends back. It is a content hash of the choice
+    itself (D3), so the same choice always has the same id and a client cannot
+    invent one: the server re-derives its own options and matches. That is why
+    `patch_json` is safe to publish -- it is shown, never accepted.
+    """
+
+    option_id: str
     label: str
     patch_json: str = "{}"
 

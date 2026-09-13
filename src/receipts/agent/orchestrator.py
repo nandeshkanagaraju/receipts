@@ -32,6 +32,7 @@ from ..domain.types import (
     ClarifyChoice,
     CompiledQuery,
     Lang,
+    QueryPlan,
     ResolvedPlan,
     ResultTable,
     Scope,
@@ -43,7 +44,7 @@ from ..safety.guard import allowlist_for_role, guard
 from ..semantic.catalog import Catalog
 from .charts import choose_chart
 from .compose import Narration, compose, load_templates, template_narration
-from .gate import GateDecision, gate
+from .gate import ClarifyOption, GateDecision, gate
 from .grounding import ground
 from .intent import route_intent
 from .planner import PlanDraft
@@ -87,6 +88,20 @@ class Deps:
 FAILED_WITH = "failed_with:"
 
 
+@dataclass(frozen=True, slots=True)
+class Chosen:
+    """The option the asker took, identified by the id the server minted.
+
+    Only an id travels. The patch is looked up among the options THIS run of the
+    gate produced, so a caller cannot supply a plan change of their own -- they
+    can only pick one that was offered. That is the whole reason `option_id` is a
+    content hash rather than an index.
+    """
+
+    clarification_id: str
+    option_id: str
+
+
 def _language(question: str) -> str:
     from ..language import load as load_lexicons
     from ..language.detect import detect
@@ -117,13 +132,21 @@ def _refusal(
     narration = template_narration(templates, key=key, question=decision.reason)
     clarification = None
     if decision.decision == "CLARIFY":
+        ambiguity_key = decision.ambiguity_key or "clarify"
         options = tuple(
-            ClarifyChoice(label=o.label, patch_json=_json(o.patch)) for o in decision.options
+            ClarifyChoice(
+                option_id=o.option_id(ambiguity_key), label=o.label, patch_json=_json(o.patch)
+            )
+            for o in decision.options
         )
+        if len(options) < 2:
+            spare = ClarifyOption(label="Other", patch={})
+            options = (
+                *options,
+                ClarifyChoice(option_id=spare.option_id(ambiguity_key), label=spare.label),
+            )
         clarification = Clarification(
-            clarification_id=decision.ambiguity_key or "clarify",
-            prompt=decision.reason,
-            options=options[:4] if len(options) >= 2 else (*options, ClarifyChoice(label="Other")),
+            clarification_id=ambiguity_key, prompt=decision.reason, options=options[:4]
         )
     return Answer(
         status=status,
@@ -140,14 +163,38 @@ def _json(value: Any) -> str:
     return json.dumps(value, sort_keys=True, default=str)
 
 
+def _picked_option(decision: GateDecision, chosen: Chosen) -> ClarifyOption | None:
+    """The offered option matching the id, or None.
+
+    None is returned rather than raised, and the caller then asks the
+    clarification again. An id that matches nothing is not an error the asker
+    can act on -- the honest response is to put the choice in front of them
+    again, not to fail the question.
+    """
+    if chosen.clarification_id != (decision.ambiguity_key or "clarify"):
+        return None
+    key = decision.ambiguity_key or "clarify"
+    for option in decision.options:
+        if option.option_id(key) == chosen.option_id:
+            return option
+    return None
+
+
 def answer(
     question: str,
     session: Session,
     scope: Scope,
     as_of: date,
     deps: Deps,
+    *,
+    chosen: Chosen | None = None,
 ) -> tuple[Answer, Trace]:
-    """SDD §9, stages 1 through 11, in order."""
+    """SDD §9, stages 1 through 11, in order.
+
+    `chosen` is the option the asker took for a clarification this same run
+    produces. It is keyword-only and defaults to None, so every existing caller
+    is unchanged and the clarified path is opt-in.
+    """
     trace = Trace()
     language = _language(question)
     templates = load_templates(language)
@@ -202,41 +249,70 @@ def answer(
             trace = trace.with_span("plan", str(exc)[:80], ok=False)
             draft = None
 
-    # Stage 5: validate.
-    validated: Validated | Issues | None = None
-    if draft is not None and draft.plan is not None:
-        validated = validate(
-            draft.plan,
-            deps.catalog,
-            scope,
-            as_of,
+    # Stages 5 and 6: validate, then gate. Run as a pair because answering a
+    # clarification runs them a second time on the patched plan -- and running
+    # the gate again is the point, not an inefficiency: the asker's choice
+    # changes the plan, and a changed plan has to face rule 1 again. Scope is
+    # never something a clarification can talk its way past (D7).
+    def _validate_and_gate(
+        candidate: QueryPlan | None, answered: frozenset[str]
+    ) -> tuple[Validated | Issues | None, GateDecision, Trace]:
+        checked: Validated | Issues | None = None
+        spans = trace
+        if candidate is not None:
+            checked = validate(
+                candidate,
+                deps.catalog,
+                scope,
+                as_of,
+                question=question,
+                prefs=session.prefs,
+                first_date=deps.first_date,
+                last_date=deps.last_date,
+            )
+            spans = spans.with_span(
+                "validate",
+                "ok" if isinstance(checked, Validated) else ",".join(checked.codes),
+                ok=isinstance(checked, Validated),
+            )
+        verdict = gate(
             question=question,
-            prefs=session.prefs,
-            first_date=deps.first_date,
-            last_date=deps.last_date,
+            intent=intent,
+            validated=checked,
+            plan=candidate,
+            scope=scope,
+            catalog=deps.catalog,
+            places=deps.places,
+            no_fit_reason=draft.no_fit.reason if draft and draft.no_fit else "",
+            no_fit_data_exists=draft.no_fit.data_exists if draft and draft.no_fit else None,
+            missing_concept=missing_concept,
+            answered_ambiguities=answered,
+            freeform_enabled=deps.freeform_enabled,
         )
-        trace = trace.with_span(
-            "validate",
-            "ok" if isinstance(validated, Validated) else ",".join(validated.codes),
-            ok=isinstance(validated, Validated),
+        return (
+            checked,
+            verdict,
+            spans.with_span("gate", f"rule {verdict.rule} -> {verdict.decision}"),
         )
 
-    # Stage 6: gate.
-    decision = gate(
-        question=question,
-        intent=intent,
-        validated=validated,
-        plan=draft.plan if draft else None,
-        scope=scope,
-        catalog=deps.catalog,
-        places=deps.places,
-        no_fit_reason=draft.no_fit.reason if draft and draft.no_fit else "",
-        no_fit_data_exists=draft.no_fit.data_exists if draft and draft.no_fit else None,
-        missing_concept=missing_concept,
-        answered_ambiguities=session.answered,
-        freeform_enabled=deps.freeform_enabled,
-    )
-    trace = trace.with_span("gate", f"rule {decision.rule} -> {decision.decision}")
+    planned = draft.plan if draft else None
+    validated, decision, trace = _validate_and_gate(planned, session.answered)
+
+    # The asker answered a clarification. Apply the choice they actually made.
+    #
+    # This is the one place `ClarifyOption.apply` is called. Before M17.1 it was
+    # called nowhere, and the API answered a clarification by re-asking the
+    # question with the ambiguity marked answered -- so the DEFAULT won and both
+    # options returned the same number. The option's own docstring warns against
+    # exactly that: "an option that was only prose would have to be re-planned
+    # after they answered, which is a second chance to pick something nobody
+    # chose."
+    if decision.decision == "CLARIFY" and chosen is not None and planned is not None:
+        picked = _picked_option(decision, chosen)
+        if picked is not None:
+            answered_now = frozenset({*session.answered, decision.ambiguity_key or "clarify"})
+            validated, decision, trace = _validate_and_gate(picked.apply(planned), answered_now)
+            trace = trace.with_note(f"clarified:{chosen.clarification_id}={chosen.option_id}")
 
     if decision.decision in ("DENY", "ABSTAIN", "CLARIFY"):
         return _refusal(decision, language, templates, question), trace

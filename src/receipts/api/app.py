@@ -27,7 +27,7 @@ from fastapi import APIRouter, FastAPI, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel
 
-from ..agent.orchestrator import FAILED_WITH
+from ..agent.orchestrator import FAILED_WITH, Chosen
 from ..agent.orchestrator import answer as run_answer
 from ..agent.session import Session
 from ..domain.types import Grain, QueryPlan, Status, WindowSpec
@@ -53,9 +53,19 @@ class AskBody(BaseModel):
 
 
 class ClarifyBody(BaseModel):
+    """Answering a clarification.
+
+    `question` is the ORIGINAL question, resent. The API keeps no session state,
+    so the alternative is storing the pending clarification server-side; resending
+    the asker's own sentence is the smaller change and keeps the route stateless.
+    `option_id` is matched against the options the gate derives on this run, so
+    nothing the client sends can become a plan change of its own.
+    """
+
     session_id: str
     clarification_id: str
     option_id: str
+    question: str
 
 
 class WhyBody(BaseModel):
@@ -176,16 +186,23 @@ def create_app(runtime: Runtime | None = None) -> FastAPI:
 
     @router.post("/clarify")
     def clarify(body: ClarifyBody, request: Request, stream: bool = True) -> Any:
+        """The asker's choice, applied to the plan (M17.1).
+
+        This route used to re-ask `body.option_id` as though it were the question
+        and mark the ambiguity answered. That let the DEFAULT win: both options of
+        a two-option clarification returned the same metric and the same number,
+        VERIFIED, with a receipt. The choice is now carried as an id and applied
+        by the orchestrator to the plan the gate was asking about.
+        """
         who = principal(request)
         rate_check(request, who.role)
-        # The stored question is re-asked with the ambiguity marked answered.
         events = list(
             _answer_events(
                 state,
                 who.role,
-                body.option_id,
+                body.question,
                 body.session_id,
-                answered={body.clarification_id},
+                chosen=Chosen(clarification_id=body.clarification_id, option_id=body.option_id),
             )
         )
         if stream:
@@ -367,7 +384,7 @@ def _answer_events(
     question: str,
     session_id: str,
     *,
-    answered: set[str] | None = None,
+    chosen: Chosen | None = None,
 ) -> Iterator[sse.Event]:
     """Run one question and emit the stream. Order is the contract."""
     scope = state.scope(role)
@@ -378,13 +395,9 @@ def _answer_events(
     budget = getattr(state.deps.llm, "budget", None)
     if budget is not None:
         budget.reset()
-    session = Session(
-        session_id=session_id,
-        role=role,
-        answered_clarifications=tuple(sorted(answered or ())),
-    )
+    session = Session(session_id=session_id, role=role)
     try:
-        result, trace = run_answer(question, session, scope, state.as_of, state.deps)
+        result, trace = run_answer(question, session, scope, state.as_of, state.deps, chosen=chosen)
     except Exception as exc:
         body = body_for(exc)
         state.audit.append(
