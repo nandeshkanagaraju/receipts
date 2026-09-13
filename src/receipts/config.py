@@ -158,6 +158,28 @@ class TestingSettings(Strict):
     suite_ceiling_seconds: int
 
 
+class Faults(Strict):
+    """The SDD §24 fault toggles. **Test-only, refused outside pytest.**
+
+    Every row of §24 needs a way to make the failure happen on purpose, and a
+    switch that turns off the primary model is a switch that can turn off the
+    primary model in production. So the loader refuses to build this object
+    unless pytest is running -- not "warns", not "logs": raises. A fault
+    injection facility that can be reached from a deployment is a fault.
+    """
+
+    model_primary_down: bool = False
+    model_secondary_down: bool = False
+    duckdb_down: bool = False
+    db_timeout: bool = False
+    bridge_down: bool = False
+    budget_exhausted: bool = False
+
+    @property
+    def any_active(self) -> bool:
+        return any(getattr(self, name) for name in type(self).model_fields)
+
+
 class Settings(Strict):
     as_of: date
     data: DataRange
@@ -232,6 +254,34 @@ def _read_yaml(path: Path) -> Any:
 
 def load_settings(path: Path | None = None) -> Settings:
     return Settings.model_validate(_read_yaml(path or CONFIG_DIR / "settings.yaml"))
+
+
+class FaultsOutsideTests(RuntimeError):
+    """Raised when a fault toggle is requested by a process that is not pytest."""
+
+
+def under_pytest() -> bool:
+    """True inside a pytest run. Read from the environment pytest itself sets.
+
+    `PYTEST_CURRENT_TEST` is set per test by pytest, and `PYTEST_VERSION` by
+    pytest 8 for the whole session. Neither is something a deployment sets by
+    accident, and both are absent from the Docker image.
+    """
+    return bool(os.environ.get("PYTEST_CURRENT_TEST") or os.environ.get("PYTEST_VERSION"))
+
+
+def load_faults(overrides: dict[str, bool] | None = None) -> Faults:
+    """The §24 toggles. Refuses outside pytest, with no quiet fallback.
+
+    Returning an all-false `Faults` outside pytest would be the friendly
+    version, and it is the wrong one: the caller asked to inject a fault and
+    would carry on believing it had. Failing loudly is how the ban stays real.
+    """
+    if not under_pytest():
+        raise FaultsOutsideTests(
+            "fault toggles are test-only (SDD §24) and this process is not pytest"
+        )
+    return Faults.model_validate(overrides or {})
 
 
 def load_thresholds(path: Path | None = None) -> Thresholds:

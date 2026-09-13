@@ -55,6 +55,43 @@ jobs:
         if: always()
         run: echo "types took $(( $(date +%s) - ${{ steps.start.outputs.t }} ))s"
 
+  images:
+    # SDD §28: the single multi-stage API image, with the web app inside it. No
+    # separate web image -- there is one deployable, and this job is what keeps
+    # that claim true rather than merely written down.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - id: start
+        run: echo "t=$(date +%s)" >> "$GITHUB_OUTPUT"
+      - uses: docker/setup-buildx-action@v3
+      - name: Build the API image (front end built from source inside it)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/Dockerfile
+          push: false
+          load: true
+          tags: receipts-api:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: It starts, serves the SPA, and the API is not shadowed by it
+        run: |
+          set -o pipefail
+          docker run -d --name receipts-ci -p 8000:8000 receipts-api:ci
+          for i in $(seq 1 40); do
+            if curl -fsS http://127.0.0.1:8000/healthz > /dev/null 2>&1; then break; fi
+            sleep 2
+          done
+          curl -fsS http://127.0.0.1:8000/healthz
+          curl -fsS http://127.0.0.1:8000/ | grep -q 'id="root"'
+          curl -fsS http://127.0.0.1:8000/api/v1/openapi.json > /dev/null
+          echo "image serves the SPA at / and the API under /api/v1"
+          docker rm -f receipts-ci
+      - name: Duration
+        if: always()
+        run: echo "images took $(( $(date +%s) - ${{ steps.start.outputs.t }} ))s"
+
   test:
     runs-on: ubuntu-latest
     # The artifact tests fail rather than skip when data/ is missing -- which is

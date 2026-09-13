@@ -50,6 +50,27 @@ class QuestionBudget:
                 f"output tokens {self.spent_out} exceed the per-question budget {self.tokens_out}"
             )
 
+    def check(self) -> None:
+        """Refuse before spending, when the allowance is ALREADY gone.
+
+        `add` can only notice a breach after the call it is pricing, because a
+        call's output length is not knowable in advance. What is knowable is
+        that the budget was blown by an earlier call -- and without this, every
+        request after the first breach still reached the provider and was still
+        billed, raising `BudgetExceeded` only on the way back. The budget capped
+        the answer and not the spend, which is half of what a budget is for.
+        """
+        if self.spent_in >= self.tokens_in:
+            raise BudgetExceeded(
+                f"input tokens {self.spent_in} have already reached the "
+                f"per-question budget {self.tokens_in}"
+            )
+        if self.spent_out >= self.tokens_out:
+            raise BudgetExceeded(
+                f"output tokens {self.spent_out} have already reached the "
+                f"per-question budget {self.tokens_out}"
+            )
+
     def reset(self) -> None:
         """A new question starts from zero. The allowance itself is unchanged."""
         self.spent_in = 0
@@ -74,6 +95,26 @@ class BudgetedLLM:
         self.model = getattr(inner, "model", "")
         self.questions = 0
 
+    @staticmethod
+    def _meter(result: Any) -> None:
+        """Report this call's usage to whoever is metering the question (§23).
+
+        Here rather than in the provider clients because every call goes through
+        this wrapper -- including replayed ones, which carry the usage that was
+        recorded. A meter fed only by live calls would report a replayed run as
+        free, and a replayed run is exactly what the eval is.
+        """
+        from ..observability.tracing import record_usage
+
+        usage = result.usage
+        model = getattr(result.provenance, "model", "") or ""
+        record_usage(
+            model=model,
+            input_tokens=usage.input_tokens,
+            output_tokens=usage.output_tokens,
+            cached=getattr(usage, "cached_input_tokens", 0),
+        )
+
     def new_question(self) -> None:
         """Start a new question's allowance. Called once per trial, by the caller.
 
@@ -88,13 +129,17 @@ class BudgetedLLM:
     def structured(
         self, *, prompt_id: str, messages: list[Msg], schema: dict[str, Any], max_tokens: int
     ) -> StructuredResult:
+        self.budget.check()
         result = self.inner.structured(
             prompt_id=prompt_id, messages=messages, schema=schema, max_tokens=max_tokens
         )
         self.budget.add(result.usage)
+        self._meter(result)
         return result
 
     def text(self, *, prompt_id: str, messages: list[Msg], max_tokens: int) -> TextResult:
+        self.budget.check()
         result = self.inner.text(prompt_id=prompt_id, messages=messages, max_tokens=max_tokens)
         self.budget.add(result.usage)
+        self._meter(result)
         return result

@@ -40,6 +40,7 @@ from ..domain.types import (
     Trace,
 )
 from ..llm.base import LLM
+from ..observability.tracing import mark_stage
 from ..safety.guard import allowlist_for_role, guard
 from ..semantic.catalog import Catalog
 from .charts import choose_chart
@@ -189,7 +190,40 @@ def answer(
     *,
     chosen: Chosen | None = None,
 ) -> tuple[Answer, Trace]:
-    """SDD §9, stages 1 through 11, in order.
+    """SDD §9, stages 1 through 11, in order, with the question's usage stamped on.
+
+    A thin wrapper around `_answer`, for one reason: SDD §23 requires tokens and
+    cost to be reported per question **in the trace**, and `_answer` returns from
+    a dozen places. Stamping at each of them is a dozen chances to forget one --
+    and the reason this is being added at all is that the three fields existed on
+    `Trace` from M0 and nothing ever wrote them (`docs/M2_NOTES.md` §11).
+
+    The meter is a context variable, so an exception on any path still leaves the
+    numbers readable to the caller.
+    """
+    from ..observability.tracing import metering
+
+    with metering() as meter:
+        result, trace = _answer(question, session, scope, as_of, deps, chosen=chosen)
+    return result, trace.model_copy(
+        update={
+            "tokens_in": meter.tokens_in,
+            "tokens_out": meter.tokens_out,
+            "cost_micro_usd": meter.cost_micro_usd,
+        }
+    )
+
+
+def _answer(
+    question: str,
+    session: Session,
+    scope: Scope,
+    as_of: date,
+    deps: Deps,
+    *,
+    chosen: Chosen | None = None,
+) -> tuple[Answer, Trace]:
+    """The pipeline itself.
 
     `chosen` is the option the asker took for a clarification this same run
     produces. It is keyword-only and defaults to None, so every existing caller
@@ -198,14 +232,14 @@ def answer(
     trace = Trace()
     language = _language(question)
     templates = load_templates(language)
-    trace = trace.with_span("language", language)
+    trace = mark_stage(trace, "language", language)
 
     # Stage 2: intent.
     try:
         intent_result = route_intent(question, deps.llm, previous_question=session.last_question)
         intent = intent_result.intent
         missing_concept = intent_result.missing_concept
-        trace = trace.with_span("intent", intent.value)
+        trace = mark_stage(trace, "intent", intent.value)
     except Exception as exc:
         return (
             Answer(
@@ -218,7 +252,7 @@ def answer(
             # message in the span. The API maps engine exceptions to typed HTTP
             # codes, and a stage that swallows one leaves the API with a string
             # to parse -- which is how "the model is down" becomes a 200.
-            trace.with_span("intent", str(exc)[:80], ok=False).with_note(
+            mark_stage(trace, "intent", str(exc)[:80], ok=False).with_note(
                 f"{FAILED_WITH}{type(exc).__name__}"
             ),
         )
@@ -229,7 +263,7 @@ def answer(
     slice_ = retrieve(
         question, deps.catalog, capabilities=capabilities, previous_metric=previous_metric
     )
-    trace = trace.with_span("retrieve", ", ".join(slice_.metric_names[:4]))
+    trace = mark_stage(trace, "retrieve", ", ".join(slice_.metric_names[:4]))
 
     # Stage 4: plan.
     draft: PlanDraft | None = None
@@ -244,9 +278,9 @@ def answer(
                 if intent_result.is_followup and session.last_resolved_plan
                 else None,
             )
-            trace = trace.with_span("plan", draft.plan.name if draft.plan else "no_fit")
+            trace = mark_stage(trace, "plan", draft.plan.name if draft.plan else "no_fit")
         except Exception as exc:
-            trace = trace.with_span("plan", str(exc)[:80], ok=False)
+            trace = mark_stage(trace, "plan", str(exc)[:80], ok=False)
             draft = None
 
     # Stages 5 and 6: validate, then gate. Run as a pair because answering a
@@ -270,7 +304,8 @@ def answer(
                 first_date=deps.first_date,
                 last_date=deps.last_date,
             )
-            spans = spans.with_span(
+            spans = mark_stage(
+                spans,
                 "validate",
                 "ok" if isinstance(checked, Validated) else ",".join(checked.codes),
                 ok=isinstance(checked, Validated),
@@ -292,7 +327,7 @@ def answer(
         return (
             checked,
             verdict,
-            spans.with_span("gate", f"rule {verdict.rule} -> {verdict.decision}"),
+            mark_stage(spans, "gate", f"rule {verdict.rule} -> {verdict.decision}"),
         )
 
     planned = draft.plan if draft else None
@@ -330,7 +365,7 @@ def answer(
     allowlist = allowlist_for_role(scope.role, deps.catalog, deps.roles)
     checked = guard(compiled.sql, deps.adapter.dialect, allowlist, row_limit=deps.row_limit)
     if not checked.ok:
-        trace = trace.with_span("guard", f"{checked.reason}: {checked.detail}", ok=False)
+        trace = mark_stage(trace, "guard", f"{checked.reason}: {checked.detail}", ok=False)
         return (
             Answer(
                 status=Status.ERROR,
@@ -340,7 +375,7 @@ def answer(
             ),
             trace,
         )
-    trace = trace.with_span("guard", "ok")
+    trace = mark_stage(trace, "guard", "ok")
 
     metric = deps.catalog.metric(resolved.plan.name)
     table = deps.adapter.run(
@@ -350,7 +385,7 @@ def answer(
         money=metric.money,
         currency=resolved.reporting_currency,
     )
-    trace = trace.with_span("execute", f"{len(table.rows)} rows")
+    trace = mark_stage(trace, "execute", f"{len(table.rows)} rows")
 
     narration, trace = _narrate(
         question,
@@ -383,7 +418,7 @@ def answer(
             chart=choose_chart(resolved, table),
             receipt=receipt,
         ),
-        trace.with_span("receipt", receipt.receipt_id),
+        mark_stage(trace, "receipt", receipt.receipt_id),
     )
 
 
@@ -405,7 +440,7 @@ def _narrate(
             question, resolved, table, language, deps.llm, metric_label=metric_label
         )
     except Exception as exc:
-        trace = trace.with_span("compose", str(exc)[:80], ok=False)
+        trace = mark_stage(trace, "compose", str(exc)[:80], ok=False)
         return fallback, trace.with_note("composer_unavailable")
 
     assert narration is not None
@@ -424,9 +459,9 @@ def _narrate(
         # Recorded in the trace, never in the answer (D12). An answer that said
         # "this is a template" would vary between runs; the operator needs to
         # know, the asker does not.
-        trace = trace.with_span("ground", f"fallback: {result.unmatched}", ok=False)
+        trace = mark_stage(trace, "ground", f"fallback: {result.unmatched}", ok=False)
         return result.narration, trace.with_note("grounding_fallback")
-    return result.narration, trace.with_span("ground", f"{len(result.matched)} numbers checked")
+    return result.narration, mark_stage(trace, "ground", f"{len(result.matched)} numbers checked")
 
 
 def _template_for(
@@ -511,16 +546,16 @@ def _freeform(
             max_tokens=deps.freeform_max_tokens,
         )
     except Exception as exc:
-        trace = trace.with_span("freeform", str(exc)[:80], ok=False)
+        trace = mark_stage(trace, "freeform", str(exc)[:80], ok=False)
         return _freeform_abstain(language, templates, "no free-form query"), trace
 
     if not draft.wrote_sql:
         # The model saying "these tables do not hold that" answers the question of
         # whether we can answer, and answers it better than SQL over a column it
         # wished existed.
-        trace = trace.with_span("freeform", f"no sql: {draft.why_not[:60]}", ok=False)
+        trace = mark_stage(trace, "freeform", f"no sql: {draft.why_not[:60]}", ok=False)
         return _freeform_abstain(language, templates, draft.why_not), trace
-    trace = trace.with_span("freeform", f"{len(draft.sql)} chars of sql")
+    trace = mark_stage(trace, "freeform", f"{len(draft.sql)} chars of sql")
 
     try:
         checked, rewrite = rewrite_and_guard(
@@ -532,14 +567,14 @@ def _freeform(
             row_limit=deps.row_limit,
         )
     except Exception as exc:
-        trace = trace.with_span("rewrite", str(exc)[:80], ok=False)
+        trace = mark_stage(trace, "rewrite", str(exc)[:80], ok=False)
         return _freeform_abstain(language, templates, "the query could not be scoped"), trace
 
     if not checked.ok:
-        trace = trace.with_span("guard", f"{checked.reason}: {checked.detail}"[:90], ok=False)
+        trace = mark_stage(trace, "guard", f"{checked.reason}: {checked.detail}"[:90], ok=False)
         return _freeform_abstain(language, templates, "that query is not one I may run"), trace
-    trace = trace.with_span("rewrite", f"{len(rewrite.rewritten) if rewrite else 0} refs scoped")
-    trace = trace.with_span("guard", "ok (second pass)")
+    trace = mark_stage(trace, "rewrite", f"{len(rewrite.rewritten) if rewrite else 0} refs scoped")
+    trace = mark_stage(trace, "guard", "ok (second pass)")
 
     money = draft.unit not in ("count", "ratio", "other")
     compiled = CompiledQuery(
@@ -554,9 +589,9 @@ def _freeform(
             currency=draft.unit if money else None,
         )
     except Exception as exc:
-        trace = trace.with_span("execute", str(exc)[:80], ok=False)
+        trace = mark_stage(trace, "execute", str(exc)[:80], ok=False)
         return _freeform_abstain(language, templates, "the query could not be run"), trace
-    trace = trace.with_span("execute", f"{len(table.rows)} rows")
+    trace = mark_stage(trace, "execute", f"{len(table.rows)} rows")
 
     if table.rows and not any(column.kind == "value" for column in table.columns):
         # The model did not follow the naming contract, so nothing downstream can
@@ -568,7 +603,7 @@ def _freeform(
         # this path had no such contract, every free-form column came back as a
         # dimension, and all twelve free-form answers on dev were filed as wrong
         # while holding the right number.
-        trace = trace.with_span("freeform", "no value column in the result", ok=False)
+        trace = mark_stage(trace, "freeform", "no value column in the result", ok=False)
         return _freeform_abstain(language, templates, "the result could not be read"), trace
 
     # D13 still applies. The narration is built from the table so it grounds by
@@ -583,10 +618,10 @@ def _freeform(
         enabled=deps.grounding_enabled,
     )
     if grounded.fell_back:
-        trace = trace.with_span("ground", f"fallback: {grounded.unmatched}", ok=False)
+        trace = mark_stage(trace, "ground", f"fallback: {grounded.unmatched}", ok=False)
         trace = trace.with_note("grounding_fallback")
     else:
-        trace = trace.with_span("ground", f"{len(grounded.matched)} numbers checked")
+        trace = mark_stage(trace, "ground", f"{len(grounded.matched)} numbers checked")
 
     receipt = build_receipt(
         status=Status.UNVERIFIED,

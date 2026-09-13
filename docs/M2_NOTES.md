@@ -761,6 +761,63 @@ Two supporting facts, both measured on dev in M9 and M10:
   clarification question itself would confirm that Dubai exists and has data —
   the refusal would leak the thing it refuses.
 
+### M21 — two M17 findings for the README: a silent wrong answer in visual form
+
+Both belong beside the four M6b findings, and the first is the more important
+thing this project found about itself all round.
+
+**1. A chart that made a 12% difference look like a landslide.**
+
+The top-5 UK showrooms by units sold are 1107, 983, 913, 746, 742. Recharts fits
+a bar chart's y-axis to the data unless told otherwise, so the axis started at
+**900** and the first bar rendered several times the height of the last. The
+numbers printed beside it were correct. The table view was correct. The receipt
+was correct, and disclosed every default. **Every number on the page was right
+and the picture was wrong.**
+
+That is the project's own thesis arriving in a form it had not considered. The
+whole argument is that a plausible wrong answer is worse than an error because
+nothing raises and the reader is reassured — and here the plausible wrong answer
+was not a number at all. A bar chart is read by area before it is read by label,
+so the axis *is* an assertion about magnitude, and an axis nobody chose is an
+assertion nobody checked. `test_every_resolved_decision_field_is_read_somewhere`
+cannot see it. Neither can the grounding check (D13), which asserts that every
+number in the narration appears in the result table — and every number did.
+
+**It was caught by looking at a screenshot.** Not by a test, not by review, and
+not by any guard in a suite that by then had 1,237 of them. The screenshot was
+only taken because BUILD_PROMPTS asks for one and the VERIFY step says to use the
+thing as each role for ten minutes. The README should say that plainly: the
+discipline that caught the visual silent-wrong was *looking at the product*, and
+it is the one discipline a test suite cannot contain.
+
+The fix is one line — bars start at zero — and the rule behind it generalises:
+where a rendering decision carries meaning, the default is a decision nobody
+made.
+
+**2. The role switcher had no accessible name below 640px.**
+
+Its label was `hidden sm:inline`. `display: none` removes an element from the
+accessibility tree entirely, so on any screen under 640px the `<select>` that
+switches ROLE — the control a reviewer reaches for first, and the one that
+demonstrates the scoping argument — had no accessible name at all. A screen
+reader announced a combo box with no idea what it selected.
+
+Two things make it worth the README rather than only a changelog line:
+
+- **It was invisible at 1280px and critical at 375px.** The same markup, the
+  same component, the same test suite: the violation existed only at the width
+  nobody develops at. Running axe at one viewport would have passed it.
+- **It was in the control that carries the product's central claim.** RBAC by
+  compile-time predicate is the architectural argument; the role switcher is how
+  a reviewer sees it in under a minute. The accessibility failure landed exactly
+  there, by coincidence, and the coincidence is instructive: the quality floor is
+  not a finishing pass over a finished product, because the thing it breaks is
+  not correlated with what is unimportant.
+
+Both were found by mechanisms BUILD_PROMPTS specified and neither by anything
+the author thought to check.
+
 ### M21 — the five compiler defects, and the shape they shared
 
 For the README at G5, beside the baseline findings. This is the other half of the

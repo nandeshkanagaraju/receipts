@@ -304,14 +304,21 @@ def test_a_clarified_plan_still_faces_the_scope_rule(client) -> None:
 
     from receipts.agent import orchestrator
 
-    source = inspect.getsource(orchestrator.answer)
+    # `answer` is a thin wrapper that stamps usage onto the trace (M20); the
+    # pipeline is `_answer`. Both are checked, so neither a renamed wrapper nor
+    # a moved pipeline can leave this guard inspecting the wrong function --
+    # which is exactly what happened when the wrapper was introduced.
+    wrapper = inspect.getsource(orchestrator.answer)
+    assert "_answer(" in wrapper, "answer() no longer delegates to the pipeline"
+
+    source = inspect.getsource(orchestrator._answer)
     tree = ast.parse(ast.unparse(ast.parse(source)))
     calls = [
         node.func.id
         for node in ast.walk(tree)
         if isinstance(node, ast.Call) and isinstance(node.func, ast.Name)
     ]
-    print(f"\n_validate_and_gate called {calls.count('_validate_and_gate')} times in answer()")
+    print(f"\n_validate_and_gate called {calls.count('_validate_and_gate')} times in _answer()")
     assert calls.count("_validate_and_gate") == 2, (
         "the clarified plan must be validated and gated again, not spliced in"
     )

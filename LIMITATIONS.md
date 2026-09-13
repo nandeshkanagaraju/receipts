@@ -1513,3 +1513,40 @@ edited to make them agree — the disagreement is real, and this is where it is
 recorded.
 
 This is the only place the front end departs from the §22 table.
+
+## M17: plan reuse across turns is specified and not demonstrated through the UI
+
+SDD §17 specifies session follow-ups: the session holds the previous
+`ResolvedPlan` and a follow-up refines it rather than re-planning from scratch.
+PDD J10 is the journey — *"now split by city"* — and it is listed as one of the
+ten that must work end to end.
+
+**The engine half is built.** `SessionStore` exists, holds `last_resolved_plan`
+and `last_question`, and the planner takes a `previous_plan` when the intent
+router marks a question a follow-up. Unit tests cover it.
+
+**The UI half is not, and cannot be demonstrated here, for two independent
+reasons:**
+
+1. **The API keeps no session state.** `_answer_events` constructs a fresh
+   `Session(session_id=..., role=...)` per request and never reads or writes
+   `SessionStore`. So `last_resolved_plan` is always `None` at the API boundary,
+   and a second question is planned from scratch however it is phrased. The
+   `session_id` the client sends is carried into the audit log and nothing else.
+2. **No follow-up question exists in the dev set, so no recording exists.** The
+   replay key hashes the question text (ADR-005), and the eval asks each question
+   independently — there is no turn-two question anywhere in `dev.jsonl`. Asking
+   *"Now split by city"* returns `MODEL_UNAVAILABLE`, because nothing ever
+   recorded a response for that text. Fixing (1) alone would not produce a
+   demonstrable J10; it would need a live model call, which the demo does not
+   make.
+
+**What the E2E suite actually covers under the name J10** is a by-dimension
+breakdown — *"Card success rate by issuing bank in the UK last month, top 10"* —
+rendering as a chart with its table view and more than one row. That is a real
+assertion about breakdowns and charts. **It is not an assertion about plan
+reuse**, and the journey table should not be read as though it were.
+
+Stated here rather than adjusted in the pass count, because a journey listed as
+covered and half-covered is exactly the shape of claim this project exists to
+avoid making.

@@ -1,0 +1,47 @@
+# Receipts — the demo deployment (ADR-022).
+#
+# One container: the API, the built SPA, and the MCP endpoint. The warehouse is
+# generated, not baked in, so it lives on a volume and is built once on the
+# machine (`make data` inside it) or copied up.
+#
+# RECEIPTS_LLM_MODE=replay is deliberate and is the thing to read before
+# concluding the demo is cheating: the model responses are the ones recorded
+# when the dev eval ran, committed to the repository, and served from disk. The
+# demo therefore costs nothing per question and answers the recorded dev
+# questions exactly as measured. See LIMITATIONS.
+
+app = "receipts-kestrel"
+primary_region = "sin"
+
+[build]
+  dockerfile = "docker/Dockerfile"
+
+[env]
+  RECEIPTS_LLM_MODE = "replay"
+  DEMO_MODE = "true"
+  OTEL_TRACES_EXPORTER = "console"
+  PORT = "8000"
+
+[http_service]
+  internal_port = 8000
+  force_https = true
+  auto_stop_machines = "suspend"
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ["app"]
+
+  [http_service.checks]
+    [http_service.checks.health]
+      grace_period = "20s"
+      interval = "30s"
+      method = "GET"
+      timeout = "5s"
+      path = "/healthz"
+
+[[mounts]]
+  source = "receipts_data"
+  destination = "/app/data"
+
+[[vm]]
+  size = "shared-cpu-2x"
+  memory = "2gb"

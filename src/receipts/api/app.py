@@ -32,6 +32,7 @@ from ..agent.orchestrator import answer as run_answer
 from ..agent.session import Session
 from ..domain.types import Grain, QueryPlan, Status, WindowSpec
 from ..observability.audit import AuditEvent
+from ..observability.spend import SpendCapReached
 from . import sse
 from .auth import AuthError, bearer_token, issue, principal_from
 from .deps import REPO, Runtime, build_runtime
@@ -150,6 +151,25 @@ def create_app(runtime: Runtime | None = None) -> FastAPI:
         except AuthError as exc:
             raise ApiError(ErrorBody("AUTH_REQUIRED", str(exc), retryable=False), 401) from exc
 
+    def spend_check() -> None:
+        """The daily cap (SDD §28). Checked before the question, not after.
+
+        A demo that answers until the card declines is not a demo with a cap.
+        """
+        try:
+            state.spend.check()
+        except SpendCapReached as exc:
+            raise ApiError(
+                ErrorBody(
+                    "BUDGET_EXCEEDED",
+                    "This demo has reached its spending limit for today. "
+                    "The catalog still runs saved metrics with no model in the path.",
+                    retryable=False,
+                    extra={"catalog_mode": True},
+                ),
+                429,
+            ) from exc
+
     def rate_check(request: Request, role: str) -> None:
         now = time.time()
         client = request.client.host if request.client else "unknown"
@@ -170,6 +190,17 @@ def create_app(runtime: Runtime | None = None) -> FastAPI:
     # ----------------------------------------------------------------- #
     @router.post("/auth/demo-login")
     def demo_login(body: LoginBody) -> dict[str, Any]:
+        """One click to become a role (PDD §8.1) -- and only in demo mode.
+
+        This route mints a token for any named role with no credential at all,
+        which is exactly right for a demo a reviewer opens and exactly wrong
+        anywhere else. `DEMO_MODE` has been in settings since M0 and was read by
+        nothing, so the route was open unconditionally.
+        """
+        if not state.demo_mode:
+            raise ApiError(
+                ErrorBody("FORBIDDEN", "demo login is disabled on this deployment", False), 403
+            )
         if body.role not in state.roles:
             raise ApiError(ErrorBody("FORBIDDEN", "unknown role", retryable=False), 403)
         return {"token": issue(body.role, state.jwt_secret), "role": body.role}
@@ -178,6 +209,7 @@ def create_app(runtime: Runtime | None = None) -> FastAPI:
     def ask(body: AskBody, request: Request, stream: bool = True) -> Any:
         who = principal(request)
         rate_check(request, who.role)
+        spend_check()
         session_id = body.session_id or new_session_id()
         events = list(_answer_events(state, who.role, body.question, session_id))
         if stream:
@@ -196,6 +228,7 @@ def create_app(runtime: Runtime | None = None) -> FastAPI:
         """
         who = principal(request)
         rate_check(request, who.role)
+        spend_check()
         events = list(
             _answer_events(
                 state,
@@ -343,7 +376,13 @@ def create_app(runtime: Runtime | None = None) -> FastAPI:
         ready = checks["db"] == "ok"
         return JSONResponse(
             status_code=200 if ready else 503,
-            content={"ready": ready, "checks": checks, "catalog_mode": state.catalog_mode},
+            content={
+                "ready": ready,
+                "checks": checks,
+                "catalog_mode": state.catalog_mode,
+                "demo_mode": state.demo_mode,
+                "spend_remaining_micro_usd": state.spend.remaining(),
+            },
         )
 
     app.include_router(router)
@@ -425,6 +464,11 @@ def _answer_events(
         yield sse.error_event(body.payload())
         yield sse.done(None, trace_id)
         return
+
+    # Charge the day's allowance with what this question actually cost (§23).
+    # After the fact, because a question's cost is not knowable before it runs;
+    # the check that refuses to START is what bounds the total.
+    state.spend.charge(trace.cost_micro_usd)
 
     for span in trace.spans:
         yield sse.step(span.name, "start")

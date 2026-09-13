@@ -9,6 +9,39 @@
 # MySQL is cut (PDD §13, cut order item 1) and deliberately absent.
 
 services:
+  # The one deployable (SDD §22, §28): the API, the built SPA at /, and the MCP
+  # endpoint, in one container. `data/` is mounted rather than baked in --
+  # generated, ~1 GB, and never committed -- and mounted READ-WRITE because the
+  # audit log is append-only and lives there. A read-only mount fails the first
+  # question, which is how that was found.
+  api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: receipts-api
+    environment:
+      RECEIPTS_LLM_MODE: replay
+      DEMO_MODE: "true"
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-}
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../data:/app/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://127.0.0.1:8000/healthz')"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+
+  # Jaeger, under the `obs` profile only (SDD §23). Grafana is cut, PDD §13.
+  jaeger:
+    image: jaegertracing/all-in-one:1.60
+    container_name: receipts-jaeger
+    profiles: ["obs"]
+    ports:
+      - "16686:16686"
+      - "4318:4318"
+
   postgres:
     image: postgres:16-alpine
     container_name: receipts-postgres

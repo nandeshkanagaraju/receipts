@@ -13,7 +13,7 @@ RUFF    := $(if $(VENV),$(VENV)/ruff,ruff)
 MYPY    := $(if $(VENV),$(VENV)/mypy,mypy)
 SET     ?= dev
 
-.PHONY: setup data test eval eval-holdout lint types up bench freeze-check freeze-questions freeze-gen seed-check freeze-translations double-compute
+.PHONY: setup data test eval eval-holdout lint types up up-obs deploy web web-e2e bench freeze-check freeze-questions freeze-gen seed-check freeze-translations double-compute
 
 # --- implemented -------------------------------------------------------------
 
@@ -104,11 +104,18 @@ web:                     ## Build the front end into web/dist (SDD §22).
 web-e2e:                 ## Playwright journeys against the API in replay mode.
 	cd web && npx playwright test
 
-up:
-	$(call NOT_BUILT,up,M20 — deploy/compose)
+up:                      ## Build and run the whole stack (SDD §28). Ctrl-C to stop.
+	docker compose -f docker/compose.yaml up --build
 
-bench:
-	$(call NOT_BUILT,bench,M20 — benchmark)
+up-obs:                  ## Same, plus Jaeger on :16686 (SDD §23 `obs` profile).
+	OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318 \
+	  docker compose -f docker/compose.yaml --profile obs up --build
+
+deploy:                  ## Deploy the demo to Fly (ADR-022). Needs `flyctl auth login`.
+	flyctl deploy --config fly.toml
+
+bench:                   ## p50/p95 per stage and cost per 1,000 questions (SDD §23).
+	$(PY) -m scripts.bench --mode $${MODE:-replay} --n $${N:-30}
 
 up-db:                   ## Start Postgres and load the 90-day overlap (SDD §5.3).
 	docker compose -f docker/compose.yaml up -d --wait

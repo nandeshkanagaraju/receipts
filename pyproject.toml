@@ -52,6 +52,7 @@ where = ["src"]
 testpaths = [
   "tests/unit", "tests/charter", "tests/injection",
   "tests/integration", "tests/property", "tests/e2e", "tests/api", "tests/mcp",
+  "tests/reliability",
 ]
 pythonpath = ["src", "."]
 addopts = "-q --strict-markers --strict-config"

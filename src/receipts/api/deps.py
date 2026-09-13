@@ -16,6 +16,7 @@ from typing import Any
 from ..agent.orchestrator import Deps
 from ..domain.types import Scope
 from ..observability.audit import AuditLog
+from ..observability.spend import DailySpend
 from .auth import load_roles, scope_for_role
 from .ratelimit import RateLimiter
 
@@ -37,9 +38,11 @@ class Runtime:
     places: dict[str, tuple[str, ...]]
     audit: AuditLog
     limiter: RateLimiter
+    spend: DailySpend
     as_of: date
     jwt_secret: str
     catalog_mode: bool = False
+    demo_mode: bool = True
     _scopes: dict[str, Scope] = field(default_factory=dict)
 
     def scope(self, role: str) -> Scope:
@@ -52,6 +55,18 @@ class Runtime:
         if role not in self._scopes:
             self._scopes[role] = scope_for_role(role, self.roles, self.places)
         return self._scopes[role]
+
+
+def _demo_mode(default: bool) -> bool:
+    """`DEMO_MODE` from the environment, else the settings value.
+
+    Anything other than a recognised truthy string is false: a deployment that
+    typo'd the variable gets the locked-down behaviour, not the open one.
+    """
+    raw = os.environ.get("DEMO_MODE")
+    if raw is None:
+        return default
+    return raw.strip().lower() in {"1", "true", "yes", "on"}
 
 
 def build_runtime(*, audit_path: Path | None = None, llm: Any = None) -> Runtime:
@@ -103,6 +118,12 @@ def build_runtime(*, audit_path: Path | None = None, llm: Any = None) -> Runtime
         places=places,
         audit=AuditLog(audit_path or REPO / "data" / "audit.sqlite"),
         limiter=RateLimiter(per_minute=settings.demo.questions_per_minute),
+        spend=DailySpend(cap_micro_usd=settings.demo.daily_spend_cap_micro_usd),
+        # SDD §28: DEMO_MODE enables demo login, the rate limit and the
+        # daily cap. The env var wins over the file so one image serves
+        # both a demo and a real deployment; `settings.demo.enabled` is
+        # the default and, until M20, was read by nothing at all.
+        demo_mode=_demo_mode(settings.demo.enabled),
         as_of=settings.as_of,
         jwt_secret=os.environ.get("RECEIPTS_JWT_SECRET", DEMO_SECRET),
     )
