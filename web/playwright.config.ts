@@ -13,7 +13,12 @@ const PYTHON = existsSync("../.venv/bin/python") ? "../.venv/bin/python" : "pyth
  *  DuckDB file. */
 export default defineConfig({
   testDir: "./e2e",
-  timeout: 45_000,
+  // Above the rate-limit wait, not below it. The suite is one browser asking as
+  // one role and genuinely exceeds the demo's 20 questions a minute, so `ask()`
+  // waits out the window the API names -- up to 61s. With a 45s test timeout
+  // that wait could not finish, and the retry that was supposed to make the
+  // suite deterministic was itself the flake.
+  timeout: 150_000,
   expect: { timeout: 10_000 },
   fullyParallel: false,
   workers: 1, // The demo rate limit is 20 questions a minute, per role AND per IP.
