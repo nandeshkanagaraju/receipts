@@ -1,0 +1,32 @@
+# Demo-only Tanglish (ta-Latn) variants of the nine example questions.
+#
+# **These are NOT part of the frozen question set.** `eval/questions/` is frozen
+# at `questions-frozen` and `dev.jsonl` carries only en, ta and hi. These nine
+# live here instead, so the demo can offer Tanglish without a reopen tag on a
+# frozen corpus.
+#
+# They are demo examples, not measured rows. Nothing scores them and no reported
+# number depends on them. The 40 ta-Latn rows in `eval.jsonl` and the rest in the
+# holdout are the measured ones.
+#
+# provenance: human — hand-written by the repository author, in the same register
+# as the 55 frozen ta-Latn rows, business terms kept in English as those rows do.
+# Applied verbatim: no cleanup, no normalising, no spelling changes.
+#
+# Every one was checked against its English with `scripts/anchors.py` before
+# recording: same place, currency, number and window. Nine of nine clean. That
+# guard exists because fifteen holdout Tanglish variants were once merged with an
+# off-by-one alignment, every row individually well-formed.
+provenance: human
+author: repository author
+language: ta-Latn
+variants:
+  DV-001: nethu Chennai-la namma UPI success rate evlo?
+  DV-002: nethu Tamil Nadu full-ah namma ethana orders eduthom?
+  DV-006: indha month Tamil Nadu-la namma refund rate evlo?
+  DV-003: last month ella countries-layum serthu total captured GMV evlo, US dollars-la?
+  DV-026: August mudivula innum unsettled-ah irundha captured money evlo?
+  DV-008: last month India-la captured value-la EMI-la irundha share evlo?
+  DV-004: last week UK-la namma actually collect panna money evlo?
+  DV-007: last month UK-la units sold-la top 5 showrooms edhu?
+  DV-024: last month UK-la namma average order value evlo?

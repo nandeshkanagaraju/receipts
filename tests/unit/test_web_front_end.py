@@ -72,30 +72,113 @@ def test_mono_is_used_only_inside_the_receipt() -> None:
     assert offenders == [], f"Plex Mono outside the receipt: {offenders}"
 
 
-def test_every_example_question_is_one_the_demo_can_actually_answer() -> None:
-    """The replay key hashes the question text (ADR-005, SDD §16).
+def test_every_example_question_actually_answers(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Ask every example, for every role and language, and require an answer.
 
-    An example that is not in the recorded dev set returns 503, so the demo
-    would fail on its own suggestions. This is why `examples.ts` is generated.
+    This replaced a membership check — "is this string in dev.jsonl" — which was
+    a proxy for the real property and stopped being a good one the moment nine
+    Tanglish examples were added from outside the frozen question set. The real
+    property is that the demo can answer what it offers, so the test asks.
+
+    Replay, so no network and no cost. `RECEIPTS_QPM` is raised because this is
+    one client asking three dozen questions in a second and the demo's own limit
+    is twenty a minute; the limiter has its own tests.
     """
+    import json
+
+    monkeypatch.setenv("RECEIPTS_LLM_MODE", "replay")
+    monkeypatch.setenv("RECEIPTS_QPM", "10000")
+    from fastapi.testclient import TestClient
+
+    from receipts.api.app import create_app
+
     source = (WEB / "src" / "examples.ts").read_text(encoding="utf-8")
     payload = json.loads(source[source.index("{") : source.rindex("}") + 1])
 
-    recorded: set[str] = set()
-    questions = (REPO / "eval" / "questions" / "dev.jsonl").read_text(encoding="utf-8")
-    for line in questions.splitlines():
-        recorded.update(json.loads(line)["variants"].values())
+    client = TestClient(create_app())
+    failures: list[str] = []
+    asked = 0
+    for role, by_language in sorted(payload.items()):
+        token = client.post("/api/v1/auth/demo-login", json={"role": role}).json()["token"]
+        headers = {"authorization": f"Bearer {token}"}
+        for language, questions in sorted(by_language.items()):
+            for question in questions:
+                asked += 1
+                body = client.post(
+                    "/api/v1/ask?stream=false", json={"question": question}, headers=headers
+                ).json()
+                status = body.get("status")
+                if status is None or status == "ERROR":
+                    failures.append(
+                        f"{role}/{language}: {question[:48]} -> {body.get('code', status)}"
+                    )
+    print(f"\nasked {asked} example questions across all roles and languages")
+    assert failures == [], "examples the demo cannot answer:\n" + "\n".join(failures)
 
-    missing = [
-        question
-        for role in payload.values()
-        for questions in role.values()
-        for question in questions
-        if question not in recorded
+
+def test_the_tanglish_examples_are_declared_outside_the_frozen_set() -> None:
+    """`dev.jsonl` is frozen and has no ta-Latn; the nine live beside it.
+
+    Asserted so the arrangement cannot drift into the frozen corpus by accident,
+    and so the provenance claim in LIMITATIONS has something enforcing it.
+    """
+    import json
+
+    import yaml
+
+    extra = yaml.safe_load((REPO / "config" / "demo_ta_latn.yaml").read_text(encoding="utf-8"))
+    assert extra["provenance"] == "human"
+    assert extra["language"] == "ta-Latn"
+
+    dev = [
+        json.loads(line)
+        for line in (REPO / "eval" / "questions" / "dev.jsonl").read_text().splitlines()
     ]
-    total = sum(len(q) for role in payload.values() for q in role.values())
-    print(f"\n{total} example questions, all drawn from the recorded dev set")
-    assert missing == [], f"examples the demo cannot answer: {missing}"
+    in_frozen = {lang for row in dev for lang, v in row["variants"].items() if (v or "").strip()}
+    print(f"\ndev.jsonl languages: {sorted(in_frozen)}")
+    print(f"demo-only ta-Latn variants: {len(extra['variants'])}")
+    assert "ta-Latn" not in in_frozen, (
+        "dev.jsonl has gained ta-Latn; the frozen question set was edited"
+    )
+
+    source = (WEB / "src" / "examples.ts").read_text(encoding="utf-8")
+    payload = json.loads(source[source.index("{") : source.rindex("}") + 1])
+    offered = {q for role in payload.values() for q in role.get("ta-Latn", [])}
+    assert offered == set(extra["variants"].values()), (
+        "the Tanglish examples shown are not the ones declared in config/demo_ta_latn.yaml"
+    )
+
+
+def test_the_tanglish_variants_ask_their_english_question() -> None:
+    """The anchor guard, run in the always-on suite rather than only by hand.
+
+    Fifteen holdout Tanglish variants were once merged with an off-by-one
+    alignment: every row well-formed, every count right, and every row asking
+    the previous question's question. Nine is few enough to check by eye and
+    that is exactly the size at which nobody does.
+    """
+    import json
+    import sys
+
+    import yaml
+
+    sys.path.insert(0, str(REPO / "scripts"))
+    from anchors import drift
+
+    extra = yaml.safe_load((REPO / "config" / "demo_ta_latn.yaml").read_text(encoding="utf-8"))
+    rows = {
+        json.loads(line)["qid"]: json.loads(line)
+        for line in (REPO / "eval" / "questions" / "dev.jsonl").read_text().splitlines()
+    }
+    problems: dict[str, object] = {}
+    for qid, text in extra["variants"].items():
+        row = dict(rows[qid])
+        row["variants"] = {**row["variants"], "ta-Latn": text}
+        found = drift(row).get("ta-Latn")
+        if found:
+            problems[qid] = found
+    print(f"\nanchor check: {len(extra['variants'])} Tanglish variants, {len(problems)} adrift")
+    assert problems == {}, problems
 
 
 def test_every_role_has_examples_in_every_offered_language() -> None:

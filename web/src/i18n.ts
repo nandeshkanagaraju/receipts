@@ -286,11 +286,27 @@ const HI: Copy = {
   runIt: "चलाएँ",
 };
 
-const COPY: Record<string, Copy> = { en: EN, ta: TA, hi: HI };
+// `ta-Latn` deliberately maps to the ENGLISH chrome. Tanglish is code-mixed
+// with English already, so English labels around Tanglish examples read as one
+// register; Tamil-script labels around Latin-script examples read as two. There
+// is no Tanglish chrome to write until someone writes it.
+const COPY: Record<string, Copy> = { en: EN, ta: TA, hi: HI, "ta-Latn": EN };
 
 export function copyFor(language: Lang | string): Copy {
   return COPY[language] ?? EN;
 }
 
-export const UI_LANGS = ["en", "ta", "hi"] as const;
-export const LANG_LABEL: Record<string, string> = { en: "EN", ta: "த", hi: "हि" };
+// `ta-Latn` is offered because it WORKS, not because the engine supports it:
+// the nine demo examples have hand-written Tanglish forms and recordings to
+// match. A toggle option with no answerable question behind it would render the
+// chrome in a language and 503 on every example, which is a worse disclosure
+// than no option at all.
+export const UI_LANGS = ["en", "ta", "hi", "ta-Latn"] as const;
+export const LANG_LABEL: Record<string, string> = {
+  en: "EN",
+  ta: "த",
+  hi: "हि",
+  // Tanglish is Tamil written in Latin script and mixed with English, so it is
+  // labelled in the script it is written in.
+  "ta-Latn": "Tanglish",
+};

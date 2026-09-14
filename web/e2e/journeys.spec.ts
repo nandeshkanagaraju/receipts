@@ -421,6 +421,46 @@ test.describe("a first-time visitor is never at a dead end", () => {
     await expect(page.getByTestId("conversation")).toContainText("UPI");
   });
 
+  test("Tanglish is a working option, not chrome", async ({ page }) => {
+    // The point of the round: a toggle entry that changes the label and then
+    // 503s on every example is a worse disclosure than no entry at all. So the
+    // test clicks it, reads an example, asks it, and requires a real answer.
+    await open(page, "rm_tamil_nadu");
+    await page.getByTestId("lang-ta-Latn").click();
+
+    const examples = page.getByTestId("example-question");
+    await expect(examples.first()).toBeVisible();
+    const first = (await examples.first().innerText()).trim();
+    console.log(`Tanglish example: ${first}`);
+    // Latin script, and the business terms kept in English as the frozen rows do.
+    expect(first).toMatch(/^[\x00-\x7F\s]+$/);
+    expect(first.toLowerCase()).toContain("evlo");
+
+    await examples.first().click();
+    await expect(page.getByTestId("answer-canvas")).toHaveAttribute("data-status", "VERIFIED", {
+      timeout: 40_000,
+    });
+    await expect(page.getByTestId("receipt-card")).toBeVisible();
+
+    // Answered IN Tanglish: Latin script, not Tamil script, and not English
+    // boilerplate either.
+    const narration = await page.getByTestId("narration").innerText();
+    console.log(`Tanglish answer: ${narration.slice(0, 70)}`);
+    expect(narration).not.toMatch(/[஀-௿]/);
+    expect(narration.toLowerCase()).toMatch(/nethu|chennai/);
+  });
+
+  test("every language the toggle offers has examples behind it", async ({ page }) => {
+    // The guard for the class: an option is only offered where it can work.
+    await open(page, "store_ops_uk");
+    for (const code of ["en", "ta", "hi", "ta-Latn"]) {
+      await page.getByTestId(`lang-${code}`).click();
+      const count = await page.getByTestId("example-question").count();
+      console.log(`${code}: ${count} examples`);
+      expect(count, `${code} has no examples`).toBeGreaterThanOrEqual(3);
+    }
+  });
+
   test("the replay note is visible before anything is typed", async ({ page }) => {
     await open(page, "rm_tamil_nadu");
     const note = page.getByTestId("recorded-note");

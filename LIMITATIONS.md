@@ -1663,7 +1663,56 @@ The demo stays in replay, which has the property a live path cannot: it answers
 numbers came from. The eval harness and all recordings remain on OpenAI
 `gpt-5.5-2026-04-23` and were never in scope for this change.
 
-## M21.1: Tanglish is not reachable in the demo, and the toggle is not why
+## M21.2: the nine Tanglish demo variants sit outside the frozen question set
+
+The demo now offers Tanglish, and the nine example questions have hand-written
+`ta-Latn` forms with recordings behind them. **Those nine variants are not part
+of the frozen question set**, and that is worth stating rather than leaving to be
+discovered.
+
+`eval/questions/` is frozen at `questions-frozen`, and `dev.jsonl` — which the
+demo examples are drawn from — carries only `en`, `ta` and `hi`. Adding `ta-Latn`
+to it would need a reopen tag in that tag's family (HANDOFF §4.4) for a demo
+affordance that no measurement depends on. So the nine live in
+`config/demo_ta_latn.yaml` instead.
+
+**What they are:** demo examples, not measured rows. Nothing scores them, no
+reported number depends on them, and they are absent from every population
+count. The measured Tanglish is the 40 rows in `eval.jsonl` and the rest in the
+holdout — 55 in total.
+
+**Provenance is `human`.** They were hand-written by the repository author, the
+same author as the 55 frozen `ta-Latn` rows, in the same register: business terms
+kept in English (`UPI success rate`, `captured GMV`, `refund rate`, `EMI`,
+`average order value`), as those rows read. Applied verbatim — no cleanup, no
+normalising, no spelling changes.
+
+**Each was checked against its English before recording**, with
+`scripts/anchors.py`: same place, currency, number and window. Nine of nine
+clean. That guard exists because fifteen holdout Tanglish variants were once
+merged with an off-by-one alignment, every row individually well-formed and every
+count correct.
+
+Recording the nine cost **$0.318425**, measured two ways that agree: the trace's
+own metering and an independent sum over the 27 recording files written.
+
+### Two smaller things about Tanglish in the demo
+
+- **Fallback narrations would appear in Tamil script, not Tanglish.**
+  `load_templates` splits the language on `-`, so `ta-Latn` inherits `ta.json`.
+  This only reaches ABSTAIN, DENY and CLARIFY, where the sentence is a template
+  rather than model-composed. All nine examples are ANS and answer VERIFIED, so
+  it does not fire on any of them — but a Tanglish question that clarified would
+  be clarified at in Tamil script. Left as it is, recorded here.
+- **The interface chrome is English when Tanglish is selected.** Tanglish is
+  code-mixed with English already, so English labels around Tanglish examples
+  read as one register where Tamil-script labels around Latin-script examples
+  read as two. There is no Tanglish chrome until someone writes it.
+
+## M21.1: Tanglish was not reachable in the demo, and the toggle was not why
+
+**Superseded by M21.2 above, which fixed it.** Kept because the diagnosis is the
+useful part: the missing thing was never the toggle.
 
 `ta-Latn` is a first-class language in the engine. `Lang.TA_LATN` exists, the
 detector identifies it correctly — both a hand-written eval row and a freshly
