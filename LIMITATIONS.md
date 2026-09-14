@@ -2090,3 +2090,48 @@ inner scroll position. The specs now reset scroll, drop focus and wait for the
 chart to stop changing before capturing; that narrowed it but did not close it.
 `docs/screens/*.png` are artefacts for the record, not a regression test, and
 the byte differences between two runs should not be read as a UI change.
+
+## M21.10: a rerun passed, and that was not evidence of anything
+
+CI went red on commit `9dbec48fec8a`, whose diff was two documentation files.
+Two Playwright journeys failed. Nothing in the changed files could have caused
+either, so the obvious reading was flake, and the obvious action was to re-run
+the job. The re-run passed. Run `34860298447` is green on the record.
+
+**Both failures were real, and one of them was a defect in the shipped product.**
+
+- **`focus moves to the answer when it arrives` (SDD §22).** `settle()` focused
+  the answer inside a `requestAnimationFrame` fired from the stream's `onDone`.
+  `onDone` can arrive in the same tick as `onAnswer`, so the frame sometimes ran
+  before React had committed the canvas: `canvas.current` was null and nothing
+  took focus. It reproduced locally on desktop, first try. This is a quality
+  floor guarantee that was **intermittently not held in the deployed demo** —
+  a keyboard or screen-reader user would sometimes be left on the ask box with
+  the answer unannounced — and it passed CI most of the time.
+- **`the schema is scoped by the same allowlist the guard enforces`.** It
+  switched role, waited for the first row to be *visible*, then counted rows.
+  The previous role's rows stay mounted until the new fetch resolves, so it
+  counted `global_finance`'s 12 twice and asserted `12 < 12`. Whether it passed
+  depended on which won, the fetch or the assertion. Fixed to wait for the list
+  to become a different list, it reads **12 against 10** — the scoping claim it
+  exists to make is now actually being made.
+
+The thing worth recording is the reasoning that nearly stopped here. A red run
+on an unrelated diff, followed by a green re-run, reads as proof the failure was
+noise. It is not proof of anything. **A re-run passing is not a fix passing** —
+it is one more sample from a distribution nobody has characterised, and the only
+information it carries is that the failure is not deterministic. A test that
+fails on the scheduler is not reporting on the product, in either direction: it
+had been reporting *pass* on a product that was intermittently broken for as
+long as it had been reporting *fail* on one that was fine.
+
+This is the same rule as the rest of the round, rotated. M21.7 found guards that
+could not fail — a skip, an `xfail` over an unconditional raise, a scorecard
+pointed at the wrong file. These are guards that fail at random, which is the
+same defect wearing the opposite sign: in both cases the signal is uncorrelated
+with the thing it is supposed to be watching. **A guard that cannot fail is not
+a guard, and a guard that fails on the scheduler is not one either.**
+
+Both are fixed rather than re-run. The green run `34860298447` stays on the
+record as what it is: a re-run that told us nothing, of a failure that was
+telling us something.

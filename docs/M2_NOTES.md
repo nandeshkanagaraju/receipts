@@ -1522,8 +1522,8 @@ Three things make it README material rather than a changelog line:
   reader is reassured. This is that, produced by the system built to prevent it,
   wearing the receipt that is supposed to make it checkable. A receipt attests
   to *how* an answer was computed. It cannot attest that the rows came back.
-- **It shipped in M17 and was found nine milestones later, by a check written
-  for something else.** Two runs of a screenshot spec differed by 41% of their
+- **It shipped in M17 and was found in M21.7, by a check written for something
+  else.** Two runs of a screenshot spec differed by 41% of their
   pixels. The screenshots exist because BUILD_PROMPTS asks for them; the diff
   happened because a clean-room check asked whether they still matched the UI.
   Nobody wrote a concurrency test, and the suite — 1,286 tests by then, with a
@@ -1537,8 +1537,9 @@ Three things make it README material rather than a changelog line:
   is the same sentence: `BudgetedLLM` is built once per process, so two
   questions in flight shared one allowance and tripped a cap neither had reached
   alone. That is where the 14 abstentions came from. The note was written, the
-  lesson was named, and the next instance still took nine milestones, because
-  what got fixed was the instance and not the class.
+  lesson was named, and the next instance still took ten milestones — M17.1
+  through M21.6, by this project's own headings — because what got fixed was the
+  instance and not the class.
 
 The README should say the last part without softening it. The harness runs
 trials sequentially, so no published number moves; the defect was only ever

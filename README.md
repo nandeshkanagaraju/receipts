@@ -68,6 +68,25 @@ what was excluded, and the hashes of the plan and the SQL.
 The model never writes SQL on the verified path. When it does — the free-form
 fallback — the answer returns `UNVERIFIED` and says so.
 
+**What a receipt cannot do.** It attests to *how* an answer was computed. It
+cannot attest that the rows came back. This demo shipped with a single DuckDB
+connection serving every request, and a connection holds one pending result — so
+under concurrent load one request's query replaced another's before it was
+fetched, and the first got nothing. That empty result travelled the whole
+governed path and came out as an answer saying there were no units sold, over a
+question whose true answer is 1107 units at one showroom. Status: VERIFIED.
+Receipt: complete, correct, and truthful about a query that had genuinely
+returned nothing. The grounding check passed too, because it asserts that every
+number in the narration appears in the result table — and the narration had no
+numbers.
+
+It shipped in M17 and was found in M21.7, by two runs of a screenshot spec
+differing in 41% of their pixels. Every test in the suite asked one question at a time,
+which is the one condition under which it cannot happen. It is fixed, and it is
+here rather than only in the notes because the failure is the argument's own
+shape: **a receipt raises the floor on what a wrong answer can hide, and it is
+not the same thing as the answer being right.**
+
 ![Pipeline](docs/diagrams/receipts_agent_pipeline.png)
 
 ![Architecture](docs/diagrams/receipts_platform_architecture.png)
