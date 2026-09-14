@@ -1486,3 +1486,68 @@ the same process whose `/ask` returns `MODEL_UNAVAILABLE`, `/catalog/run` answer
 the layer. That is only possible because the governed path contains no model at
 all — and it is the clearest demonstration in the project that the semantic layer
 is doing work rather than decorating a model's output.
+
+### M21 — for the README: the project's own failure mode, in the project's own demo
+
+It belongs with the M17 findings above, and it is the sharper version of the
+same point.
+
+**One DuckDB connection served every request, and under concurrent load the demo
+returned a zero-row answer marked VERIFIED.**
+
+A DuckDB connection holds one pending result. The adapter cached a single
+connection for the process, and the API serves sync routes from a threadpool —
+so one request's `execute` replaced another's result before it was fetched, and
+the first request fetched nothing. An empty table is not a benign failure here.
+It travelled the whole governed path and came out as a narration saying there
+were no units sold, over a question whose true answer is 1107 units at Kestrel
+Birmingham East. Status: VERIFIED. Receipt: complete, with a plan hash, a SQL
+hash, and every default disclosed. Measured on the deployed code, 24 identical
+concurrent asks returned 8 correct answers, 14 abstentions, and twice that.
+
+**Every guard in the project held, and every one of them was looking at
+something else.** D13's grounding check asserts that every number in the
+narration appears in the result table; the narration contained no numbers and
+the table had no rows, so it passed. The receipt is constructed from what was
+actually executed (D14), so it truthfully described a query that truthfully
+returned nothing. The compiler was byte-deterministic, the scope was correct,
+the SQL was correct, the plan hash was correct. Nothing in the pipeline was
+wrong except the result, and nothing in the pipeline is positioned to notice
+that the result belonged to a different question.
+
+Three things make it README material rather than a changelog line:
+
+- **It is the thesis, turned on the author.** The entire argument is that a
+  plausible wrong answer is worse than an error, because nothing raises and the
+  reader is reassured. This is that, produced by the system built to prevent it,
+  wearing the receipt that is supposed to make it checkable. A receipt attests
+  to *how* an answer was computed. It cannot attest that the rows came back.
+- **It shipped in M17 and was found nine milestones later, by a check written
+  for something else.** Two runs of a screenshot spec differed by 41% of their
+  pixels. The screenshots exist because BUILD_PROMPTS asks for them; the diff
+  happened because a clean-room check asked whether they still matched the UI.
+  Nobody wrote a concurrency test, and the suite — 1,286 tests by then, with a
+  charter that walks the AST — had no reason to run two questions at once.
+  **Every test in it asked one question at a time, which is the one condition
+  under which the bug cannot occur.**
+- **The second instance of it was already in this file.** §7 records that the
+  per-question budget was not reset between requests, so the first question
+  consumed the allowance and the rest returned ERROR — "the gap between how the
+  engine is used in tests and how it is used in a server". The concurrent case
+  is the same sentence: `BudgetedLLM` is built once per process, so two
+  questions in flight shared one allowance and tripped a cap neither had reached
+  alone. That is where the 14 abstentions came from. The note was written, the
+  lesson was named, and the next instance still took nine milestones, because
+  what got fixed was the instance and not the class.
+
+The README should say the last part without softening it. The harness runs
+trials sequentially, so no published number moves; the defect was only ever
+reachable through the demo, which is the only part of this project a reader
+touches. **A suite that never exercises concurrency cannot report on
+concurrency, and this one reported 1,286 passes the whole time.**
+
+The fix is small — a per-query `cursor()`, and a context-local spend — and the
+regression test needed a `threading.Barrier` to be worth anything: without one
+the threads run end to end, the race never happens, and the test passes against
+the broken code. Which is the rule this round kept finding, in its fourth
+costume: **a guard that cannot fail is not a guard.**
