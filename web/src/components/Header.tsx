@@ -13,12 +13,14 @@ export function Header({
   copy,
   onRole,
   onLanguage,
+  onTour,
 }: {
   role: Role;
   language: Lang;
   copy: Copy;
   onRole: (role: Role) => void;
   onLanguage: (language: Lang) => void;
+  onTour: () => void;
 }) {
   return (
     <header className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-rule bg-panel px-4 py-3 sm:px-6">
@@ -46,6 +48,15 @@ export function Header({
           ))}
         </select>
       </div>
+
+      <button
+        type="button"
+        data-testid="take-tour"
+        onClick={onTour}
+        className="rounded border border-rule px-2.5 py-1.5 text-sm text-ink/75 hover:bg-surface"
+      >
+        {copy.takeTour}
+      </button>
 
       <div
         role="group"

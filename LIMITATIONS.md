@@ -1927,3 +1927,39 @@ The structural argument — that scope is a compiler predicate rather than a
 sentence in a prompt, and that `QueryPlan` has no scope field for a model to
 fill in — never depended on the count and still stands. It is an argument about
 the code, readable in the code.
+
+## M21.6: the guided tour is a fourth SDD §22 deviation, and replaces the video
+
+`Tour` is a component the §22 table does not name. The table was written when
+the demo was to be accompanied by a recorded walkthrough; the tour replaces that
+video, and §22 has no row for it because the plan contained no such thing.
+
+It adds no capability. Every step points at a component that **is** in the table
+— the answer, the receipt, the status badge, the step trace, the catalog, the
+role switcher, the language toggle — and says what it is for. Nothing in the
+product behaves differently because the tour exists.
+
+**Four components now exist that §22 does not name**: `Drawer` (the shell the two
+drawers share), `CatalogPanel`, `Tour`, and — counting the other kind of
+departure — "Ask why" is rendered disabled. All are listed by name in
+`test_no_component_exists_that_the_sdd_table_does_not_name` with their reasons,
+so a fifth cannot appear without someone deciding to add it.
+
+### Two defects the tour exposed, neither of them in the tour
+
+- **Reloading the page opened the receipt drawer.** The app writes
+  `?receipt=<id>` into the URL after every answer, and then read its own
+  parameter back on load as an inbound deep link — so a refresh produced a
+  full-height SQL panel nobody asked for, over the header. It had been that way
+  since M17 and no test noticed, because no test reloaded. The parameter still
+  names which receipt the page is showing; it no longer opens anything. An id
+  from someone else's session could not have been displayed anyway, since the
+  client keeps no store of receipts.
+- **The caption covered the receipt it was describing.** Found in a screenshot,
+  not a test: the receipt is nearly full-height, so "below, or above if there is
+  no room" left the caption on top of the metric name and definition. It now
+  goes beside a tall target. There is a test asserting the caption covers no
+  more than 2% of the spotlight on desktop — measured, it covers 0% at every
+  step. At 375px neither side fits and the receipt step covers 30.6%, which is
+  the least bad of three bad options on a phone and is allowed explicitly rather
+  than by the assertion being loose.

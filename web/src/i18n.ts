@@ -28,6 +28,12 @@ export interface Copy {
   readonly catalogTitle: string;
   readonly catalogBlurb: string;
   readonly catalogRunOne: string;
+  readonly takeTour: string;
+  readonly tourNext: string;
+  readonly tourSkip: string;
+  readonly tourDone: string;
+  readonly tourStepOf: (n: number, total: number) => string;
+  readonly tour: readonly { readonly title: string; readonly body: string }[];
   readonly tabMetrics: string;
   readonly tabSchema: string;
   readonly schemaBlurb: string;
@@ -93,6 +99,42 @@ const EN: Copy = {
   catalogBlurb:
     "Every metric a question can reach. Each one is defined in the glossary, and a role only sees the ones its capabilities allow.",
   catalogRunOne: "Run one",
+  takeTour: "Take the tour",
+  tourNext: "Next",
+  tourSkip: "Skip",
+  tourDone: "Done",
+  tourStepOf: (n, total) => `${n} of ${total}`,
+  tour: [
+    {
+      title: "The answer",
+      body: "Ask in plain language — English, Tamil, Hindi or Tanglish. The answer comes back in the language you asked in.",
+    },
+    {
+      title: "The receipt",
+      body:
+        "This is the point of the project. Every answer carries one: which metric was used and how it is defined, the window, the scope it was computed over, what was excluded, and every default that was applied — including the reporting currency. If a number is wrong, the receipt is where you find out why, without reading any code.",
+    },
+    {
+      title: "The status",
+      body: "VERIFIED, UNVERIFIED, CLARIFY, ABSTAIN or DENIED. The system says which it is instead of always answering.",
+    },
+    {
+      title: "How it was answered",
+      body: "The stages appear here as your question runs. The model produces a typed plan; a deterministic compiler writes the SQL.",
+    },
+    {
+      title: "The governed layer",
+      body: "Every metric a question can reach, with its definition and the team that owns it, scoped to your role. The Schema tab beneath shows the tables underneath — those are columns, these are definitions.",
+    },
+    {
+      title: "Change role",
+      body: "Ask the same question as another role and it is scoped differently, or refused outright. Scope is compiled into the SQL, not requested in a prompt.",
+    },
+    {
+      title: "Change language",
+      body: "English, Tamil, Hindi and hand-written Tanglish. Each has its own example questions.",
+    },
+  ],
   tabMetrics: "Governed metrics",
   tabSchema: "Schema",
   schemaBlurb:
@@ -178,6 +220,42 @@ const TA: Copy = {
   catalogBlurb:
     "ஒரு கேள்வி அணுகக்கூடிய ஒவ்வொரு metric-ம். ஒவ்வொன்றும் glossary-யில் வரையறுக்கப்பட்டுள்ளது; ஒரு பங்கு அதன் அனுமதிகள் இடும் metrics-ஐ மட்டுமே காணும்.",
   catalogRunOne: "ஒன்றை இயக்கு",
+  takeTour: "சுற்றுப்பயணம்",
+  tourNext: "அடுத்து",
+  tourSkip: "தவிர்",
+  tourDone: "முடிந்தது",
+  tourStepOf: (n, total) => `${total}-ல் ${n}`,
+  tour: [
+    {
+      title: "பதில்",
+      body: "எளிய மொழியில் கேளுங்கள் — ஆங்கிலம், தமிழ், இந்தி அல்லது Tanglish. நீங்கள் கேட்ட மொழியிலேயே பதில் வரும்.",
+    },
+    {
+      title: "Receipt",
+      body:
+        "இதுதான் இந்தத் திட்டத்தின் மையம். ஒவ்வொரு பதிலுடனும் ஒன்று வரும்: எந்த metric, அதன் வரையறை, காலம், எல்லை, விலக்கப்பட்டவை, மற்றும் பயன்படுத்தப்பட்ட ஒவ்வொரு இயல்புநிலையும் — reporting currency உட்பட. ஒரு எண் தவறாக இருந்தால், code படிக்காமலேயே காரணத்தை receipt-ல் காணலாம்.",
+    },
+    {
+      title: "நிலை",
+      body: "VERIFIED, UNVERIFIED, CLARIFY, ABSTAIN அல்லது DENIED. எப்போதும் பதிலளிப்பதற்குப் பதிலாக, எது என்பதை அமைப்பு சொல்கிறது.",
+    },
+    {
+      title: "எப்படி பதிலளிக்கப்பட்டது",
+      body: "உங்கள் கேள்வி இயங்கும்போது படிகள் இங்கே தோன்றும். Model ஒரு typed plan-ஐ உருவாக்குகிறது; ஒரு deterministic compiler SQL-ஐ எழுதுகிறது.",
+    },
+    {
+      title: "ஆளுகை அடுக்கு",
+      body: "ஒரு கேள்வி அணுகக்கூடிய ஒவ்வொரு metric-ம், அதன் வரையறை மற்றும் உரிமையாளர் குழுவுடன், உங்கள் பங்குக்கு ஏற்ப. கீழே உள்ள Schema tab அடிப்படை tables-ஐக் காட்டுகிறது.",
+    },
+    {
+      title: "பங்கை மாற்று",
+      body: "அதே கேள்வியை வேறு பங்காகக் கேட்டால் எல்லை மாறும், அல்லது மறுக்கப்படும். எல்லை SQL-ல் compile செய்யப்படுகிறது, prompt-ல் கேட்கப்படுவதில்லை.",
+    },
+    {
+      title: "மொழியை மாற்று",
+      body: "ஆங்கிலம், தமிழ், இந்தி மற்றும் கையால் எழுதப்பட்ட Tanglish. ஒவ்வொன்றுக்கும் தனி எடுத்துக்காட்டுக் கேள்விகள்.",
+    },
+  ],
   tabMetrics: "ஆளுகை metrics",
   tabSchema: "Schema",
   schemaBlurb:
@@ -244,6 +322,42 @@ const HI: Copy = {
   catalogBlurb:
     "हर वह metric जिस तक कोई सवाल पहुँच सकता है। हर एक glossary में परिभाषित है, और कोई भूमिका केवल वही देखती है जिसकी अनुमति उसके पास है।",
   catalogRunOne: "एक चलाएँ",
+  takeTour: "परिचय देखें",
+  tourNext: "आगे",
+  tourSkip: "छोड़ें",
+  tourDone: "पूरा",
+  tourStepOf: (n, total) => `${total} में से ${n}`,
+  tour: [
+    {
+      title: "जवाब",
+      body: "सामान्य भाषा में पूछें — अंग्रेज़ी, तमिल, हिंदी या Tanglish। जवाब उसी भाषा में आता है जिसमें आपने पूछा।",
+    },
+    {
+      title: "Receipt",
+      body:
+        "यही इस प्रोजेक्ट का मूल है। हर जवाब के साथ एक आती है: कौन-सा metric और उसकी परिभाषा, अवधि, दायरा, क्या शामिल नहीं था, और लागू हुआ हर डिफ़ॉल्ट — reporting currency सहित। अगर कोई संख्या ग़लत है, तो कोड पढ़े बिना कारण receipt में मिलेगा।",
+    },
+    {
+      title: "स्थिति",
+      body: "VERIFIED, UNVERIFIED, CLARIFY, ABSTAIN या DENIED। सिस्टम हमेशा जवाब देने के बजाय बताता है कि स्थिति क्या है।",
+    },
+    {
+      title: "जवाब कैसे बना",
+      body: "आपका सवाल चलते ही चरण यहाँ दिखेंगे। Model एक typed plan बनाता है; एक deterministic compiler SQL लिखता है।",
+    },
+    {
+      title: "शासित परत",
+      body: "हर वह metric जिस तक सवाल पहुँच सकता है, उसकी परिभाषा और स्वामी टीम के साथ, आपकी भूमिका के अनुसार। नीचे Schema tab अंतर्निहित tables दिखाता है।",
+    },
+    {
+      title: "भूमिका बदलें",
+      body: "वही सवाल दूसरी भूमिका से पूछें और दायरा बदल जाएगा, या मना कर दिया जाएगा। दायरा SQL में compile होता है, prompt में माँगा नहीं जाता।",
+    },
+    {
+      title: "भाषा बदलें",
+      body: "अंग्रेज़ी, तमिल, हिंदी और हाथ से लिखी Tanglish। हर एक के अपने उदाहरण सवाल हैं।",
+    },
+  ],
   tabMetrics: "शासित metrics",
   tabSchema: "Schema",
   schemaBlurb:

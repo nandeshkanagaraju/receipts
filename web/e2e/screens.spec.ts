@@ -29,6 +29,9 @@ const SHOTS: { role: string; question: string; name: string }[] = [
 for (const shot of SHOTS) {
   test(`screenshot ${shot.name}`, async ({ page }, info) => {
     const width = info.project.name === "mobile" ? 375 : 1280;
+    // The tour auto-starts on a first visit and its overlay intercepts clicks.
+    // Every spec that navigates directly has to opt out, or it tests the tour.
+    await page.addInitScript(() => window.localStorage.setItem("receipts.tour.v1", "1"));
     await page.goto(`/?role=${shot.role}`);
     // The same rate-limit wait the journeys use. This spec runs after them, so
     // by the time it starts the demo's 20-a-minute allowance is often spent --

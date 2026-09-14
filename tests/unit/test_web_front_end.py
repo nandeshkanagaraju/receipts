@@ -341,6 +341,13 @@ def test_no_component_exists_that_the_sdd_table_does_not_name() -> None:
         # and still runs metrics; this is a second presentation of it, not a
         # replacement. Recorded in LIMITATIONS as the second §22 deviation.
         "CatalogPanel",
+        # Not in the table either. §22 was written when the demo was to be
+        # accompanied by a video; the tour replaces the video, and a first-visit
+        # walkthrough is a thing the table has no row for because the plan had
+        # no such thing in it. It adds no capability -- it points at components
+        # that ARE in the table and says what they are for. Recorded in
+        # LIMITATIONS as the fourth §22 deviation.
+        "Tour",
     }
     built = {path.stem for path in (WEB / "src" / "components").glob("*.tsx")}
     print(f"\ncomponents built: {sorted(built)}")

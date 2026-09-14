@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import * as api from "./api/client";
 import { CatalogPanel } from "./components/CatalogPanel";
+import { Tour, hasSeenTour } from "./components/Tour";
 import type {
   Answer,
   ApiErrorBody,
@@ -53,8 +54,8 @@ export function App() {
   const [catalogMode, setCatalogMode] = useState(false);
   const [receiptOpen, setReceiptOpen] = useState(false);
   const [catalogOpen, setCatalogOpen] = useState(false);
-  const [deepReceipt] = useState<string | null>(initial.current.receipt);
   const [preloaded, setPreloaded] = useState<string | null>(null);
+  const [tourOpen, setTourOpen] = useState(false);
   const preloadedFor = useRef<string>("");
   // Set the moment a real question starts. The preload is a request the page
   // made of itself and it must lose every race against one the visitor made:
@@ -126,9 +127,22 @@ export function App() {
   // The deep link opens the drawer on load. The receipt itself is whatever the
   // session has answered; a link to another session's receipt shows the drawer
   // with nothing in it rather than inventing one.
+  // `?receipt=<id>` names which receipt the page is showing. It does NOT open
+  // the drawer.
+  //
+  // The app writes that parameter itself after every answer, so on a reload the
+  // page was reading its own URL as an inbound deep link and opening the SQL
+  // drawer over everything — including the header. A visitor who refreshed got
+  // a panel they had not asked for. And an id from someone else's session
+  // cannot be shown at all, because the client keeps no store of receipts, so
+  // honouring it would open an empty drawer instead.
+  //
+  // The receipt itself is on the page either way; the drawer is a detail view,
+  // and detail views are opened by people.
+
   useEffect(() => {
-    if (deepReceipt) setReceiptOpen(true);
-  }, [deepReceipt]);
+    if (answer && !hasSeenTour()) setTourOpen(true);
+  }, [answer]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -229,6 +243,7 @@ export function App() {
           userAsked.current = false;
         }}
         onLanguage={setLanguage}
+        onTour={() => setTourOpen(true)}
       />
       {catalogMode ? (
         <CatalogModeBanner copy={copy} onCatalog={() => setCatalogOpen(true)} />
@@ -305,6 +320,11 @@ export function App() {
           />
         </section>
       </main>
+
+      {/* Started only once the preloaded answer is on screen: the first three
+          steps point at an answer, a receipt and a status badge, and a tour
+          that highlights empty space on step one is worse than no tour. */}
+      {tourOpen ? <Tour copy={copy} onClose={() => setTourOpen(false)} /> : null}
 
       <ReceiptDrawer
         open={receiptOpen}

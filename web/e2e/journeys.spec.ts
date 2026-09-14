@@ -13,6 +13,11 @@ const J5_EN = "What were the Dubai showrooms' sales last week?";
 const J10_EN = "Card success rate by issuing bank in the UK last month, top 10.";
 
 async function open(page: Page, role: string): Promise<void> {
+  // Mark the tour as seen before the page loads. It auto-starts on a first
+  // visit and its overlay intercepts clicks, so without this every journey
+  // below would be testing the tour instead of the journey. The tour's own
+  // tests deliberately do NOT call this.
+  await page.addInitScript(() => window.localStorage.setItem("receipts.tour.v1", "1"));
   await page.goto(`/?role=${role}`);
   await expect(page.getByTestId("role-switcher")).toHaveValue(role);
 }
@@ -407,6 +412,9 @@ test.describe("a first-time visitor is never at a dead end", () => {
     // The race CI found: the preload is a request the page makes of itself, and
     // a visitor who types immediately was having the example's answer land on
     // top of their pending question. It must lose every race against a real one.
+    // The tour auto-starts on a first visit and its overlay intercepts clicks.
+    // Every spec that navigates directly has to opt out, or it tests the tour.
+    await page.addInitScript(() => window.localStorage.setItem("receipts.tour.v1", "1"));
     await page.goto("/?role=rm_tamil_nadu");
     await page.getByTestId("question-input").fill(J1_TA);
     await page.getByTestId("ask-button").click();
