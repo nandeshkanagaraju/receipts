@@ -115,15 +115,33 @@ class DuckDBAdapter:
             self._connection = connect(self.db_path)
         return self._connection
 
+    def _query_handle(self) -> Any:
+        """A private handle onto the shared database instance, per query.
+
+        A DuckDB connection holds ONE pending result. The API serves sync routes
+        from a threadpool, so two requests would call `execute` on the same
+        cached connection and the second would replace the first's result before
+        it was fetched. Measured on the demo warehouse: 24 identical concurrent
+        asks returned 8 correct, 14 abstentions, and twice an answer marked
+        VERIFIED over zero rows -- a silent wrong, which is the one outcome this
+        project exists to prevent.
+
+        `cursor()` duplicates the connection against the same instance, so the
+        read-only flag and the locked configuration come with it (they are per
+        instance and per open, both already settled by `connect`), while the
+        pending result is private to the caller.
+        """
+        return self._conn().cursor()
+
     def ping(self) -> bool:
         try:
-            self._conn().execute("SELECT 1")
+            self._query_handle().execute("SELECT 1")
         except Exception:
             return False
         return True
 
     def fresh_through(self) -> date:
-        row = self._conn().execute("SELECT max(business_date) FROM orders").fetchone()
+        row = self._query_handle().execute("SELECT max(business_date) FROM orders").fetchone()
         if not row or row[0] is None:
             raise DbUnavailable("no orders loaded; the warehouse has no freshness")
         fresh = row[0]
@@ -140,7 +158,7 @@ class DuckDBAdapter:
         money: bool = False,
         currency: str | None = None,
     ) -> ResultTable:
-        connection = self._conn()
+        connection = self._query_handle()
         try:
             # DuckDB has no statement timeout, so the clock is enforced by the
             # caller thread. `interrupt()` is the documented way to stop a query

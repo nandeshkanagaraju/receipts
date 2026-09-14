@@ -2030,3 +2030,63 @@ repo as controls.
 One thing is reported rather than fixed: `docs/FREEZE_MANIFEST.json` says the
 translations are frozen separately "(tag: `translations-frozen`)", and no such
 tag exists locally or on the remote. `docs/` is not mine to edit.
+
+## M21.8: two questions at once shared one connection and one budget
+
+Found while checking whether the committed screenshots still match the UI. Two
+runs of the same spec produced images differing in 41% of their pixels, and the
+difference was not layout: one run answered "Top 5 UK showrooms by units sold
+last month" with the five showrooms, the other said **"No Units sold"** over an
+empty chart — same question, same plan, same receipt id `bdb899f251698daa`, same
+warehouse, and the second one was marked VERIFIED.
+
+Measured directly against the API in replay mode, 24 identical concurrent asks:
+
+| | answers |
+|---|---:|
+| correct (5 rows, VERIFIED) | 8 |
+| abstained, "no plan was produced" | 14 |
+| **zero rows, VERIFIED** | **2** |
+
+The last row is a silent wrong, which is the single outcome this project exists
+to prevent, and it did not come from the model. Two pieces of shared mutable
+state:
+
+- **One DuckDB connection, serving every request.** A DuckDB connection holds
+  one pending result. The API serves sync routes from a threadpool, so a second
+  request's `execute` replaced the first's result before it was fetched and the
+  first fetched nothing. Downstream, an empty table became a narration that
+  there were no units sold. Each query now takes its own `cursor()` onto the
+  same instance — the read-only flag and the locked configuration come with it,
+  the pending result does not.
+- **One `QuestionBudget`, serving every request.** `BudgetedLLM` is built once
+  per process. Each question's `new_question()` zeroed the other's count, and
+  their combined spend tripped a per-question cap neither had reached alone —
+  hence the 14 abstentions. The spend is now context-local; the allowance, which
+  is configuration, still is not. The module's own docstring already said that a
+  budget shared across questions is not a per-question budget. It was right
+  about the sequential case and the concurrent case was the same sentence.
+
+After both fixes the same probe returns 24 of 24 correct.
+
+`tests/integration/test_concurrent_questions.py` pins both. The budget test
+needed a `threading.Barrier` to be worth anything: without one the work is short
+enough that the threads run end to end, the race never happens and the test
+passes against the broken code. It was checked in both directions — both tests
+fail against the pre-fix sources and pass against the fixed ones.
+
+### What this does not tell us
+
+The eval numbers are unaffected: the harness runs trials sequentially in one
+process, one question at a time, which is the case that always worked. Nothing
+in the holdout or dev results moves. What it does mean is that the **deployed
+demo** has been serving concurrent visitors from this code since M17, and the
+measured rate above is what they would have got. The deployment has not been
+rebuilt with the fix as of this entry.
+
+The screenshots were the tripwire, and they are not a reliable one. Two runs of
+an unchanged UI produce PNGs that differ, from chart animation, focus rings and
+inner scroll position. The specs now reset scroll, drop focus and wait for the
+chart to stop changing before capturing; that narrowed it but did not close it.
+`docs/screens/*.png` are artefacts for the record, not a regression test, and
+the byte differences between two runs should not be read as a UI change.

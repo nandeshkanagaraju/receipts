@@ -26,6 +26,34 @@ const SHOTS: { role: string; question: string; name: string }[] = [
   },
 ];
 
+/** `fullPage` captures the document, but the answer lives in a scrollable
+ *  panel — so whatever the last `toBeVisible()` scrolled that panel to is what
+ *  lands in the PNG. Two runs of the same spec produced images differing in 41%
+ *  of their pixels with identical content. Reset every scroll position first. */
+async function settleScroll(page: import("@playwright/test").Page) {
+  await page.evaluate(() => {
+    document.querySelectorAll("*").forEach((el) => {
+      if ((el as HTMLElement).scrollTop) (el as HTMLElement).scrollTop = 0;
+      if ((el as HTMLElement).scrollLeft) (el as HTMLElement).scrollLeft = 0;
+    });
+    window.scrollTo(0, 0);
+    (document.activeElement as HTMLElement | null)?.blur();
+  });
+  // Recharts animates the bars up from zero on mount, so a capture taken while
+  // that is running photographs half-grown bars — three shots moved by 3-10% of
+  // their pixels between two runs of the same spec. Wait for the SVG to stop
+  // changing rather than guessing at a duration.
+  let previous = "";
+  for (let i = 0; i < 40; i += 1) {
+    const current = await page.evaluate(
+      () => document.querySelector("svg.recharts-surface")?.outerHTML ?? "no-chart",
+    );
+    if (current === previous) break;
+    previous = current;
+    await page.waitForTimeout(150);
+  }
+}
+
 for (const shot of SHOTS) {
   test(`screenshot ${shot.name}`, async ({ page }, info) => {
     const width = info.project.name === "mobile" ? 375 : 1280;
@@ -48,6 +76,7 @@ for (const shot of SHOTS) {
     }
     await expect(page.getByTestId("answer-canvas")).toBeVisible();
     await expect(page.getByTestId("receipt-card")).toBeVisible();
+    await settleScroll(page);
     await page.screenshot({
       path: `../docs/screens/ask-${width}-${shot.name}.png`,
       fullPage: true,

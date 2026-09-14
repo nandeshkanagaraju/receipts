@@ -16,11 +16,20 @@ otherwise -- one `BudgetedLLM` is built per *run*, so the counter accumulated
 across trials and the third question in a 180-question run died at 48,482 tokens
 against a 40,000 budget. A per-question budget that is never reset is a per-run
 budget with a misleading name.
+
+The counters are context-local for the same reason they are reset per question.
+One `BudgetedLLM` is built per process, so when the API serves two questions at
+once on its threadpool they shared one allowance: each `new_question` zeroed the
+other's count, and their combined spend tripped a cap neither had reached alone.
+Measured on the demo, 8 concurrent asks of one question answered 3 and abstained
+5 with "no plan was produced". A budget shared between questions is not a
+per-question budget either.
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from contextvars import ContextVar
+from dataclasses import dataclass
 from typing import Any
 
 from .base import LLM, BudgetExceeded, Msg, StructuredResult, TextResult, Usage
@@ -31,16 +40,40 @@ DEFAULT_TOKENS_OUT = 2000
 
 @dataclass
 class QuestionBudget:
-    """What one question may spend, and what it has spent."""
+    """What one question may spend, and what it has spent.
+
+    The allowance is shared (it is configuration); the spend is per context, so
+    two questions in flight at once cannot spend each other's.
+    """
 
     tokens_in: int = DEFAULT_TOKENS_IN
     tokens_out: int = DEFAULT_TOKENS_OUT
-    spent_in: int = field(default=0)
-    spent_out: int = field(default=0)
+
+    def __post_init__(self) -> None:
+        # Per instance, not module-global: two budgets living in one context are
+        # two allowances, and must not read each other's spend.
+        # The name is for debuggers only; isolation comes from each instance
+        # holding its own ContextVar object, not from the name. It is a constant
+        # because D3 forbids `id()` as an identity, and the charter test is right
+        # to: an address is not a name.
+        self._spent: ContextVar[tuple[int, int]] = ContextVar(
+            "receipts_question_spend", default=(0, 0)
+        )
+
+    @property
+    def spent_in(self) -> int:
+        return self._spent.get()[0]
+
+    @property
+    def spent_out(self) -> int:
+        return self._spent.get()[1]
+
+    def _spend(self, delta_in: int, delta_out: int) -> None:
+        current = self._spent.get()
+        self._spent.set((current[0] + delta_in, current[1] + delta_out))
 
     def add(self, usage: Usage) -> None:
-        self.spent_in += usage.input_tokens
-        self.spent_out += usage.output_tokens
+        self._spend(usage.input_tokens, usage.output_tokens)
         if self.spent_in > self.tokens_in:
             raise BudgetExceeded(
                 f"input tokens {self.spent_in} exceed the per-question budget {self.tokens_in}"
@@ -73,8 +106,7 @@ class QuestionBudget:
 
     def reset(self) -> None:
         """A new question starts from zero. The allowance itself is unchanged."""
-        self.spent_in = 0
-        self.spent_out = 0
+        self._spent.set((0, 0))
 
     @property
     def remaining_in(self) -> int:

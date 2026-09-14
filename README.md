@@ -93,7 +93,7 @@ be the result.
   as integer minor units (D1) — each enforced by a charter test that walks the
   AST rather than grepping.
 
-1,286 tests. `LIMITATIONS.md` is the list of everything this project cannot
+1,288 tests. `LIMITATIONS.md` is the list of everything this project cannot
 claim, including the three errors I made in the round that produced the result above.
 
 ### Cost
