@@ -20,7 +20,18 @@ set -euo pipefail
 
 REGION="${AWS_REGION:-ap-south-1}"
 NAME="${EC2_NAME:-receipts-demo}"
-TYPE="${EC2_TYPE:-t3.micro}"
+# t3.small, not t3.micro.
+#
+# `unsettled_amount` — the heaviest metric in the layer, a join over
+# payment_attempts and settlements — did not complete in FIVE MINUTES on a
+# t3.micro, in English or Tanglish. It is one of the nine demo examples, so the
+# demo had been unable to answer one of its own suggestions for
+# global_finance and admin. It went unnoticed because every live check until now
+# had used rm_tamil_nadu questions, which are light.
+#
+# 1GB is not enough for DuckDB to hold that join; 2GB answers it. The difference
+# is about 20c a day.
+TYPE="${EC2_TYPE:-t3.small}"
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 ACCOUNT="$(aws sts get-caller-identity --query Account --output text)"
 ECR="${ACCOUNT}.dkr.ecr.${REGION}.amazonaws.com"

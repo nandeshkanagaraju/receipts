@@ -1747,3 +1747,35 @@ measured per-question rate.
 **What this costs the claim:** the demo shows two of the three languages the
 system supports. `ta-Latn` is measured in the eval and holdout sets, not
 demonstrated live.
+
+## M21.2a: the demo could not answer one of its own examples, and nothing noticed
+
+Found while verifying Tanglish, and **it was never a Tanglish problem**.
+
+`unsettled_amount` — the heaviest metric in the layer, a join across
+`payment_attempts` and `settlements` — **did not complete in five minutes** on
+the `t3.micro` the demo was running on. In English as well as Tanglish. It is
+one of the nine example questions, offered to `global_finance` and `admin` on
+the first screen, so **the demo had been unable to answer one of its own
+suggestions** for those two roles.
+
+**Why nothing caught it.** The browser suite runs against a local server on a
+laptop, where the query takes about 350ms. Every live check until now had used
+`rm_tamil_nadu` questions, which are light, and the first-screen preload uses
+each role's *first* example — which for `global_finance` is a different, cheap
+one. The failing path was offered to visitors and exercised by nobody.
+
+Fixed by moving to `t3.small`: 2GB rather than 1GB, about 20c a day more. Every
+one of the 48 examples — four roles, four languages — now answers on the live
+instance, verified by asking all of them.
+
+**What remains true:** first touch of a heavy query on that instance is slow.
+Measured across all 48, the median is **0.3s** and the maximum **44.5s**, the
+latter being the first run of the top-5 showrooms breakdown before DuckDB's page
+cache is warm. Repeat asks of the same question return in about 0.2s. A visitor
+unlucky enough to click a cold heavy example waits, and the step trace is the
+only thing telling them it is working.
+
+**The lesson, which is the reusable part:** a deployment check that exercises
+the cheap path proves the deployment serves the cheap path. The three roles were
+not equivalent and were treated as though they were.
