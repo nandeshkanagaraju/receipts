@@ -1881,8 +1881,49 @@ weight.
   claims. The baseline's record-time report differed from its replay, and **the
   record-time artifact was overwritten before it could be diffed** — so which
   field differed is unknown rather than explained. Snapshot before replaying.
+- **I reported mid-run that the first arm had died and that no measurement
+  existed**, and asked whether the D17 lock should be reset. It had not died —
+  it was still running. Two weak signals were read as proof: a `pgrep` that
+  failed to match because of my own quoting, and a log that was empty because
+  stdout was block-buffered. The conclusion was stated with far more confidence
+  than either deserved, and it asked the author to rule on a charter artifact on
+  the strength of it. Corrected inside the round; recorded because the failure
+  mode — confident inference from absent evidence — is the same one this project
+  keeps finding in its own code.
 - **The lock recorded `["en","en"]` for the first arm**, because the runner's
   `--language` argparse appended to its own default. Harmless to the run and a
   trap for the next: a later `["en"]` would not have matched and would have been
   refused as a different language set. The lock now canonicalises language sets
   to a set on both write and comparison, so the existing record reads correctly.
+
+
+## M21.5: two claims withdrawn from the README, and why they are not coming back
+
+Recorded separately from the defect that caused them (M21.3) because what
+matters here is what is no longer claimed.
+
+Two findings were withdrawn from the README list in `docs/M2_NOTES.md` §5:
+
+1. **"Scope leaks 25% in English and 75% in Tamil and Hindi."** 7 of 12
+   out-of-scope questions were said to return out-of-scope data, with a language
+   split. It was called *the headline architectural argument*.
+2. **"Receipts' scope boundary is language-independent, and that is the
+   argument"** — the measured half of it, which quoted the same 25/75 split.
+
+Both came from the leak detector M12 fixed: `canaries_from_truth` iterated a
+mapping and yielded its keys, so `AE`, `GB`, `IN`, `MY`, `SG` and `US` became
+canary values and matched inside `IN-TN`, `INR` and a SQL `IN (...)`. Regenerated
+with the working detector, the baseline's dev report shows **zero** leaks, not
+seven.
+
+The holdout, run with the fixed detector, leaks **nothing on either arm**. So the
+count is gone, the language split is gone, and neither returns. What replaced
+them is narrower and measured: on the holdout's six scope-refusal questions
+Receipts refused 5 of 6 correctly and the baseline 0 of 6. That is a claim about
+**refusing correctly**, not about leaking, and it is the one the evidence
+supports.
+
+The structural argument — that scope is a compiler predicate rather than a
+sentence in a prompt, and that `QueryPlan` has no scope field for a model to
+fill in — never depended on the count and still stands. It is an argument about
+the code, readable in the code.
