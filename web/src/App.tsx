@@ -56,6 +56,11 @@ export function App() {
   const [deepReceipt] = useState<string | null>(initial.current.receipt);
   const [preloaded, setPreloaded] = useState<string | null>(null);
   const preloadedFor = useRef<string>("");
+  // Set the moment a real question starts. The preload is a request the page
+  // made of itself and it must lose every race against one the visitor made:
+  // typing fast enough to beat it had the example's answer land ON TOP of the
+  // pending question, label and all.
+  const userAsked = useRef(false);
 
   const canvas = useRef<HTMLDivElement>(null);
   const abort = useRef<AbortController | null>(null);
@@ -98,7 +103,7 @@ export function App() {
     api
       .askOnce(token, question, sessionId)
       .then((received) => {
-        if (!live || !received) return;
+        if (!live || !received || userAsked.current) return;
         setAnswer(received);
         setPreloaded(question);
       })
@@ -173,6 +178,7 @@ export function App() {
         setAsked((current) => [...current, question]);
         setLastQuestion(question);
       }
+      userAsked.current = true;
       setPreloaded(null);
       const stream = choice
         ? api.clarify(
@@ -220,6 +226,7 @@ export function App() {
           setFailure(null);
           setAsked([]);
           setPreloaded(null);
+          userAsked.current = false;
         }}
         onLanguage={setLanguage}
       />

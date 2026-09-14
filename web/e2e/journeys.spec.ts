@@ -345,6 +345,24 @@ test.describe("a first-time visitor is never at a dead end", () => {
     await expect(page.getByTestId("receipt-card")).toBeVisible();
   });
 
+  test("a question typed before the example lands still wins", async ({ page }) => {
+    // The race CI found: the preload is a request the page makes of itself, and
+    // a visitor who types immediately was having the example's answer land on
+    // top of their pending question. It must lose every race against a real one.
+    await page.goto("/?role=rm_tamil_nadu");
+    await page.getByTestId("question-input").fill(J1_TA);
+    await page.getByTestId("ask-button").click();
+
+    await expect(page.getByTestId("answer-canvas")).toHaveAttribute("data-status", "VERIFIED", {
+      timeout: 40_000,
+    });
+    // Their question is the one in the transcript, and nothing is labelled an
+    // example -- give the preload a moment to arrive late and be ignored.
+    await page.waitForTimeout(1_500);
+    await expect(page.getByTestId("preloaded-label")).toHaveCount(0);
+    await expect(page.getByTestId("conversation")).toContainText("UPI");
+  });
+
   test("the replay note is visible before anything is typed", async ({ page }) => {
     await open(page, "rm_tamil_nadu");
     const note = page.getByTestId("recorded-note");
