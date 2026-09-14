@@ -114,9 +114,8 @@ Dubai.
 Needs Python 3.11 (the package pins `>=3.11,<3.12`) and Docker for `make up`.
 
 ```bash
-make setup                      # uv venv --python python3.11 .venv
+make setup    # creates .venv on python3.11, installs the package, installs the hooks
 . .venv/bin/activate
-pip install -e ".[dev]"
 make data     # generate the synthetic warehouse (~3.5 min)
 make up       # API, SPA and MCP in one container, at :8000
 make eval     # re-run a scored evaluation and diff it against the committed one

@@ -28,7 +28,10 @@ setup:
 	# remembering to install it. Twenty-five holdout qids reached commit messages
 	# on main, every one written by someone who knew the rule.
 	git config core.hooksPath .githooks
-	@echo "setup: done. Interpreter: $$($(PY) --version), hooks: $$(git config --get core.hooksPath)"
+	# .venv/bin/python, not $(PY): make expands $(PY) before the venv exists, so
+	# it falls back to the bare `python` and reported the SYSTEM interpreter --
+	# "Interpreter: Python 3.14.7" directly after creating a 3.11 venv.
+	@echo "setup: done. Interpreter: $$(.venv/bin/python --version), hooks: $$(git config --get core.hooksPath)"
 
 test:
 	$(PYTEST)
