@@ -1,0 +1,23 @@
+{
+  "data": {
+    "result": {
+      "data_exists": false,
+      "no_fit": true,
+      "reason": "The question asks about showroom opening hours, but none of the offered metrics measure store hours or whether a showroom is open on Sundays."
+    }
+  },
+  "kind": "structured",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "planner",
+    "provider": "openai",
+    "sha256": "b0b4f239c1e82e040030ab894872875c7b461a9406057341e5278262b3fa74bf",
+    "version": 1
+  },
+  "raw": "{\"result\":{\"no_fit\":true,\"reason\":\"The question asks about showroom opening hours, but none of the offered metrics measure store hours or whether a showroom is open on Sundays.\",\"data_exists\":false}}",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 2311,
+    "output_tokens": 120
+  }
+}

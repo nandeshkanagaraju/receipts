@@ -1,0 +1,22 @@
+{
+  "data": {
+    "assumption": "“Phones sold” means the sum of item quantities for non-accessory products on completed, non-test UK showroom orders during last month, grouped by storage size.",
+    "sql": "SELECT p.storage_gb, SUM(oi.qty) AS value\nFROM orders o\nJOIN showrooms s ON s.showroom_id = o.showroom_id\nJOIN countries c ON c.country_code = s.country_code\nJOIN order_items oi ON oi.order_id = o.order_id\nJOIN products p ON p.sku = oi.sku\nWHERE o.is_test = FALSE\n  AND c.name = 'United Kingdom'\n  AND o.business_date >= DATE '2026-08-01'\n  AND o.business_date < DATE '2026-09-01'\n  AND o.status = 'completed'\n  AND p.is_accessory = FALSE\nGROUP BY p.storage_gb\nORDER BY p.storage_gb",
+    "unit": "count",
+    "why_not": ""
+  },
+  "kind": "structured",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "freeform",
+    "provider": "openai",
+    "sha256": "fb698c2a85e957df0a8de83a3ce4c866dbe5bea3e7a1e3fbc16a04bc85d34ed6",
+    "version": 1
+  },
+  "raw": "{\"sql\":\"SELECT p.storage_gb, SUM(oi.qty) AS value\\nFROM orders o\\nJOIN showrooms s ON s.showroom_id = o.showroom_id\\nJOIN countries c ON c.country_code = s.country_code\\nJOIN order_items oi ON oi.order_id = o.order_id\\nJOIN products p ON p.sku = oi.sku\\nWHERE o.is_test = FALSE\\n  AND c.name = 'United Kingdom'\\n  AND o.business_date >= DATE '2026-08-01'\\n  AND o.business_date < DATE '2026-09-01'\\n  AND o.status = 'completed'\\n  AND p.is_accessory = FALSE\\nGROUP BY p.storage_gb\\nORDER BY p.storage_gb\",\"unit\":\"count\",\"why_not\":\"\",\"assumption\":\"“Phones sold” means the sum of item quantities for non-accessory products on completed, non-test UK showroom orders during last month, grouped by storage size.\"}",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 795,
+    "output_tokens": 721
+  }
+}

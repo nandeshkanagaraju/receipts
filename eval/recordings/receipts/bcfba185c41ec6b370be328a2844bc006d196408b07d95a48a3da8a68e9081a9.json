@@ -1,0 +1,16 @@
+{
+  "kind": "text",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "composer",
+    "provider": "openai",
+    "sha256": "b2811b5cadb8075a4cba32008339059d163d0eb918b9b2525bb21fc546e8a498",
+    "version": 1
+  },
+  "text": "Using the glossary definition of captured GMV as gmv_captured, for 2026-09-01 to 2026-09-09: India USD 566085066 vs USD 635324720 (delta USD -69239654); Malaysia USD 63247045 vs USD 69297053 (delta USD -6050008); Singapore USD 75579239 vs USD 100953739 (delta USD -25374500); United Arab Emirates USD 136317115 vs USD 152181507 (delta USD -15864392); United Kingdom USD 136465147 vs USD 132088659 (delta USD 4376488); United States USD 116388400 vs USD 123357900 (delta USD -6969500).",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 667,
+    "output_tokens": 588
+  }
+}

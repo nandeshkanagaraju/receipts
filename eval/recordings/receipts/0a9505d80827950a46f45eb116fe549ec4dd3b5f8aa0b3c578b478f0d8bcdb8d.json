@@ -1,0 +1,16 @@
+{
+  "kind": "text",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "composer",
+    "provider": "openai",
+    "sha256": "b2811b5cadb8075a4cba32008339059d163d0eb918b9b2525bb21fc546e8a498",
+    "version": 1
+  },
+  "text": "Using the glossary-selected orders_count metric and the USD reporting-currency default, Singapore orders were 7809 in March 2026, 7801 in April 2026, 7843 in May 2026, 6997 in June 2026, 7105 in July 2026, and 7394 in August 2026.",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 585,
+    "output_tokens": 406
+  }
+}

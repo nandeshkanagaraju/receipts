@@ -1,0 +1,23 @@
+{
+  "data": {
+    "result": {
+      "data_exists": true,
+      "no_fit": true,
+      "reason": "The requested metric, refund_rate, is available, but the requested breakdown by storage size is not an offered dimension. The condition to include only storage sizes with at least 100 paid orders also cannot be represented with the offered metrics, since orders_count includes paid, abandoned, and cancelled orders alike."
+    }
+  },
+  "kind": "structured",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "planner",
+    "provider": "openai",
+    "sha256": "b0b4f239c1e82e040030ab894872875c7b461a9406057341e5278262b3fa74bf",
+    "version": 1
+  },
+  "raw": "{\"result\":{\"no_fit\":true,\"reason\":\"The requested metric, refund_rate, is available, but the requested breakdown by storage size is not an offered dimension. The condition to include only storage sizes with at least 100 paid orders also cannot be represented with the offered metrics, since orders_count includes paid, abandoned, and cancelled orders alike.\",\"data_exists\":true}}",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 2643,
+    "output_tokens": 473
+  }
+}

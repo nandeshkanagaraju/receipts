@@ -1817,3 +1817,72 @@ now regenerates all four.**
 
 **The shape of it:** a guard that covers most of a thing reads, in a green
 build, exactly like a guard that covers all of it.
+
+## M21.4: the thesis does not hold on the holdout
+
+**T2 fails.** Receipts' silent-wrong rate divided by the baseline's is **0.733**
+against a pre-declared threshold of **≤ 0.5**. On unseen questions, Receipts is
+not half as silently wrong as the baseline; it is roughly three-quarters as
+silently wrong, and it answers far fewer questions to get there.
+
+Holdout, English only, 91 trials, both arms, run once at `dd5227a03169`:
+
+| | Receipts | B0 | dev (Receipts) |
+|---|---:|---:|---:|
+| coverage, ANS correct | **14/45 = 31.1%** | 29/45 = 64.4% | 77/108 = 71.3% |
+| silent-wrong, raw | **11/45 = 24.4%** | 15/45 = 33.3% | 12/108 = 11.1% |
+| silent-wrong \| answered | **11/30 = 36.7%** | 15/45 = 33.3% | 12.0% |
+| over-abstain | 15/45 = 33.3% | 0/45 = 0% | — |
+
+**Conditioned on answering, Receipts is worse than the baseline** — 36.7%
+against 33.3%. The raw advantage comes entirely from abstaining on a third of
+the questions. A system that declines to answer is safer than one that guesses,
+and the project's own scoring says so; but "we are half as wrong" was the claim,
+and it is not what the measurement says.
+
+Pre-declared thresholds, as reported by the harness:
+
+    T1  silent-wrong <= 3%      : FAIL  (24.4%)
+    T2  thesis ratio <= 0.5     : FAIL  (0.733)
+    T3  accuracy >= 85%         : FAIL  (31.1%)
+    T5  over-abstention <= 10%  : FAIL  (33.3%)
+
+Per population, Receipts against B0: ANS 31.1% vs 64.4%; AMB 18.2% vs 90.9%;
+UNA 70% vs 90%; **DENY 83.3% vs 0%**.
+
+DENY is the one place the architecture shows: Receipts answers 5 of 6 scope
+refusals correctly and leaks nothing; the baseline gets none of them right. With
+the fixed leak detector neither system leaks canary values on this set, so the
+claim that survives is "Receipts refuses correctly and the baseline does not",
+not "the baseline leaks".
+
+**The gap between dev and holdout is the size of the memory dev carries.** Dev
+is the set six diagnostic rounds ran against: 71.3% coverage and 11.1%
+silent-wrong there, 31.1% and 24.4% here. Every fix in those rounds implemented
+a rule written down before the failure was seen, and it still did not transfer.
+That is the honest result and it is the one this project exists to be able to
+state.
+
+**The eval set was never run.** Both arms of it would have cost $18.29 on a
+borrowed key and were skipped, so the holdout ran **without a rehearsal** — no
+intermediate measurement on unseen questions existed between dev and this. A
+rehearsal would not have changed the holdout number, but it would have meant
+this one was not the first time anybody looked.
+
+**English only.** T6 language parity is not reported. Dev carries the only
+three-language measurement in the project, and six diagnostic rounds ran against
+dev, so the language comparison available is the one least able to support
+weight.
+
+### Two process notes from the run
+
+- **Replays are byte-identical; the record-time report is not the replay.**
+  Two consecutive replays of each arm produce identical bytes, which is what D16
+  claims. The baseline's record-time report differed from its replay, and **the
+  record-time artifact was overwritten before it could be diffed** — so which
+  field differed is unknown rather than explained. Snapshot before replaying.
+- **The lock recorded `["en","en"]` for the first arm**, because the runner's
+  `--language` argparse appended to its own default. Harmless to the run and a
+  trap for the next: a later `["en"]` would not have matched and would have been
+  refused as a different language set. The lock now canonicalises language sets
+  to a set on both write and comparison, so the existing record reads correctly.

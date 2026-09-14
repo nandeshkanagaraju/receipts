@@ -1,0 +1,16 @@
+{
+  "kind": "text",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "baseline",
+    "provider": "openai",
+    "sha256": "090de0f66427067263b3bab5362e4ec84053149f3b1f35e46139a141a5121fbd",
+    "version": 1
+  },
+  "text": "```sql\nselect\n  NULL as key,\n  sum(i.qty) as value\nfrom order_items i\njoin orders o on o.order_id = i.order_id\njoin products p on p.sku = i.sku\nwhere not o.is_test\n  and o.status = 'paid'\n  and not p.is_accessory\n  and o.business_date = date '2026-09-09'\norder by value\n```",
+  "usage": {
+    "cached_input_tokens": 16128,
+    "input_tokens": 16364,
+    "output_tokens": 187
+  }
+}

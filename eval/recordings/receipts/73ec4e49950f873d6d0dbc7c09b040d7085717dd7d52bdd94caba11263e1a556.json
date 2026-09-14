@@ -1,0 +1,22 @@
+{
+  "data": {
+    "assumption": "“Refund on last month's orders in Chennai” means the total successful refund amount, in minor units, for non-test orders placed in Chennai during August 2026, regardless of when the refund was processed.",
+    "sql": "SELECT SUM(r.amount_minor) AS value\nFROM refunds r\nJOIN orders o ON o.order_id = r.order_id\nJOIN payment_attempts pa ON pa.attempt_id = r.attempt_id\nJOIN showrooms s ON s.showroom_id = o.showroom_id\nJOIN cities c ON c.city_id = s.city_id\nWHERE o.is_test = FALSE\n  AND pa.is_test = FALSE\n  AND o.business_date >= DATE '2026-08-01'\n  AND o.business_date < DATE '2026-09-01'\n  AND c.name = 'Chennai'\n  AND r.currency = 'INR'\n  AND r.status = 'succeeded'",
+    "unit": "INR",
+    "why_not": ""
+  },
+  "kind": "structured",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "freeform",
+    "provider": "openai",
+    "sha256": "fb698c2a85e957df0a8de83a3ce4c866dbe5bea3e7a1e3fbc16a04bc85d34ed6",
+    "version": 1
+  },
+  "raw": "{\"sql\":\"SELECT SUM(r.amount_minor) AS value\\nFROM refunds r\\nJOIN orders o ON o.order_id = r.order_id\\nJOIN payment_attempts pa ON pa.attempt_id = r.attempt_id\\nJOIN showrooms s ON s.showroom_id = o.showroom_id\\nJOIN cities c ON c.city_id = s.city_id\\nWHERE o.is_test = FALSE\\n  AND pa.is_test = FALSE\\n  AND o.business_date >= DATE '2026-08-01'\\n  AND o.business_date < DATE '2026-09-01'\\n  AND c.name = 'Chennai'\\n  AND r.currency = 'INR'\\n  AND r.status = 'succeeded'\",\"unit\":\"INR\",\"why_not\":\"\",\"assumption\":\"“Refund on last month's orders in Chennai” means the total successful refund amount, in minor units, for non-test orders placed in Chennai during August 2026, regardless of when the refund was processed.\"}",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 796,
+    "output_tokens": 725
+  }
+}

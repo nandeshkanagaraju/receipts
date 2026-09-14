@@ -1,0 +1,16 @@
+{
+  "kind": "text",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "baseline",
+    "provider": "openai",
+    "sha256": "090de0f66427067263b3bab5362e4ec84053149f3b1f35e46139a141a5121fbd",
+    "version": 1
+  },
+  "text": "```sql\nwith fx as (\n    select c.rate_date,\n           c.currency,\n           cast(c.usd_per_unit / r.usd_per_unit as decimal(38,12)) as to_reporting\n    from fx_rates c\n    join fx_rates r on r.rate_date = c.rate_date and r.currency = 'USD'\n),\ncaptures as (\n    select a.attempt_id,\n           a.acquiring_bank,\n           a.amount_minor,\n           a.currency,\n           a.business_date,\n           row_number() over (\n               partition by a.order_id, a.amount_minor\n               order by a.attempt_no, a.attempt_id\n           ) as capture_rank\n    from payment_attempts a\n    where a.status = 'captured'\n      and not a.is_test\n      and a.business_date <= date '2026-07-31'\n),\nsettled_by_end_july as (\n    select distinct si.attempt_id\n    from settlement_items si\n    join settlements s on s.settlement_id = si.settlement_id\n    where s.settled_on <= date '2026-07-31'\n)\nselect c.acquiring_bank as key,\n       cast(round(sum(c.amount_minor * fx.to_reporting)) as bigint) as value\nfrom captures c\njoin fx on fx.currency = c.currency and fx.rate_date = c.business_date\nleft join settled_by_end_july sb on sb.attempt_id = c.attempt_id\nwhere c.capture_rank = 1\n  and sb.attempt_id is null\ngroup by c.acquiring_bank\norder by value desc, key asc\n```",
+  "usage": {
+    "cached_input_tokens": 16128,
+    "input_tokens": 16370,
+    "output_tokens": 1238
+  }
+}

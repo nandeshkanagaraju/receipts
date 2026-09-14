@@ -1,0 +1,16 @@
+{
+  "kind": "text",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "baseline",
+    "provider": "openai",
+    "sha256": "090de0f66427067263b3bab5362e4ec84053149f3b1f35e46139a141a5121fbd",
+    "version": 1
+  },
+  "text": "```sql\nwith fx as (\n    select c.rate_date,\n           c.currency,\n           cast(c.usd_per_unit / r.usd_per_unit as decimal(38,12)) as to_reporting\n    from fx_rates c\n    join fx_rates r on r.rate_date = c.rate_date and r.currency = 'GBP'\n),\ncaptures_base as (\n    select ci.name as city_name,\n           a.amount_minor,\n           a.currency,\n           a.business_date,\n           row_number() over (\n               partition by a.order_id, a.amount_minor\n               order by a.attempt_no, a.attempt_id\n           ) as capture_rank\n    from payment_attempts a\n    join orders o on o.order_id = a.order_id\n    join showrooms s on s.showroom_id = o.showroom_id\n    join cities ci on ci.city_id = s.city_id\n    where a.status = 'captured'\n      and not a.is_test\n      and not o.is_test\n      and s.country_code IN ('GB')\n      and a.business_date between date '2026-08-01' and date '2026-08-31'\n),\ncaptures as (\n    select cb.city_name,\n           sum(cb.amount_minor * fx.to_reporting) as amount\n    from captures_base cb\n    join fx on fx.currency = cb.currency and fx.rate_date = cb.business_date\n    where cb.capture_rank = 1\n    group by cb.city_name\n),\nrefunded as (\n    select ci.name as city_name,\n           sum(rf.amount_minor * fx.to_reporting) as amount\n    from refunds rf\n    join orders o on o.order_id = rf.order_id\n    join payment_attempts a on a.attempt_id = rf.attempt_id\n    join showrooms s on s.showroom_id = o.showroom_id\n    join cities ci on ci.city_id = s.city_id\n    join fx on fx.currency = rf.currency and fx.rate_date = rf.business_date\n    where rf.status = 'processed'\n      and not o.is_test\n      and not a.is_test\n      and s.country_code IN ('GB')\n      and rf.business_date between date '2026-08-01' and date '2026-08-31'\n    group by ci.name\n)\nselect coalesce(c.city_name, r.city_name) as key,\n       cast(round(coalesce(c.amount, 0) - coalesce(r.amount, 0)) as bigint) as value\nfrom captures c\nfull outer join refunded r on r.city_name = c.city_name\norder by value desc, key asc\n```",
+  "usage": {
+    "cached_input_tokens": 15104,
+    "input_tokens": 16157,
+    "output_tokens": 1059
+  }
+}

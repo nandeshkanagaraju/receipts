@@ -1,0 +1,16 @@
+{
+  "kind": "text",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "composer",
+    "provider": "openai",
+    "sha256": "b2811b5cadb8075a4cba32008339059d163d0eb918b9b2525bb21fc546e8a498",
+    "version": 1
+  },
+  "text": "For 2026-09-01 to 2026-09-09, “refunds” means refunded amount in GBP; by refund reason, price_match was 1455312, duplicate_charge 1043158, customer_changed_mind 993270, damaged_in_transit 926756, wrong_item 897821, and faulty_device 348420.",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 560,
+    "output_tokens": 280
+  }
+}

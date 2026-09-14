@@ -685,17 +685,26 @@ literal values of every enum, ten worked examples with reasoning, its scope in
 words, and one retry. This is not a strawman's failure rate. Excluding the ten
 few-shot questions it is 33.3%.
 
-**2. Scope leaks 25% in English and 75% in Tamil and Hindi, because prompt prose
-is not a boundary.** 7 of 12 out-of-scope questions returned out-of-scope data.
-This is the headline architectural argument — it is precisely what the scope
-rewrite (SDD §12.2) exists to replace, and it says the difference is not
-theoretical.
+**2. ~~Scope leaks 25% in English and 75% in Tamil and Hindi~~ — WITHDRAWN,
+pending the holdout.**
 
-**It was not predicted.** The leak check was extended from DENY to every
-population on general principle, and the language split fell out of it. Worth
-saying in the README, because a finding that was looked for and a finding that
-turned up are different kinds of evidence, and this project's credibility rests
-on not blurring them.
+This said 7 of 12 out-of-scope questions returned out-of-scope data, with a
+language split, and it was called the headline architectural argument. **It came
+from the leak detector that M12 fixed.** `canaries_from_truth` iterated a mapping
+and yielded its keys, so `AE`, `GB`, `IN`, `MY`, `SG` and `US` became canaries
+and matched inside `IN-TN`, `INR` and a SQL `IN (...)`. Regenerating the
+baseline's dev report with the working detector gives **0 leaks, not 7**
+(M21.3 in LIMITATIONS).
+
+The count is gone and so is the language split, which came from the same seven
+trials. **Do not put either in the README.** Whether the baseline's scope
+boundary leaks at all, and whether it leaks differently by language, is
+**unproven** until a run with a working detector says so.
+
+The instinct in the original note still stands and is worth keeping: a finding
+that was looked for and a finding that turned up are different kinds of
+evidence. This one turned up, and then turned out to be an artefact — which is
+the same lesson from the other side.
 
 **3. The traps split cleanly, with no middle, and few-shot exposure does not
 predict which group.** `partial_refunds`, `authorised_vs_captured`, `emi` and
@@ -731,10 +740,15 @@ were checked rather than accepted.
 For the README at G5, beside the four M6b findings. This one is the *answer* to
 the second of them and should be printed next to it.
 
-The baseline leaks out-of-scope data on **25% of English** DENY questions and
-**75% of Tamil and Hindi** ones (M6b, commit `552a7ff`). Its scope is a paragraph
-of English prose in a prompt, and a question in another language walks past the
-paragraph.
+**The measured half of this is withdrawn.** It read: the baseline leaks on 25%
+of English DENY questions and 75% of Tamil and Hindi ones, from M6b commit
+`552a7ff`. Those seven leaks were the M12 canary defect, and with the fixed
+detector the baseline's dev report shows **none**. Until a run with a working
+detector reports, it is **not known** whether the baseline's prose boundary
+leaks, in any language.
+
+What survives is the *structural* claim, which never depended on the count and
+can be read off the code:
 
 Receipts cannot have that failure mode, and the reason is structural rather than
 careful. The gate reads a **resolved plan** — a metric name, a list of dimension

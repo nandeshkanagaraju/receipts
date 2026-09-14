@@ -1,0 +1,16 @@
+{
+  "kind": "text",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "composer",
+    "provider": "openai",
+    "sha256": "b2811b5cadb8075a4cba32008339059d163d0eb918b9b2525bb21fc546e8a498",
+    "version": 1
+  },
+  "text": "From 2026-09-03 to 2026-09-09, using refunded_amount for “refunded amount,” refunded amounts in USD by country were India 18888334, United States 5399383, United Arab Emirates 4323571, United Kingdom 4193416, Singapore 3127090, and Malaysia 2528339.",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 559,
+    "output_tokens": 380
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "kind": "text",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "composer",
+    "provider": "openai",
+    "sha256": "b2811b5cadb8075a4cba32008339059d163d0eb918b9b2525bb21fc546e8a498",
+    "version": 1
+  },
+  "text": "For business dates 2026-09-01 to 2026-09-09, average order value in London was GBP 60183 at Kestrel London Garden Road, GBP 54592 at Kestrel London Central, GBP 47309 at Kestrel London City Centre, and GBP 45980 at Kestrel London High Street, using the glossary’s average order value metric and the GBP reporting currency default.",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 567,
+    "output_tokens": 192
+  }
+}

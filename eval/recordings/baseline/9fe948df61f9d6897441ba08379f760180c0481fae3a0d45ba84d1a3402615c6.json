@@ -1,0 +1,16 @@
+{
+  "kind": "text",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "baseline",
+    "provider": "openai",
+    "sha256": "090de0f66427067263b3bab5362e4ec84053149f3b1f35e46139a141a5121fbd",
+    "version": 1
+  },
+  "text": "```sql\nselect\n  NULL as key,\n  cast(sum(rf.processed_on - rf.business_date) * 1.0 / count(*) as decimal(38,12)) as value\nfrom refunds rf\njoin orders o on o.order_id = rf.order_id\njoin showrooms s on s.showroom_id = o.showroom_id\njoin cities ci on ci.city_id = s.city_id\nleft join payment_attempts a on a.attempt_id = rf.attempt_id\nwhere not o.is_test\n  and (a.attempt_id is null or not a.is_test)\n  and rf.status = 'processed'\n  and rf.processed_on between date '2026-08-01' and date '2026-08-31'\n  and s.region_id in ('IN-TN')\n  and ci.name = 'Chennai'\norder by value\n```",
+  "usage": {
+    "cached_input_tokens": 15104,
+    "input_tokens": 16163,
+    "output_tokens": 1484
+  }
+}

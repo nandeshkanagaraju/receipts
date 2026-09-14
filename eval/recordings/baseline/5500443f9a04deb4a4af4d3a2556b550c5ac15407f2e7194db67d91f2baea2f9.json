@@ -1,0 +1,16 @@
+{
+  "kind": "text",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "baseline",
+    "provider": "openai",
+    "sha256": "090de0f66427067263b3bab5362e4ec84053149f3b1f35e46139a141a5121fbd",
+    "version": 1
+  },
+  "text": "```sql\nwith captures as (\n    select\n        a.attempt_id,\n        a.amount_minor,\n        a.business_date,\n        row_number() over (\n            partition by a.order_id, a.amount_minor\n            order by a.attempt_no, a.attempt_id\n        ) as capture_rank\n    from payment_attempts a\n    join orders o on o.order_id = a.order_id\n    join showrooms s on s.showroom_id = o.showroom_id\n    join cities ci on ci.city_id = s.city_id\n    where not a.is_test\n      and not o.is_test\n      and a.status = 'captured'\n      and s.region_id = 'IN-TN'\n      and ci.name = 'Salem'\n),\nweekend_sales as (\n    select\n        coalesce(sum(case\n            when business_date between date '2026-09-05' and date '2026-09-06'\n            then amount_minor\n            else 0\n        end), 0) as latest_weekend_sales,\n        coalesce(sum(case\n            when business_date between date '2026-08-29' and date '2026-08-30'\n            then amount_minor\n            else 0\n        end), 0) as previous_weekend_sales\n    from captures\n    where capture_rank = 1\n      and business_date between date '2026-08-29' and date '2026-09-06'\n)\nselect\n    null as key,\n    case\n        when latest_weekend_sales > previous_weekend_sales then 1\n        else 0\n    end as value\nfrom weekend_sales\norder by value\n```",
+  "usage": {
+    "cached_input_tokens": 15104,
+    "input_tokens": 16161,
+    "output_tokens": 3353
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "data": {
+    "assumption": "I interpreted “orders we got paid for in Tamil Nadu last month” as distinct non-test orders at Tamil Nadu showrooms with a non-test succeeded payment attempt whose business_date was in August 2026.",
+    "sql": "SELECT COUNT(DISTINCT o.order_id) AS value\nFROM orders o\nJOIN showrooms s ON s.showroom_id = o.showroom_id\nJOIN regions r ON r.region_id = s.region_id\nJOIN payment_attempts pa ON pa.order_id = o.order_id\nWHERE o.is_test = false\n  AND pa.is_test = false\n  AND r.name = 'Tamil Nadu'\n  AND pa.status = 'succeeded'\n  AND pa.business_date >= DATE '2026-08-01'\n  AND pa.business_date < DATE '2026-09-01'",
+    "unit": "count",
+    "why_not": ""
+  },
+  "kind": "structured",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "freeform",
+    "provider": "openai",
+    "sha256": "fb698c2a85e957df0a8de83a3ce4c866dbe5bea3e7a1e3fbc16a04bc85d34ed6",
+    "version": 1
+  },
+  "raw": "{\"sql\":\"SELECT COUNT(DISTINCT o.order_id) AS value\\nFROM orders o\\nJOIN showrooms s ON s.showroom_id = o.showroom_id\\nJOIN regions r ON r.region_id = s.region_id\\nJOIN payment_attempts pa ON pa.order_id = o.order_id\\nWHERE o.is_test = false\\n  AND pa.is_test = false\\n  AND r.name = 'Tamil Nadu'\\n  AND pa.status = 'succeeded'\\n  AND pa.business_date >= DATE '2026-08-01'\\n  AND pa.business_date < DATE '2026-09-01'\",\"unit\":\"count\",\"why_not\":\"\",\"assumption\":\"I interpreted “orders we got paid for in Tamil Nadu last month” as distinct non-test orders at Tamil Nadu showrooms with a non-test succeeded payment attempt whose business_date was in August 2026.\"}",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 798,
+    "output_tokens": 703
+  }
+}

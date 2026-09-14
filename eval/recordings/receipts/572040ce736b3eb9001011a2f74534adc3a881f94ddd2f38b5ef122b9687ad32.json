@@ -1,0 +1,16 @@
+{
+  "kind": "text",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "composer",
+    "provider": "openai",
+    "sha256": "b2811b5cadb8075a4cba32008339059d163d0eb918b9b2525bb21fc546e8a498",
+    "version": 1
+  },
+  "text": "Using the default mapping of “sales” to Captured GMV and INR reporting, this month versus last month was: Chennai INR 3694748400 vs INR 4305504000 (delta -610755600), Coimbatore INR 2297769600 vs INR 2513910000 (delta -216140400), Madurai INR 450063600 vs INR 551233200 (delta -101169600), Salem INR 2756359200 vs INR 3107655600 (delta -351296400), and Trichy INR 2875958400 vs INR 3199257600 (delta -323299200).",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 668,
+    "output_tokens": 556
+  }
+}

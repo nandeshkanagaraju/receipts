@@ -1,0 +1,22 @@
+{
+  "data": {
+    "assumption": "“Sales value” means the sum of successful non-test payment attempt amounts in INR for Tamil Nadu showrooms over the inclusive 30-day business-date window from 2026-08-12 through 2026-09-10.",
+    "sql": "SELECT s.name AS showroom_name, SUM(pa.amount_minor) AS value\nFROM payment_attempts pa\nJOIN orders o ON o.order_id = pa.order_id\nJOIN showrooms s ON s.showroom_id = o.showroom_id\nJOIN regions r ON r.region_id = s.region_id\nWHERE pa.is_test = false\n  AND o.is_test = false\n  AND pa.status = 'succeeded'\n  AND pa.currency = 'INR'\n  AND r.name = 'Tamil Nadu'\n  AND pa.business_date BETWEEN DATE '2026-08-12' AND DATE '2026-09-10'\nGROUP BY s.showroom_id, s.name\nORDER BY value DESC\nLIMIT 5",
+    "unit": "INR",
+    "why_not": ""
+  },
+  "kind": "structured",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "freeform",
+    "provider": "openai",
+    "sha256": "fb698c2a85e957df0a8de83a3ce4c866dbe5bea3e7a1e3fbc16a04bc85d34ed6",
+    "version": 1
+  },
+  "raw": "{\"sql\":\"SELECT s.name AS showroom_name, SUM(pa.amount_minor) AS value\\nFROM payment_attempts pa\\nJOIN orders o ON o.order_id = pa.order_id\\nJOIN showrooms s ON s.showroom_id = o.showroom_id\\nJOIN regions r ON r.region_id = s.region_id\\nWHERE pa.is_test = false\\n  AND o.is_test = false\\n  AND pa.status = 'succeeded'\\n  AND pa.currency = 'INR'\\n  AND r.name = 'Tamil Nadu'\\n  AND pa.business_date BETWEEN DATE '2026-08-12' AND DATE '2026-09-10'\\nGROUP BY s.showroom_id, s.name\\nORDER BY value DESC\\nLIMIT 5\",\"unit\":\"INR\",\"why_not\":\"\",\"assumption\":\"“Sales value” means the sum of successful non-test payment attempt amounts in INR for Tamil Nadu showrooms over the inclusive 30-day business-date window from 2026-08-12 through 2026-09-10.\"}",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 800,
+    "output_tokens": 736
+  }
+}

@@ -24,12 +24,24 @@ if str(REPO / "src") not in sys.path:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--system", required=True)
-    parser.add_argument("--language", action="append", default=["en"])
+    # `default=None`, not `["en"]`: with action="append" argparse APPENDS to the
+    # default, so `--language en` produced ["en","en"] and the lock recorded a
+    # language set of two identical entries. Harmless to the run, and a trap for
+    # the next one -- a later ["en"] would not match and would be refused as a
+    # DIFFERENT language set.
+    parser.add_argument("--language", action="append", default=None)
     parser.add_argument("--set", dest="set_name", default="holdout")
     args = parser.parse_args(argv)
+    languages = sorted(set(args.language or ["en"]))
 
+    # Tracked changes only. Untracked files are what a run WRITES -- recordings
+    # and results -- so counting them meant the first arm blocked the second.
     dirty = subprocess.run(
-        ["git", "status", "--porcelain"], cwd=REPO, capture_output=True, text=True, check=True
+        ["git", "status", "--porcelain", "--untracked-files=no"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        check=True,
     ).stdout.strip()
     if dirty and args.set_name == "holdout":
         raise SystemExit("the tree is dirty; the lock records a commit SHA, so commit first")
@@ -46,7 +58,7 @@ def main(argv: list[str] | None = None) -> int:
     from receipts.evalkit.harness import main as harness_main
 
     cli = ["--system", args.system, "--set", args.set_name]
-    for language in args.language:
+    for language in languages:
         cli += ["--language", language]
     print(f"running: {' '.join(cli)}  (mode=record)")
     return int(harness_main(cli) or 0)

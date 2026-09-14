@@ -1,0 +1,22 @@
+{
+  "data": {
+    "assumption": "I interpreted “store” as showroom and “today” as payment_attempts.business_date = 2026-09-10, counting failed non-test payment attempts.",
+    "sql": "SELECT showroom_id, showroom_name, value\nFROM (\n  SELECT\n    s.showroom_id,\n    s.name AS showroom_name,\n    COUNT(*) AS value,\n    MAX(COUNT(*)) OVER () AS max_value\n  FROM payment_attempts pa\n  JOIN orders o ON o.order_id = pa.order_id\n  JOIN showrooms s ON s.showroom_id = o.showroom_id\n  WHERE pa.is_test IS FALSE\n    AND o.is_test IS FALSE\n    AND pa.business_date = DATE '2026-09-10'\n    AND pa.status = 'failed'\n  GROUP BY s.showroom_id, s.name\n) ranked\nWHERE value = max_value",
+    "unit": "count",
+    "why_not": ""
+  },
+  "kind": "structured",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "freeform",
+    "provider": "openai",
+    "sha256": "fb698c2a85e957df0a8de83a3ce4c866dbe5bea3e7a1e3fbc16a04bc85d34ed6",
+    "version": 1
+  },
+  "raw": "{\"sql\":\"SELECT showroom_id, showroom_name, value\\nFROM (\\n  SELECT\\n    s.showroom_id,\\n    s.name AS showroom_name,\\n    COUNT(*) AS value,\\n    MAX(COUNT(*)) OVER () AS max_value\\n  FROM payment_attempts pa\\n  JOIN orders o ON o.order_id = pa.order_id\\n  JOIN showrooms s ON s.showroom_id = o.showroom_id\\n  WHERE pa.is_test IS FALSE\\n    AND o.is_test IS FALSE\\n    AND pa.business_date = DATE '2026-09-10'\\n    AND pa.status = 'failed'\\n  GROUP BY s.showroom_id, s.name\\n) ranked\\nWHERE value = max_value\",\"unit\":\"count\",\"why_not\":\"\",\"assumption\":\"I interpreted “store” as showroom and “today” as payment_attempts.business_date = 2026-09-10, counting failed non-test payment attempts.\"}",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 796,
+    "output_tokens": 717
+  }
+}

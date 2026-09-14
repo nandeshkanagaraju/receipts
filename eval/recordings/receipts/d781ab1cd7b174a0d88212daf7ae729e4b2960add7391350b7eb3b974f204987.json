@@ -1,0 +1,22 @@
+{
+  "data": {
+    "assumption": "I interpreted “last month’s UK captured GMV” as UK showroom captured payments in August 2026, and “settled to us so far” as bank settlements received by today.",
+    "sql": null,
+    "unit": "GBP",
+    "why_not": "The schema has captured payment attempts, but no bank settlement records, settlement status, settlement dates, or settled amounts to tell what the bank has settled to us so far."
+  },
+  "kind": "structured",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "freeform",
+    "provider": "openai",
+    "sha256": "fb698c2a85e957df0a8de83a3ce4c866dbe5bea3e7a1e3fbc16a04bc85d34ed6",
+    "version": 1
+  },
+  "raw": "{\"sql\":null,\"unit\":\"GBP\",\"why_not\":\"The schema has captured payment attempts, but no bank settlement records, settlement status, settlement dates, or settled amounts to tell what the bank has settled to us so far.\",\"assumption\":\"I interpreted “last month’s UK captured GMV” as UK showroom captured payments in August 2026, and “settled to us so far” as bank settlements received by today.\"}",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 802,
+    "output_tokens": 452
+  }
+}

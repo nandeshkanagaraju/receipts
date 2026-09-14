@@ -1,0 +1,22 @@
+{
+  "data": {
+    "assumption": "I interpreted “UK orders delivered late last month” as a count of non-test orders from UK showrooms that were delivered after their promised delivery date in August 2026.",
+    "sql": null,
+    "unit": "count",
+    "why_not": "The schema has no delivery date, promised delivery date, or lateness indicator to determine whether delivered UK orders were late."
+  },
+  "kind": "structured",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "freeform",
+    "provider": "openai",
+    "sha256": "fb698c2a85e957df0a8de83a3ce4c866dbe5bea3e7a1e3fbc16a04bc85d34ed6",
+    "version": 1
+  },
+  "raw": "{\"sql\":null,\"unit\":\"count\",\"why_not\":\"The schema has no delivery date, promised delivery date, or lateness indicator to determine whether delivered UK orders were late.\",\"assumption\":\"I interpreted “UK orders delivered late last month” as a count of non-test orders from UK showrooms that were delivered after their promised delivery date in August 2026.\"}",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 794,
+    "output_tokens": 158
+  }
+}

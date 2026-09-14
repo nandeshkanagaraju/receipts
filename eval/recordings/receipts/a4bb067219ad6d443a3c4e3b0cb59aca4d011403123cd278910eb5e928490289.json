@@ -1,0 +1,60 @@
+{
+  "data": {
+    "result": {
+      "ambiguities": [
+        {
+          "chosen": "refunded_amount by refund_reason",
+          "kind": "metric_choice",
+          "readings": [
+            "Refunded amount by refund reason, which shows the value of phone refunds associated with each reason",
+            "Count or share of returned/refunded phone orders by refund reason, which is not one of the offered metrics"
+          ],
+          "term": "Why are customers returning phones"
+        }
+      ],
+      "compare_to": null,
+      "dimensions": [
+        "refund_reason"
+      ],
+      "filters": [
+        {
+          "dimension": "product_type",
+          "op": "eq",
+          "values": [
+            "phone"
+          ]
+        }
+      ],
+      "grain": "NONE",
+      "kind": "metric",
+      "limit": null,
+      "name": "refunded_amount",
+      "order": "value_desc",
+      "reporting_currency": null,
+      "window": {
+        "calendar": "unspecified",
+        "end": null,
+        "kind": "relative",
+        "n": null,
+        "quarter": null,
+        "relative": null,
+        "start": null,
+        "year": null
+      }
+    }
+  },
+  "kind": "structured",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "planner",
+    "provider": "openai",
+    "sha256": "b0b4f239c1e82e040030ab894872875c7b461a9406057341e5278262b3fa74bf",
+    "version": 1
+  },
+  "raw": "{\"result\":{\"kind\":\"metric\",\"name\":\"refunded_amount\",\"dimensions\":[\"refund_reason\"],\"filters\":[{\"dimension\":\"product_type\",\"op\":\"eq\",\"values\":[\"phone\"]}],\"window\":{\"kind\":\"relative\",\"relative\":null,\"start\":null,\"end\":null,\"quarter\":null,\"year\":null,\"n\":null,\"calendar\":\"unspecified\"},\"grain\":\"NONE\",\"compare_to\":null,\"order\":\"value_desc\",\"limit\":null,\"reporting_currency\":null,\"ambiguities\":[{\"term\":\"Why are customers returning phones\",\"kind\":\"metric_choice\",\"readings\":[\"Refunded amount by refund reason, which shows the value of phone refunds associated with each reason\",\"Count or share of returned/refunded phone orders by refund reason, which is not one of the offered metrics\"],\"chosen\":\"refunded_amount by refund_reason\"}]}}",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 2524,
+    "output_tokens": 694
+  }
+}

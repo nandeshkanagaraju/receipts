@@ -1,0 +1,52 @@
+{
+  "data": {
+    "result": {
+      "ambiguities": [
+        {
+          "chosen": null,
+          "kind": "calendar",
+          "readings": [
+            "current calendar quarter",
+            "current fiscal quarter"
+          ],
+          "term": "this quarter"
+        }
+      ],
+      "compare_to": null,
+      "dimensions": [
+        "country"
+      ],
+      "filters": [],
+      "grain": "NONE",
+      "kind": "metric",
+      "limit": 1,
+      "name": "net_revenue",
+      "order": "value_desc",
+      "reporting_currency": null,
+      "window": {
+        "calendar": "unspecified",
+        "end": null,
+        "kind": "relative",
+        "n": null,
+        "quarter": null,
+        "relative": "this_quarter",
+        "start": null,
+        "year": null
+      }
+    }
+  },
+  "kind": "structured",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "planner",
+    "provider": "openai",
+    "sha256": "b0b4f239c1e82e040030ab894872875c7b461a9406057341e5278262b3fa74bf",
+    "version": 1
+  },
+  "raw": "{\"result\":{\"kind\":\"metric\",\"name\":\"net_revenue\",\"dimensions\":[\"country\"],\"filters\":[],\"window\":{\"kind\":\"relative\",\"relative\":\"this_quarter\",\"start\":null,\"end\":null,\"quarter\":null,\"year\":null,\"n\":null,\"calendar\":\"unspecified\"},\"grain\":\"NONE\",\"compare_to\":null,\"order\":\"value_desc\",\"limit\":1,\"reporting_currency\":null,\"ambiguities\":[{\"term\":\"this quarter\",\"kind\":\"calendar\",\"readings\":[\"current calendar quarter\",\"current fiscal quarter\"],\"chosen\":null}]}}",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 1875,
+    "output_tokens": 389
+  }
+}

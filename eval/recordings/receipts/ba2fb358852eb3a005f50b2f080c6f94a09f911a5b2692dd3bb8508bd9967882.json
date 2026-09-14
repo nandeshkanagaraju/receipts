@@ -1,0 +1,23 @@
+{
+  "data": {
+    "result": {
+      "data_exists": true,
+      "no_fit": true,
+      "reason": "The question asks for refunded amount limited to orders that had been captured twice. Although refunded amount and duplicate capture count are offered separately, there is no offered dimension or filter for “orders captured twice,” so the requested restricted refund amount cannot be planned with the available metrics/dimensions."
+    }
+  },
+  "kind": "structured",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "planner",
+    "provider": "openai",
+    "sha256": "b0b4f239c1e82e040030ab894872875c7b461a9406057341e5278262b3fa74bf",
+    "version": 1
+  },
+  "raw": "{\"result\":{\"no_fit\":true,\"reason\":\"The question asks for refunded amount limited to orders that had been captured twice. Although refunded amount and duplicate capture count are offered separately, there is no offered dimension or filter for “orders captured twice,” so the requested restricted refund amount cannot be planned with the available metrics/dimensions.\",\"data_exists\":true}}",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 2551,
+    "output_tokens": 392
+  }
+}

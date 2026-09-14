@@ -1,0 +1,22 @@
+{
+  "data": {
+    "assumption": "I interpreted “how much of our business is online” as the share of non-test order value from orders whose channel is 'online', calculated separately per currency to avoid mixing minor units.",
+    "sql": "SELECT currency, CAST(SUM(CASE WHEN LOWER(channel) = 'online' THEN total_minor ELSE 0 END) AS DECIMAL(38, 6)) / NULLIF(SUM(total_minor), 0) AS value FROM orders WHERE is_test = false GROUP BY currency",
+    "unit": "ratio",
+    "why_not": ""
+  },
+  "kind": "structured",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "freeform",
+    "provider": "openai",
+    "sha256": "fb698c2a85e957df0a8de83a3ce4c866dbe5bea3e7a1e3fbc16a04bc85d34ed6",
+    "version": 1
+  },
+  "raw": "{\"sql\":\"SELECT currency, CAST(SUM(CASE WHEN LOWER(channel) = 'online' THEN total_minor ELSE 0 END) AS DECIMAL(38, 6)) / NULLIF(SUM(total_minor), 0) AS value FROM orders WHERE is_test = false GROUP BY currency\",\"unit\":\"ratio\",\"why_not\":\"\",\"assumption\":\"I interpreted “how much of our business is online” as the share of non-test order value from orders whose channel is 'online', calculated separately per currency to avoid mixing minor units.\"}",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 832,
+    "output_tokens": 632
+  }
+}

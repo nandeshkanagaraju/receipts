@@ -1,0 +1,16 @@
+{
+  "kind": "text",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "baseline",
+    "provider": "openai",
+    "sha256": "090de0f66427067263b3bab5362e4ec84053149f3b1f35e46139a141a5121fbd",
+    "version": 1
+  },
+  "text": "```sql\nwith captures as (\n    select\n        a.order_id,\n        a.amount_minor,\n        row_number() over (\n            partition by a.order_id, a.amount_minor\n            order by a.attempt_no, a.attempt_id\n        ) as capture_rank\n    from payment_attempts a\n    join orders o on o.order_id = a.order_id\n    join showrooms s on s.showroom_id = o.showroom_id\n    join cities ci on ci.city_id = s.city_id\n    where not a.is_test\n      and not o.is_test\n      and a.status = 'captured'\n      and s.country_code in ('GB')\n      and ci.name = 'London'\n      and a.business_date between date '2026-09-01' and date '2026-09-09'\n)\nselect\n    null as key,\n    cast(round(sum(amount_minor) * 1.0 / nullif(count(distinct order_id), 0)) as bigint) as value\nfrom captures\nwhere capture_rank = 1\norder by value\n```",
+  "usage": {
+    "cached_input_tokens": 15104,
+    "input_tokens": 16153,
+    "output_tokens": 744
+  }
+}

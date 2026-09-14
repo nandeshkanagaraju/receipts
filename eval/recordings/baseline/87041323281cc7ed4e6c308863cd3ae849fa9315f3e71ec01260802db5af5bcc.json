@@ -1,0 +1,16 @@
+{
+  "kind": "text",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "baseline",
+    "provider": "openai",
+    "sha256": "090de0f66427067263b3bab5362e4ec84053149f3b1f35e46139a141a5121fbd",
+    "version": 1
+  },
+  "text": "```sql\nwith fx as (\n    select c.rate_date,\n           c.currency,\n           cast(c.usd_per_unit / r.usd_per_unit as decimal(38,12)) as to_reporting\n    from fx_rates c\n    join fx_rates r on r.rate_date = c.rate_date and r.currency = 'INR'\n),\nhandset_orders as (\n    select o.order_id,\n           max(p.storage_gb) as storage_gb\n    from orders o\n    join showrooms s on s.showroom_id = o.showroom_id\n    join order_items i on i.order_id = o.order_id\n    join products p on p.sku = i.sku\n    where not o.is_test\n      and s.region_id = 'IN-TN'\n      and p.model_name = 'Kestrel Onyx'\n      and not p.is_accessory\n    group by o.order_id\n),\neligible_storage as (\n    select h.storage_gb\n    from handset_orders h\n    join orders o on o.order_id = h.order_id\n    where o.status = 'paid'\n      and o.business_date between date '2026-08-01' and date '2026-08-31'\n    group by h.storage_gb\n    having count(distinct h.order_id) >= 100\n),\ncaptures_ranked as (\n    select h.storage_gb,\n           a.order_id,\n           a.amount_minor,\n           a.currency,\n           a.business_date,\n           row_number() over (\n               partition by a.order_id, a.amount_minor\n               order by a.attempt_no, a.attempt_id\n           ) as capture_rank\n    from payment_attempts a\n    join handset_orders h on h.order_id = a.order_id\n    where a.status = 'captured'\n      and not a.is_test\n),\ncaptured as (\n    select c.storage_gb,\n           sum(c.amount_minor * fx.to_reporting) as amount\n    from captures_ranked c\n    join fx on fx.currency = c.currency and fx.rate_date = c.business_date\n    where c.capture_rank = 1\n      and c.business_date between date '2026-08-01' and date '2026-08-31'\n    group by c.storage_gb\n),\nrefunded as (\n    select h.storage_gb,\n           sum(rf.amount_minor * fx.to_reporting) as amount\n    from refunds rf\n    join orders o on o.order_id = rf.order_id\n    join handset_orders h on h.order_id = rf.order_id\n    join payment_attempts a on a.attempt_id = rf.attempt_id\n    join fx on fx.currency = rf.currency and fx.rate_date = rf.business_date\n    where not o.is_test\n      and not a.is_test\n      and rf.status = 'processed'\n      and rf.business_date between date '2026-08-01' and date '2026-08-31'\n    group by h.storage_gb\n)\nselect cast(es.storage_gb as varchar) as key,\n       cast(coalesce(r.amount, 0) / nullif(c.amount, 0) as decimal(38,12)) as value\nfrom eligible_storage es\njoin captured c on c.storage_gb = es.storage_gb\nleft join refunded r on r.storage_gb = es.storage_gb\norder by es.storage_gb\n```",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 16177,
+    "output_tokens": 3293
+  }
+}

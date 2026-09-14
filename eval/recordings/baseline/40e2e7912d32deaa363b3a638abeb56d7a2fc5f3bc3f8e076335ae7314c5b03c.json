@@ -1,0 +1,16 @@
+{
+  "kind": "text",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "baseline",
+    "provider": "openai",
+    "sha256": "090de0f66427067263b3bab5362e4ec84053149f3b1f35e46139a141a5121fbd",
+    "version": 1
+  },
+  "text": "CLARIFY: By \"this year\", do you mean calendar year 2026 to date or Kestrel fiscal year FY2027 to date?",
+  "usage": {
+    "cached_input_tokens": 15104,
+    "input_tokens": 16158,
+    "output_tokens": 552
+  }
+}

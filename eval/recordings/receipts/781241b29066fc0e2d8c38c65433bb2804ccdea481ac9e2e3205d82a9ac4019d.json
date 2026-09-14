@@ -1,0 +1,16 @@
+{
+  "kind": "text",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "composer",
+    "provider": "openai",
+    "sha256": "b2811b5cadb8075a4cba32008339059d163d0eb918b9b2525bb21fc546e8a498",
+    "version": 1
+  },
+  "text": "Total sales across all countries yesterday were USD 108977679, using the default captured GMV metric in USD.",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 507,
+    "output_tokens": 176
+  }
+}

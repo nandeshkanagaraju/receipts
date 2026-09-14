@@ -1,0 +1,16 @@
+{
+  "kind": "text",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "baseline",
+    "provider": "openai",
+    "sha256": "090de0f66427067263b3bab5362e4ec84053149f3b1f35e46139a141a5121fbd",
+    "version": 1
+  },
+  "text": "```sql\nwith fx as (\n    select c.rate_date,\n           c.currency,\n           cast(c.usd_per_unit / r.usd_per_unit as decimal(38,12)) as to_reporting\n    from fx_rates c\n    join fx_rates r on r.rate_date = c.rate_date and r.currency = 'GBP'\n),\ndays as (\n    select d::date as business_date\n    from generate_series(date '2026-09-03', date '2026-09-09', interval 1 day) as t(d)\n),\ndaily_refunds as (\n    select rf.business_date,\n           cast(round(sum(rf.amount_minor * fx.to_reporting)) as bigint) as value\n    from refunds rf\n    join orders o on o.order_id = rf.order_id\n    join showrooms s on s.showroom_id = o.showroom_id\n    join fx on fx.currency = rf.currency and fx.rate_date = rf.business_date\n    where not o.is_test\n      and rf.status = 'processed'\n      and s.country_code = 'GB'\n      and rf.business_date between date '2026-09-03' and date '2026-09-09'\n    group by rf.business_date\n)\nselect cast(d.business_date as varchar) as key,\n       coalesce(dr.value, 0) as value\nfrom days d\nleft join daily_refunds dr on dr.business_date = d.business_date\norder by key asc\n```",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 16160,
+    "output_tokens": 820
+  }
+}

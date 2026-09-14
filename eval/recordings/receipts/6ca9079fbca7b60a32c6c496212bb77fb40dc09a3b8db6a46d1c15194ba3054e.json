@@ -1,0 +1,57 @@
+{
+  "data": {
+    "result": {
+      "ambiguities": [],
+      "compare_to": null,
+      "dimensions": [
+        "issuing_bank"
+      ],
+      "filters": [
+        {
+          "dimension": "payment_method",
+          "op": "eq",
+          "values": [
+            "EMI"
+          ]
+        },
+        {
+          "dimension": "country",
+          "op": "eq",
+          "values": [
+            "India"
+          ]
+        }
+      ],
+      "grain": "NONE",
+      "kind": "metric",
+      "limit": null,
+      "name": "gmv_captured",
+      "order": null,
+      "reporting_currency": "INR",
+      "window": {
+        "calendar": "unspecified",
+        "end": null,
+        "kind": "relative",
+        "n": null,
+        "quarter": null,
+        "relative": "last_month",
+        "start": null,
+        "year": null
+      }
+    }
+  },
+  "kind": "structured",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "planner",
+    "provider": "openai",
+    "sha256": "b0b4f239c1e82e040030ab894872875c7b461a9406057341e5278262b3fa74bf",
+    "version": 1
+  },
+  "raw": "{\"result\":{\"kind\":\"metric\",\"name\":\"gmv_captured\",\"dimensions\":[\"issuing_bank\"],\"filters\":[{\"dimension\":\"payment_method\",\"op\":\"eq\",\"values\":[\"EMI\"]},{\"dimension\":\"country\",\"op\":\"eq\",\"values\":[\"India\"]}],\"window\":{\"kind\":\"relative\",\"relative\":\"last_month\",\"start\":null,\"end\":null,\"quarter\":null,\"year\":null,\"n\":null,\"calendar\":\"unspecified\"},\"grain\":\"NONE\",\"compare_to\":null,\"order\":null,\"limit\":null,\"reporting_currency\":\"INR\",\"ambiguities\":[]}}",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 2302,
+    "output_tokens": 305
+  }
+}

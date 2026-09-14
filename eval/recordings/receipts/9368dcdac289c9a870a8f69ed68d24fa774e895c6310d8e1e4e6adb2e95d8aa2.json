@@ -1,0 +1,22 @@
+{
+  "data": {
+    "assumption": "I interpreted “refunds were processed in Tamil Nadu yesterday” as refunds with status 'processed' on business_date 2026-09-09 for orders from showrooms in the Tamil Nadu region.",
+    "sql": "SELECT COUNT(*) AS value\nFROM refunds r\nJOIN orders o ON o.order_id = r.order_id\nJOIN payment_attempts pa ON pa.attempt_id = r.attempt_id\nJOIN showrooms s ON s.showroom_id = o.showroom_id\nJOIN regions rg ON rg.region_id = s.region_id\nWHERE o.is_test = FALSE\n  AND pa.is_test = FALSE\n  AND r.status = 'processed'\n  AND r.business_date = DATE '2026-09-09'\n  AND rg.name = 'Tamil Nadu'",
+    "unit": "count",
+    "why_not": ""
+  },
+  "kind": "structured",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "freeform",
+    "provider": "openai",
+    "sha256": "fb698c2a85e957df0a8de83a3ce4c866dbe5bea3e7a1e3fbc16a04bc85d34ed6",
+    "version": 1
+  },
+  "raw": "{\"sql\":\"SELECT COUNT(*) AS value\\nFROM refunds r\\nJOIN orders o ON o.order_id = r.order_id\\nJOIN payment_attempts pa ON pa.attempt_id = r.attempt_id\\nJOIN showrooms s ON s.showroom_id = o.showroom_id\\nJOIN regions rg ON rg.region_id = s.region_id\\nWHERE o.is_test = FALSE\\n  AND pa.is_test = FALSE\\n  AND r.status = 'processed'\\n  AND r.business_date = DATE '2026-09-09'\\n  AND rg.name = 'Tamil Nadu'\",\"unit\":\"count\",\"why_not\":\"\",\"assumption\":\"I interpreted “refunds were processed in Tamil Nadu yesterday” as refunds with status 'processed' on business_date 2026-09-09 for orders from showrooms in the Tamil Nadu region.\"}",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 794,
+    "output_tokens": 693
+  }
+}

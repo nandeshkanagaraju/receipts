@@ -1,0 +1,16 @@
+{
+  "kind": "text",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "baseline",
+    "provider": "openai",
+    "sha256": "090de0f66427067263b3bab5362e4ec84053149f3b1f35e46139a141a5121fbd",
+    "version": 1
+  },
+  "text": "```sql\nwith scoped_orders as (\n    select o.order_id\n    from orders o\n    join showrooms s on s.showroom_id = o.showroom_id\n    where not o.is_test\n      and s.country_code = 'GB'\n      and o.business_date between date '2026-08-01' and date '2026-08-31'\n),\nattempts as (\n    select a.order_id,\n           a.method,\n           a.status,\n           row_number() over (\n               partition by a.order_id\n               order by a.attempt_no, a.created_at_utc, a.attempt_id\n           ) as rn\n    from payment_attempts a\n    join scoped_orders so on so.order_id = a.order_id\n    where not a.is_test\n),\nfirst_attempt as (\n    select order_id, method as first_method\n    from attempts\n    where rn = 1\n),\npaid_different as (\n    select distinct a.order_id\n    from attempts a\n    join first_attempt f on f.order_id = a.order_id\n    where a.status = 'captured'\n      and a.method <> f.first_method\n)\nselect null as key,\n       count(*) as value\nfrom paid_different\norder by value\n```",
+  "usage": {
+    "cached_input_tokens": 15104,
+    "input_tokens": 16163,
+    "output_tokens": 779
+  }
+}

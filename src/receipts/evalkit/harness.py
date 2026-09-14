@@ -573,7 +573,11 @@ def holdout_lock(
             "the holdout runs once (D17). Set CONFIRM_HOLDOUT=yes if that is what you mean."
         )
     lock = RESULTS / "holdout" / "LOCK"
-    wanted = tuple(sorted(languages))
+    # A SET, canonicalised: ("en","en") and ("en",) are one language set, and
+    # ("en","ta") and ("ta","en") are one. Without this a caller that passed a
+    # duplicate would write a record no later run could match, and the next
+    # legitimate run would be refused as a DIFFERENT language set.
+    wanted = tuple(sorted(set(languages)))
     record = {"system": system, "languages": list(wanted), "sha": sha or _git_sha()}
 
     existing: list[dict[str, Any]] = []
@@ -586,7 +590,7 @@ def holdout_lock(
         for prior in existing:
             if prior.get("system") != system:
                 continue
-            prior_languages = tuple(prior.get("languages") or ())
+            prior_languages = tuple(sorted(set(prior.get("languages") or ())))
             if prior_languages == wanted:
                 raise SystemExit(
                     f"the holdout has already been run for {system!r} in "

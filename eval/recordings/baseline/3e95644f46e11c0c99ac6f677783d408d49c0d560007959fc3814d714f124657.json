@@ -1,0 +1,16 @@
+{
+  "kind": "text",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "baseline",
+    "provider": "openai",
+    "sha256": "090de0f66427067263b3bab5362e4ec84053149f3b1f35e46139a141a5121fbd",
+    "version": 1
+  },
+  "text": "CLARIFY: What time period should I use for the refunded amount?",
+  "usage": {
+    "cached_input_tokens": 15104,
+    "input_tokens": 16151,
+    "output_tokens": 399
+  }
+}

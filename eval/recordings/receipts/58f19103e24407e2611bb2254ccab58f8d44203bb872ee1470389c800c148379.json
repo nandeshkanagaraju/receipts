@@ -1,0 +1,16 @@
+{
+  "kind": "text",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "composer",
+    "provider": "openai",
+    "sha256": "b2811b5cadb8075a4cba32008339059d163d0eb918b9b2525bb21fc546e8a498",
+    "version": 1
+  },
+  "text": "For July 2026 in the United Arab Emirates, net revenue was AED 1490283998 for in_store and AED 305293575 for online_pickup; UAE was interpreted as United Arab Emirates and net revenue used the glossary definition.",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 551,
+    "output_tokens": 181
+  }
+}

@@ -1,0 +1,83 @@
+{
+  "data": {
+    "result": {
+      "ambiguities": [
+        {
+          "chosen": null,
+          "kind": "calendar",
+          "readings": [
+            "calendar year to date",
+            "fiscal year to date"
+          ],
+          "term": "this year"
+        },
+        {
+          "chosen": "physical in-store channel in the UK",
+          "kind": "entity",
+          "readings": [
+            "physical in-store channel in the UK",
+            "all UK showrooms/stores regardless of channel attribution"
+          ],
+          "term": "UK stores"
+        }
+      ],
+      "compare_to": null,
+      "dimensions": [
+        "model"
+      ],
+      "filters": [
+        {
+          "dimension": "country",
+          "op": "eq",
+          "values": [
+            "UK"
+          ]
+        },
+        {
+          "dimension": "product_type",
+          "op": "eq",
+          "values": [
+            "phone"
+          ]
+        },
+        {
+          "dimension": "channel",
+          "op": "eq",
+          "values": [
+            "in store"
+          ]
+        }
+      ],
+      "grain": "NONE",
+      "kind": "metric",
+      "limit": 10,
+      "name": "units_sold",
+      "order": "value_desc",
+      "reporting_currency": null,
+      "window": {
+        "calendar": "unspecified",
+        "end": null,
+        "kind": "relative",
+        "n": null,
+        "quarter": null,
+        "relative": "this_year",
+        "start": null,
+        "year": null
+      }
+    }
+  },
+  "kind": "structured",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "planner",
+    "provider": "openai",
+    "sha256": "b0b4f239c1e82e040030ab894872875c7b461a9406057341e5278262b3fa74bf",
+    "version": 1
+  },
+  "raw": "{\"result\":{\"kind\":\"metric\",\"name\":\"units_sold\",\"dimensions\":[\"model\"],\"filters\":[{\"dimension\":\"country\",\"op\":\"eq\",\"values\":[\"UK\"]},{\"dimension\":\"product_type\",\"op\":\"eq\",\"values\":[\"phone\"]},{\"dimension\":\"channel\",\"op\":\"eq\",\"values\":[\"in store\"]}],\"window\":{\"kind\":\"relative\",\"relative\":\"this_year\",\"start\":null,\"end\":null,\"quarter\":null,\"year\":null,\"n\":null,\"calendar\":\"unspecified\"},\"grain\":\"NONE\",\"compare_to\":null,\"order\":\"value_desc\",\"limit\":10,\"reporting_currency\":null,\"ambiguities\":[{\"term\":\"this year\",\"kind\":\"calendar\",\"readings\":[\"calendar year to date\",\"fiscal year to date\"],\"chosen\":null},{\"term\":\"UK stores\",\"kind\":\"entity\",\"readings\":[\"physical in-store channel in the UK\",\"all UK showrooms/stores regardless of channel attribution\"],\"chosen\":\"physical in-store channel in the UK\"}]}}",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 1871,
+    "output_tokens": 724
+  }
+}

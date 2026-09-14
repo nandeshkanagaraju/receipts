@@ -1,0 +1,69 @@
+{
+  "data": {
+    "result": {
+      "ambiguities": [
+        {
+          "chosen": "refund_rate",
+          "kind": "metric_choice",
+          "readings": [
+            "refunded_amount: total value of refunds processed",
+            "refund_rate: refunded amount divided by captured GMV, better for whether refunds are high relative to sales"
+          ],
+          "term": "refunds high"
+        },
+        {
+          "chosen": "last_7_days",
+          "kind": "window",
+          "readings": [
+            "last_7_days",
+            "yesterday",
+            "this_month"
+          ],
+          "term": "recently"
+        },
+        {
+          "chosen": "previous equivalent period",
+          "kind": "window",
+          "readings": [
+            "compare with previous equivalent period",
+            "compare with same period last year"
+          ],
+          "term": "unusually high"
+        }
+      ],
+      "compare_to": "previous_period",
+      "dimensions": [],
+      "filters": [],
+      "grain": "NONE",
+      "kind": "metric",
+      "limit": null,
+      "name": "refund_rate",
+      "order": null,
+      "reporting_currency": null,
+      "window": {
+        "calendar": "unspecified",
+        "end": null,
+        "kind": "relative",
+        "n": null,
+        "quarter": null,
+        "relative": "last_7_days",
+        "start": null,
+        "year": null
+      }
+    }
+  },
+  "kind": "structured",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "planner",
+    "provider": "openai",
+    "sha256": "b0b4f239c1e82e040030ab894872875c7b461a9406057341e5278262b3fa74bf",
+    "version": 1
+  },
+  "raw": "{\"result\":{\"kind\":\"metric\",\"name\":\"refund_rate\",\"dimensions\":[],\"filters\":[],\"window\":{\"kind\":\"relative\",\"relative\":\"last_7_days\",\"start\":null,\"end\":null,\"quarter\":null,\"year\":null,\"n\":null,\"calendar\":\"unspecified\"},\"grain\":\"NONE\",\"compare_to\":\"previous_period\",\"order\":null,\"limit\":null,\"reporting_currency\":null,\"ambiguities\":[{\"term\":\"refunds high\",\"kind\":\"metric_choice\",\"readings\":[\"refunded_amount: total value of refunds processed\",\"refund_rate: refunded amount divided by captured GMV, better for whether refunds are high relative to sales\"],\"chosen\":\"refund_rate\"},{\"term\":\"recently\",\"kind\":\"window\",\"readings\":[\"last_7_days\",\"yesterday\",\"this_month\"],\"chosen\":\"last_7_days\"},{\"term\":\"unusually high\",\"kind\":\"window\",\"readings\":[\"compare with previous equivalent period\",\"compare with same period last year\"],\"chosen\":\"previous equivalent period\"}]}}",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 2599,
+    "output_tokens": 409
+  }
+}

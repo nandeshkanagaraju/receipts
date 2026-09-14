@@ -1,0 +1,16 @@
+{
+  "kind": "text",
+  "provenance": {
+    "model": "gpt-5.5-2026-04-23",
+    "prompt_id": "composer",
+    "provider": "openai",
+    "sha256": "b2811b5cadb8075a4cba32008339059d163d0eb918b9b2525bb21fc546e8a498",
+    "version": 1
+  },
+  "text": "For 2026-08-01 to 2026-08-31, captured GMV (gmv_captured; EMI interpreted as payment_method=emi) was INR 6707106000 for Bank of Coromandel, INR 6549547200 for Deccan National, INR 6884740800 for Konkan Savings, INR 6350744400 for Peninsula Bank, INR 6447462000 for Sarasvati Union, and INR 6493435200 for Vindhya Credit.",
+  "usage": {
+    "cached_input_tokens": 0,
+    "input_tokens": 619,
+    "output_tokens": 287
+  }
+}
