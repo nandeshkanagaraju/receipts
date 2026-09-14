@@ -217,5 +217,12 @@
   "sealed_files": {
     "eval/sealed/holdout_anomalies.json": "88b2dd63aadd2358e86408923cd4c23388d6e19b54d33e1eff2fdd5bae9b3c26",
     "eval/sealed/holdout_why.jsonl": "b94f55577962822de6f29321eefdf86651402ce0d4f5ba8a8e118e6e509702b1"
-  }
+  },
+  "translations": {
+    "eval/questions/dev.jsonl": "8defaffbfd520e108d9e4dd01953dc7c85179edcb7fe89a0aae85b63ed419f9a",
+    "eval/questions/eval.jsonl": "c08ebbd1f0878a05fbfd08cdb3c46591269af8cec21c051084411085471d8909",
+    "eval/questions/holdout.jsonl": "096f7d40a37c0b4816efc7a1bb3f5d2b5e390ea904ae124cc013a84b131a0a3c",
+    "eval/questions/holdout_blind.jsonl": "cda116238e1a28faf61b4733bdba5b628f1a294c8d8a03407ab4a9cb2fb390be"
+  },
+  "translations_projection": "Translated fields only: variants.ta, variants.hi, variants.ta-Latn and translation_provenance. The English wording and structure are covered by questions-frozen."
 }
