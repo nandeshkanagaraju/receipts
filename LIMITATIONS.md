@@ -1616,3 +1616,35 @@ add it.
 
 Together with "Ask why" rendered disabled, that is three places the front end
 departs from the frozen §22 table, and this file is the list of all of them.
+
+## M20.2: a Groq live-demo path was evaluated and rejected
+
+The deployed demo answers from recorded model responses. Moving it to a live,
+cheaper provider was evaluated — Groq, `qwen/qwen3.8-27b` — and rejected on three
+findings, gathered before anything was wired
+(`scripts/groq_schema_smoke.py`).
+
+**Enum adherence held in practice, but by the wrong mechanism.** Across about a
+dozen calls against the real schema and the real planner prompt, including an
+explicit instruction to use an invented metric and dimension, no value outside
+the governed layer was ever returned, and out-of-layer questions produced
+`no_fit` deterministically. But Groq's own errors — `json_validate_failed`, with
+the model's raw output in `failed_generation` — show it **generates and then
+validates** rather than constraining decoding. An unknown metric is therefore
+*rejected*, not *unrepresentable*. The distinction does not change what reaches
+the pipeline (the compiler still writes SQL from a typed plan, and `QueryPlan`'s
+enum would refuse a bad value regardless), but it is a weaker guarantee than the
+one the design claims.
+
+**No dated model snapshot is available.** The account offers fourteen models and
+none carry a date. `qwen/qwen3.8-27b` is version-pinned, not date-pinned, so a
+disclosure naming it could silently stop being true.
+
+**The free tier rate-limits below demo load** — HTTP 429 after roughly eight
+calls a minute. The page answers an example on load, so a burst of visitors
+would meet errors rather than the product.
+
+The demo stays in replay, which has the property a live path cannot: it answers
+**exactly the questions that were measured**, with the responses the published
+numbers came from. The eval harness and all recordings remain on OpenAI
+`gpt-5.5-2026-04-23` and were never in scope for this change.

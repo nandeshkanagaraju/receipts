@@ -818,6 +818,50 @@ Two things make it worth the README rather than only a changelog line:
 Both were found by mechanisms BUILD_PROMPTS specified and neither by anything
 the author thought to check.
 
+### M21 — a capability test that does not use the real prompt tests a prompt nobody ships
+
+Written up because the first run blamed the model for a defect in the test, and
+the conclusion would have been acted on.
+
+Before switching the live demo to a cheaper provider, one question decided it:
+can the provider enforce the planner's enum, so a metric outside the governed
+layer cannot be named? The first version of the smoke test built its schema from
+`plan_schema` — the **plan branch only** — and wrote its own system prompt, two
+sentences of it.
+
+The real forced-output schema is `{"result": {"anyOf": [plan, no_fit]}}`, and the
+real prompt says, in the file: *"If none of them is what the question means, say
+so rather than choosing the closest one — a plan that names the wrong metric
+produces a confident number that answers a different question, which is the
+worst outcome available to you."*
+
+With the plan branch alone and none of that instruction, the model had **no way
+to abstain**. Asked how satisfied customers were, it returned `net_revenue`
+broken down by city, showroom and product type. That reads as the exact failure
+this project exists to prevent — a confident number answering a different
+question — and it was entirely an artefact of the harness. With the real schema
+and the real prompt the same model returns `no_fit` with a correct reason, five
+times out of five at temperature 0.
+
+**The lesson is not "check your test".** It is that a provider capability test
+is only about the product to the extent it uses the product's own prompt and
+schema. Both were available as importable functions — `schema_from_slice` and
+`render_prompt` — and reconstructing simplified versions of them tested a system
+nobody ships. The same shape as the traps in §11: the thing measured was not the
+thing named.
+
+Two smaller findings from the same hour, both worth a line because each produced
+a confidently wrong reading of a correct status code:
+
+- **Groq sits behind Cloudflare**, which answers `Python-urllib/3.x` with
+  `403, error code 1010` — a browser-signature ban. Read as an API refusal, that
+  is "the provider rejected our schema". It was `urllib`.
+- **`json_validate_failed` is evidence about the mechanism, not just a failure.**
+  Its presence proves the provider generates and then validates; under
+  constrained decoding that error cannot occur. The error body was the most
+  informative artefact of the investigation, and it arrived while looking for
+  something else.
+
 ### M21 — the five compiler defects, and the shape they shared
 
 For the README at G5, beside the baseline findings. This is the other half of the
