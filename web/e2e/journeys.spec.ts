@@ -286,15 +286,25 @@ test.describe("the first screen", () => {
   });
 
   test("the schema is scoped by the same allowlist the guard enforces", async ({ page }) => {
+    const names = () => page.getByTestId("schema-table-row").allInnerTexts();
+
     await open(page, "global_finance");
     await page.getByTestId("catalog-tab-schema").click();
     await expect(page.getByTestId("schema-table-row").first()).toBeVisible();
-    const finance = await page.getByTestId("schema-table-row").count();
+    const financeNames = await names();
+    const finance = financeNames.length;
 
     await page.getByTestId("role-switcher").selectOption("store_ops_uk");
     await page.getByTestId("catalog-tab-schema").click();
-    await expect(page.getByTestId("schema-table-row").first()).toBeVisible();
-    const storeOps = await page.getByTestId("schema-table-row").count();
+    // Waiting for the first row to be VISIBLE proved nothing: the previous
+    // role's rows are still mounted until the new fetch resolves, so the count
+    // was global_finance's. CI read 12 against 12 and the assertion failed with
+    // the product working — a test that reports on the scheduler, not on scope.
+    // Wait for the list to actually be a different list.
+    await expect
+      .poll(async () => (await names()).join("|"), { timeout: 10_000 })
+      .not.toBe(financeNames.join("|"));
+    const storeOps = (await names()).length;
 
     console.log(`schema tables: global_finance ${finance}, store_ops_uk ${storeOps}`);
     // A table the role could never reach in a query is not described to it.

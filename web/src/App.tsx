@@ -152,17 +152,32 @@ export function App() {
     window.history.replaceState(null, "", `?${params.toString()}`);
   }, [role, answer]);
 
-  /** Focus moves to the answer when it arrives (SDD §22 quality floor). */
+  /** Focus moves to the answer when it arrives (SDD §22 quality floor).
+   *
+   *  This used to focus inside a `requestAnimationFrame` fired from the
+   *  stream's `onDone`. `onDone` can arrive in the same tick as `onAnswer`, so
+   *  the frame sometimes ran before React had committed the canvas — `canvas.
+   *  current` was null, nothing was focused, and the quality-floor journey
+   *  failed on desktop while passing on mobile, purely on render timing. The
+   *  request is recorded here and acted on in an effect keyed to the answer, so
+   *  the element is in the DOM by the time it is asked to take focus.
+   */
+  const wantsFocus = useRef(false);
+
   const settle = useCallback(() => {
     setBusy(false);
-    window.requestAnimationFrame(() => {
-      // Scroll as well as focus. At 375px the answer is below the fold, and
-      // focus alone does not always bring it into view inside a scroll
-      // container.
-      canvas.current?.focus();
-      canvas.current?.scrollIntoView({ block: "nearest" });
-    });
+    wantsFocus.current = true;
   }, []);
+
+  useEffect(() => {
+    if (!wantsFocus.current) return;
+    if (!answer && !failure) return;
+    wantsFocus.current = false;
+    // Scroll as well as focus. At 375px the answer is below the fold, and focus
+    // alone does not always bring it into view inside a scroll container.
+    canvas.current?.focus();
+    canvas.current?.scrollIntoView({ block: "nearest" });
+  }, [answer, failure]);
 
   const handlers = useCallback(
     (): api.StreamHandlers => ({
