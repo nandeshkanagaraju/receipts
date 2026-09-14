@@ -1591,3 +1591,28 @@ Two smaller properties of the same deployment, for completeness:
   question — and it matters only if the demo is ever switched to live.
 - **Rate-limit counters are per process** and likewise reset. One container, so
   no divergence — but a second replica would each keep their own.
+
+## M20.1: `CatalogPanel` is a second SDD §22 deviation
+
+SDD §22's component table names `CatalogDrawer (becomes CatalogRunForm in
+catalog mode)` — a thing a reviewer opens. The demo now also renders
+`CatalogPanel`: the same governed layer, on the first screen, without opening
+anything.
+
+The reason is that the catalog is the most checkable artefact the project has —
+every metric a question can reach, the sentence defining it, the glossary line
+that sentence comes from, and the capability a role must hold to use it — and it
+was reachable only through a button in the corner of the header. A reviewer had
+to go looking for the evidence.
+
+The drawer is unchanged and still runs metrics with no model in the path (J7).
+`CatalogPanel` adds no capability; it relocates a view.
+
+**Two components now exist that §22 does not name**: `Drawer` (the shell the two
+drawers share, which renders nothing of its own) and `CatalogPanel`. Both are
+listed by name in `test_no_component_exists_that_the_sdd_table_does_not_name`
+with the reason, so neither can be joined by a third without someone deciding to
+add it.
+
+Together with "Ask why" rendered disabled, that is three places the front end
+departs from the frozen §22 table, and this file is the list of all of them.

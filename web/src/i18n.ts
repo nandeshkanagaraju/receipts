@@ -25,6 +25,12 @@ export interface Copy {
   readonly noReceiptBody: string;
   readonly showSql: string;
   readonly catalog: string;
+  readonly catalogTitle: string;
+  readonly catalogBlurb: string;
+  readonly catalogRunOne: string;
+  readonly definedIn: string;
+  readonly exampleAnswerLabel: string;
+  readonly traceIdle: string;
   readonly closeLabel: string;
   readonly metric: string;
   readonly window: string;
@@ -75,6 +81,13 @@ const EN: Copy = {
   noReceiptBody: "Nothing ran against the data, so there is nothing to show a receipt for.",
   showSql: "Show SQL, plan and trace",
   catalog: "Catalog",
+  catalogTitle: "Governed metrics",
+  catalogBlurb:
+    "Every metric a question can reach. Each one is defined in the glossary, and a role only sees the ones its capabilities allow.",
+  catalogRunOne: "Run one",
+  definedIn: "Defined in",
+  exampleAnswerLabel: "An example, answered when this page loaded",
+  traceIdle: "The stages will appear here as your question runs.",
   closeLabel: "Close",
   metric: "Metric",
   window: "Window",
@@ -144,6 +157,13 @@ const TA: Copy = {
   noReceiptBody: "தரவுக்கு எதிராக எதுவும் இயக்கப்படவில்லை, எனவே காட்ட receipt எதுவும் இல்லை.",
   showSql: "SQL, plan மற்றும் steps காட்டு",
   catalog: "Catalog",
+  catalogTitle: "ஆளுகை செய்யப்பட்ட metrics",
+  catalogBlurb:
+    "ஒரு கேள்வி அணுகக்கூடிய ஒவ்வொரு metric-ம். ஒவ்வொன்றும் glossary-யில் வரையறுக்கப்பட்டுள்ளது; ஒரு பங்கு அதன் அனுமதிகள் இடும் metrics-ஐ மட்டுமே காணும்.",
+  catalogRunOne: "ஒன்றை இயக்கு",
+  definedIn: "வரையறை",
+  exampleAnswerLabel: "இந்தப் பக்கம் ஏற்றப்பட்டபோது பதிலளிக்கப்பட்ட ஓர் எடுத்துக்காட்டு",
+  traceIdle: "உங்கள் கேள்வி இயங்கும்போது படிகள் இங்கே தோன்றும்.",
   closeLabel: "மூடு",
   metric: "Metric",
   window: "காலம்",
@@ -194,6 +214,13 @@ const HI: Copy = {
   noReceiptBody: "डेटा पर कुछ नहीं चला, इसलिए दिखाने के लिए कोई receipt नहीं है।",
   showSql: "SQL, plan और steps दिखाएँ",
   catalog: "Catalog",
+  catalogTitle: "शासित metrics",
+  catalogBlurb:
+    "हर वह metric जिस तक कोई सवाल पहुँच सकता है। हर एक glossary में परिभाषित है, और कोई भूमिका केवल वही देखती है जिसकी अनुमति उसके पास है।",
+  catalogRunOne: "एक चलाएँ",
+  definedIn: "परिभाषा",
+  exampleAnswerLabel: "इस पेज के लोड होने पर दिया गया एक उदाहरण",
+  traceIdle: "आपका सवाल चलते ही चरण यहाँ दिखेंगे।",
   closeLabel: "बंद करें",
   metric: "Metric",
   window: "अवधि",

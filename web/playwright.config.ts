@@ -35,7 +35,11 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: `cd .. && RECEIPTS_LLM_MODE=replay ${PYTHON.replace("../", "")} -m uvicorn --factory receipts.api.app:create_app --host 127.0.0.1 --port 8011`,
+    // RECEIPTS_QPM raises the demo's per-minute allowance for THIS server only.
+    // The limiter still runs and still has its own tests; what it stops doing is
+    // throttling a browser suite that opens the page twenty times a minute --
+    // each load now answering an example, so each load costs a question.
+    command: `cd .. && RECEIPTS_LLM_MODE=replay RECEIPTS_QPM=600 ${PYTHON.replace("../", "")} -m uvicorn --factory receipts.api.app:create_app --host 127.0.0.1 --port 8011`,
     url: "http://127.0.0.1:8011/healthz",
     reuseExistingServer: true,
     timeout: 120_000,

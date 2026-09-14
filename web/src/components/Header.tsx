@@ -2,21 +2,23 @@ import { ROLES, type Lang, type Role } from "../api/types";
 import { LANG_LABEL, UI_LANGS, type Copy } from "../i18n";
 
 /** RoleSwitcher and LanguageToggle. One click to become another role, so a
- *  reviewer can see scoping work inside a minute (PDD §8.1). */
+ *  reviewer can see scoping work inside a minute (PDD §8.1).
+ *
+ *  The Catalog button used to live here, in the corner, which asked a reviewer
+ *  to go looking for the most convincing artefact in the project. It is now a
+ *  panel in the left column, on screen from the first second. */
 export function Header({
   role,
   language,
   copy,
   onRole,
   onLanguage,
-  onCatalog,
 }: {
   role: Role;
   language: Lang;
   copy: Copy;
   onRole: (role: Role) => void;
   onLanguage: (language: Lang) => void;
-  onCatalog: () => void;
 }) {
   return (
     <header className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-rule bg-panel px-4 py-3 sm:px-6">
@@ -67,14 +69,6 @@ export function Header({
         ))}
       </div>
 
-      <button
-        type="button"
-        data-testid="open-catalog"
-        onClick={onCatalog}
-        className="rounded border border-rule px-2.5 py-1.5 text-sm text-ink/75 hover:bg-surface"
-      >
-        {copy.catalog}
-      </button>
     </header>
   );
 }

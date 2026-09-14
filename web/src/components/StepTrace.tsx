@@ -19,7 +19,17 @@ export function StepTrace({
   copy: Copy;
 }) {
   const reached = STAGES.filter((stage) => steps[stage] !== undefined);
-  if (reached.length === 0 && !running) return null;
+  // Idle until a question is asked. A row of ten ticked stages sitting on the
+  // first screen, before anyone has run anything, reads as decoration -- and
+  // decoration that imitates a live trace is the worst kind, because the whole
+  // point of the trace is that it shows what actually happened.
+  if (reached.length === 0 && !running) {
+    return (
+      <p data-testid="step-trace-idle" className="my-4 text-xs leading-relaxed text-ink/65">
+        {copy.traceIdle}
+      </p>
+    );
+  }
   const current = [...reached].reverse().find((stage) => steps[stage] === "start");
 
   return (

@@ -35,6 +35,18 @@ teardown() {
         --query 'Reservations[].Instances[].InstanceId' --output text)
   [[ -n "${ids}" ]] && { q ec2 terminate-instances --instance-ids ${ids} >/dev/null
     echo "terminating ${ids}"; q ec2 wait instance-terminated --instance-ids ${ids}; }
+
+  # Release the Elastic IP. An EIP is free while it is attached to a running
+  # instance and BILLED HOURLY once it is not -- so the one state this script
+  # must never leave behind is an address associated with nothing. Released
+  # after the instance is gone, and before the script can exit for any other
+  # reason.
+  alloc=$(q ec2 describe-addresses --filters "Name=tag:Name,Values=${NAME}" \
+          --query 'Addresses[0].AllocationId' --output text 2>/dev/null || echo None)
+  if [[ -n "${alloc}" && "${alloc}" != "None" ]]; then
+    echo "releasing Elastic IP ${alloc}"
+    q ec2 release-address --allocation-id "${alloc}"
+  fi
   q ec2 delete-security-group --group-name "${NAME}-sg" 2>/dev/null || true
   aws iam remove-role-from-instance-profile --instance-profile-name "${NAME}-profile" \
     --role-name "${NAME}-ec2-role" 2>/dev/null || true
@@ -108,6 +120,26 @@ IID=$(q ec2 run-instances --image-id "${AMI}" --instance-type "${TYPE}" \
 echo "instance ${IID}"
 q ec2 wait instance-running --instance-ids "${IID}"
 
+# --------------------------------------------------------------------------- #
+# The Elastic IP, so the URL survives a redeploy.
+#
+# Without it the public DNS name is derived from whatever address the instance
+# happens to get, and replacing the instance changes the URL -- which is fine
+# for a throwaway and not fine for a link that goes in a README, a video and an
+# application. Reused if one is already tagged, so redeploying does not leak a
+# second address.
+# --------------------------------------------------------------------------- #
+ALLOC=$(q ec2 describe-addresses --filters "Name=tag:Name,Values=${NAME}" \
+        --query 'Addresses[0].AllocationId' --output text 2>/dev/null || echo None)
+if [[ -z "${ALLOC}" || "${ALLOC}" == "None" ]]; then
+  log "Allocating an Elastic IP"
+  ALLOC=$(q ec2 allocate-address --domain vpc \
+    --tag-specifications "ResourceType=elastic-ip,Tags=[{Key=Name,Value=${NAME}}]" \
+    --query AllocationId --output text)
+fi
+log "Associating ${ALLOC}"
+q ec2 associate-address --instance-id "${IID}" --allocation-id "${ALLOC}" >/dev/null
+
 HOST=$(q ec2 describe-instances --instance-ids "${IID}" \
   --query 'Reservations[0].Instances[0].PublicDnsName' --output text)
 URL="http://${HOST}"
@@ -124,3 +156,4 @@ echo "${URL}"
 echo "${URL}/?role=rm_tamil_nadu   <- try as the Chennai manager"
 echo
 echo "Tear it down with:  deploy/aws/ec2.sh --teardown"
+echo "(that also releases the Elastic IP, which is billed once nothing holds it)"

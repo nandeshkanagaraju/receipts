@@ -138,6 +138,26 @@ async function stream(
   }
 }
 
+/** One answer, without the event stream.
+ *
+ *  Used for the page's own preloaded example. Streaming exists so the asker can
+ *  watch their question move through the stages; a request nobody made has no
+ *  business lighting that up. */
+export async function askOnce(
+  token: string,
+  question: string,
+  sessionId: string,
+): Promise<Answer | null> {
+  try {
+    return await post<Answer>("/ask?stream=false", token, {
+      question,
+      session_id: sessionId,
+    });
+  } catch {
+    return null;
+  }
+}
+
 export function ask(
   token: string,
   question: string,

@@ -267,6 +267,14 @@ def create_app(runtime: Runtime | None = None) -> FastAPI:
                 "unit": m.unit,
                 "siblings": list(m.siblings),
                 "allowed_dimensions": list(m.allowed_dimensions),
+                # Where the definition is WRITTEN DOWN, and what a role must
+                # hold to use it. Both are the governance the catalog is
+                # evidence of, and neither was reachable from the API -- so the
+                # front end could show a list of metrics and not the one thing
+                # that makes it a governed list.
+                "glossary_ref": m.glossary_ref,
+                "required_capability": m.required_capability,
+                "excludes": list(m.excludes),
             }
             for m in state.deps.catalog.metrics
             if m.required_capability is None or m.required_capability in held

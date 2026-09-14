@@ -23,9 +23,14 @@ export const AnswerCanvas = forwardRef<
     busy: boolean;
     onChoose: (optionId: string) => void;
     retryAfter: number | null;
+    /** The question, when this answer is the page's own preloaded example
+     *  rather than something the visitor asked. Labelled, because a screen that
+     *  shows an answer to an unasked question and says nothing is lying about a
+     *  small thing on a page whose argument is that it does not. */
+    preloaded?: string | null;
   }
 >(function AnswerCanvas(
-  { answer, failure, language, copy, busy, onChoose, retryAfter },
+  { answer, failure, language, copy, busy, onChoose, retryAfter, preloaded = null },
   ref,
 ) {
   if (failure) {
@@ -60,7 +65,19 @@ export const AnswerCanvas = forwardRef<
       aria-label={copy.answerRegion}
       className="rounded border border-rule bg-panel p-5"
     >
-      <StatusBadge status={answer.status} label={copy.statusOf(answer.status)} />
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+        <StatusBadge status={answer.status} label={copy.statusOf(answer.status)} />
+        {preloaded ? (
+          <span data-testid="preloaded-label" className="text-xs text-ink/65">
+            {copy.exampleAnswerLabel}
+          </span>
+        ) : null}
+      </div>
+      {preloaded ? (
+        <p data-testid="preloaded-question" className="mt-3 text-sm italic text-ink/70">
+          “{preloaded}”
+        </p>
+      ) : null}
 
       {answer.narration ? (
         <p data-testid="narration" className="mt-4 text-[15px] leading-relaxed text-ink">

@@ -76,6 +76,28 @@ def _audit_path() -> Path:
     return Path(override) if override else REPO / "data" / "audit.sqlite"
 
 
+def _questions_per_minute(default: int) -> int:
+    """The demo's rate limit, overridable by `RECEIPTS_QPM`.
+
+    Not a way to switch the limiter off -- it always runs, and its own tests
+    assert it fires. It exists because the browser suite is one client asking as
+    one role and legitimately exceeds a demo's allowance: the page now answers
+    an example on every load, so opening the page costs a question. Waiting out
+    a 60-second window per collision made the journey tests slower than the
+    journeys they test.
+
+    The deployed demo sets nothing and gets the value from settings.yaml.
+    """
+    raw = os.environ.get("RECEIPTS_QPM")
+    if raw is None:
+        return default
+    try:
+        value = int(raw)
+    except ValueError:
+        return default
+    return value if value > 0 else default
+
+
 def _demo_mode(default: bool) -> bool:
     """`DEMO_MODE` from the environment, else the settings value.
 
@@ -136,7 +158,7 @@ def build_runtime(*, audit_path: Path | None = None, llm: Any = None) -> Runtime
         roles=roles,
         places=places,
         audit=AuditLog(audit_path or _audit_path()),
-        limiter=RateLimiter(per_minute=settings.demo.questions_per_minute),
+        limiter=RateLimiter(per_minute=_questions_per_minute(settings.demo.questions_per_minute)),
         spend=DailySpend(cap_micro_usd=settings.demo.daily_spend_cap_micro_usd),
         # SDD §28: DEMO_MODE enables demo login, the rate limit and the
         # daily cap. The env var wins over the file so one image serves

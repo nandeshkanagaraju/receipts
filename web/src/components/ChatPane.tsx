@@ -32,27 +32,13 @@ export function ChatPane({
   const [draft, setDraft] = useState("");
 
   return (
-    <div className="flex h-full flex-col">
-      {/* Bottom-aligned: a transcript grows downwards, and `flex-1` alone left
-          a large void between the first question and the input. */}
-      <ol
-        className="flex flex-1 flex-col justify-end space-y-3 overflow-y-auto"
-        data-testid="conversation"
-      >
-        {asked.map((question, index) => (
-          <li
-            key={`${index}-${question}`}
-            className="rounded border border-rule bg-panel px-4 py-3 text-sm leading-relaxed text-ink"
-          >
-            {question}
-          </li>
-        ))}
-      </ol>
-
-      {trace}
-
+    <div className="flex shrink-0 flex-col">
+      {/* The input and the examples come FIRST, so both are above the fold at
+          375px. A transcript-first layout put the one thing a visitor needs to
+          click below three other blocks, and the examples below the input --
+          which is the correct chat convention and the wrong one here, because
+          the examples are the only questions this demo can answer. */}
       <form
-        className="mt-1"
         onSubmit={(event) => {
           event.preventDefault();
           const question = draft.trim();
@@ -74,7 +60,7 @@ export function ChatPane({
             placeholder={copy.askPlaceholder}
             /* text-base: 16px, so iOS does not zoom the viewport on focus --
                which is most of what breaks a 375px layout in practice. */
-            className="min-w-0 flex-1 rounded border border-rule bg-panel px-3 py-2.5 text-base text-ink placeholder:text-ink/65 disabled:opacity-60"
+            className="min-w-0 flex-1 rounded border border-rule bg-panel px-3 py-2.5 text-base text-ink placeholder:text-ink/40 disabled:opacity-60"
           />
           <button
             type="submit"
@@ -86,26 +72,15 @@ export function ChatPane({
           </button>
         </div>
         {/* The explanation is always true, so it is always shown. The
-            instruction is only true while the examples are on screen, so it is
-            only shown then -- a note telling the reader to start with an
-            example below, above nothing, is a small lie about its own page. */}
+            instruction is only true while the examples are on screen. */}
         <p className="mt-2 text-xs leading-relaxed text-ink/65" data-testid="recorded-note">
           {copy.recordedNote}
           {showExamples ? ` ${copy.startWithExample}` : ""}
         </p>
       </form>
 
-      {/* Examples are an empty state, so they go once an answer is on screen --
-          leaving them up pushed the answer below three buttons and the trace at
-          375px. But they come BACK on a failure.
-          
-          Without that, the 503 copy said "try one of the examples" while the
-          examples were hidden: the one thing the error told the reader to do was
-          the one thing they could not see. A first-time visitor who typed their
-          own question before clicking an example reached a dead end that named
-          its own way out and then withheld it. */}
       {showExamples ? (
-        <ul className="mt-3 space-y-1.5" data-testid="examples">
+        <ul className="mt-2.5 space-y-1.5" data-testid="examples">
           {examples.map((question) => (
             <li key={question}>
               <button
@@ -121,6 +96,21 @@ export function ChatPane({
           ))}
         </ul>
       ) : null}
+
+      {asked.length > 0 ? (
+        <ol className="mt-4 space-y-2" data-testid="conversation">
+          {asked.map((question, index) => (
+            <li
+              key={`${index}-${question}`}
+              className="rounded border border-rule bg-panel px-3 py-2 text-sm leading-relaxed text-ink"
+            >
+              {question}
+            </li>
+          ))}
+        </ol>
+      ) : null}
+
+      {trace}
     </div>
   );
 }

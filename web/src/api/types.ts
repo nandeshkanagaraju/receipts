@@ -108,6 +108,11 @@ export interface MetricSummary {
   unit: Unit;
   siblings: string[];
   allowed_dimensions: string[];
+  /** Where the definition is written down — GLOSSARY.md and an anchor. */
+  glossary_ref: string;
+  /** What a role must hold to use it at all. Null means anyone in scope. */
+  required_capability: string | null;
+  excludes: string[];
 }
 
 /** The stages the API publishes, in order (receipts.api.sse.STAGES). */

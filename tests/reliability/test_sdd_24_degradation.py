@@ -436,3 +436,51 @@ def test_every_fault_toggle_names_a_row_of_sdd_24() -> None:
         "bridge_down",
         "budget_exhausted",
     }
+
+
+# --------------------------------------------------------------------------- #
+# The demo rate limit. Not an SDD §24 row, but it is the control the browser
+# suite now runs with raised, so it gets a test that does not depend on the
+# browser suite's value.
+# --------------------------------------------------------------------------- #
+def test_the_rate_limiter_fires_at_its_configured_rate() -> None:
+    """It still refuses. `RECEIPTS_QPM` moves the number, never the behaviour."""
+    from receipts.api.ratelimit import RateLimiter
+
+    limiter = RateLimiter(per_minute=3)
+    now = 1_000_000.0
+    allowed = [limiter.check("role:demo", now) for _ in range(5)]
+    print(f"\nper_minute=3 -> {allowed}")
+    assert allowed == [True, True, True, False, False]
+
+    # The next window starts clean, and the wait it advertises is bounded.
+    assert limiter.check("role:demo", now + 60)
+    assert 1 <= limiter.retry_after(now) <= 60
+
+
+def test_the_rate_limit_override_cannot_switch_the_limiter_off(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A zero, a negative or a typo falls back to the configured value.
+
+    An override that could set the allowance to zero -- or to "off" -- would be
+    a way to disable a control by mistyping an environment variable.
+    """
+    from receipts.api.deps import _questions_per_minute
+
+    for raw in ("0", "-5", "lots", ""):
+        monkeypatch.setenv("RECEIPTS_QPM", raw)
+        assert _questions_per_minute(20) == 20, raw
+    monkeypatch.setenv("RECEIPTS_QPM", "600")
+    assert _questions_per_minute(20) == 600
+    monkeypatch.delenv("RECEIPTS_QPM")
+    assert _questions_per_minute(20) == 20
+    print("\noverride is a number or it is ignored")
+
+
+def test_the_deployed_demo_does_not_raise_its_own_limit() -> None:
+    """The E2E value must not travel. Asserted against the deploy scripts."""
+    for name in ("deploy/aws/ec2.sh", "deploy/aws/lambda.sh", "deploy/spaces/Dockerfile"):
+        text = (REPO / name).read_text(encoding="utf-8")
+        assert "RECEIPTS_QPM" not in text, f"{name} overrides the demo's rate limit"
+    print("\nno deploy path raises the demo's allowance")

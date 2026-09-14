@@ -28,6 +28,14 @@ async function ask(page: Page, question: string): Promise<void> {
   for (let attempt = 0; attempt < 3; attempt += 1) {
     await page.getByTestId("question-input").fill(question);
     await page.getByTestId("ask-button").click();
+
+    // The canvas is no longer empty before a question: the page answers an
+    // example on load. So waiting for "a canvas is visible" would match the
+    // PRELOADED answer and let the test read it as the reply -- which is how
+    // J10 started asserting against a scalar it never asked for. Wait for the
+    // example to be replaced first.
+    await expect(page.getByTestId("preloaded-label")).toHaveCount(0, { timeout: 40_000 });
+
     const canvas = page.getByTestId("answer-canvas");
     const failure = page.getByTestId("answer-error");
     await expect(canvas.or(failure)).toBeVisible({ timeout: 40_000 });
@@ -156,6 +164,150 @@ test.describe("PDD §8.3", () => {
     const table = page.getByTestId("data-table");
     await expect(table).toBeVisible();
     expect(await table.locator("tbody tr").count()).toBeGreaterThan(1);
+  });
+});
+
+test.describe("the first screen", () => {
+  test("shows a working answer with its receipt before anything is asked", async ({ page }) => {
+    await open(page, "rm_tamil_nadu");
+
+    // The product working, not a heading over white space.
+    const canvas = page.getByTestId("answer-canvas");
+    await expect(canvas).toBeVisible({ timeout: 40_000 });
+    await expect(canvas).toHaveAttribute("data-status", "VERIFIED");
+    await expect(page.getByTestId("receipt-card")).toBeVisible();
+    await expect(page.getByTestId("receipt-stamp")).toContainText("VERIFIED");
+
+    // And it says it is an example, because nobody asked it.
+    await expect(page.getByTestId("preloaded-label")).toBeVisible();
+    await expect(page.getByTestId("preloaded-question")).toBeVisible();
+
+    // The transcript stays empty: the visitor has asked nothing.
+    await expect(page.getByTestId("conversation")).toHaveCount(0);
+  });
+
+  test("the step trace is idle until a question is asked", async ({ page }) => {
+    await open(page, "rm_tamil_nadu");
+    await expect(page.getByTestId("answer-canvas")).toBeVisible({ timeout: 40_000 });
+
+    // A row of ticked stages before anyone ran anything is decoration.
+    await expect(page.getByTestId("step-trace-idle")).toBeVisible();
+    await expect(page.getByTestId("step-trace")).toHaveCount(0);
+
+    // It becomes live for a question the visitor actually asks.
+    await ask(page, J1_TA);
+    await expect(page.getByTestId("step-trace")).toBeVisible();
+    await expect(page.getByTestId("step-trace-idle")).toHaveCount(0);
+    await expect(page.getByTestId("step-execute")).toBeVisible();
+  });
+
+  test("the ask box and the examples are above the fold at 375px", async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 667 });
+    await open(page, "rm_tamil_nadu");
+
+    const fold = 667;
+    for (const id of ["question-input", "example-question"]) {
+      const box = await page.getByTestId(id).first().boundingBox();
+      expect(box, `${id} has no box`).not.toBeNull();
+      console.log(`${id}: bottom at ${Math.round(box!.y + box!.height)}px (fold ${fold})`);
+      expect(box!.y + box!.height).toBeLessThanOrEqual(fold);
+    }
+    // All three examples, not just the first.
+    expect(await page.getByTestId("example-question").count()).toBeGreaterThanOrEqual(3);
+  });
+
+  test("the catalog is on screen, with definitions and the capability that gates them", async ({
+    page,
+  }) => {
+    await open(page, "global_finance");
+    const panel = page.getByTestId("catalog-panel");
+    await expect(panel).toBeVisible();
+
+    const rows = page.getByTestId("catalog-metric-row");
+    await expect(rows.first()).toBeVisible();
+    const shown = await rows.count();
+    console.log(`catalog rows for global_finance: ${shown}`);
+    expect(shown).toBeGreaterThanOrEqual(10);
+
+    // A definition, and where it is written down.
+    await rows.first().click();
+    await expect(panel).toContainText("GLOSSARY.md");
+
+    // global_finance holds `finance`, so capability-gated metrics are listed
+    // and say so.
+    await expect(page.getByTestId("catalog-capability").first()).toBeVisible();
+  });
+
+  test("the catalog list is itself scoped: a role sees fewer metrics", async ({ page }) => {
+    await open(page, "global_finance");
+    await expect(page.getByTestId("catalog-metric-row").first()).toBeVisible();
+    const finance = await page.getByTestId("catalog-metric-row").count();
+
+    await page.getByTestId("role-switcher").selectOption("store_ops_uk");
+    await expect(page.getByTestId("catalog-metric-row").first()).toBeVisible();
+    await expect(page.getByTestId("catalog-capability")).toHaveCount(0);
+    const storeOps = await page.getByTestId("catalog-metric-row").count();
+
+    console.log(`global_finance ${finance} metrics, store_ops_uk ${storeOps}`);
+    // Absent, not greyed out: a list that shows what you may not have tells you
+    // it exists, which is the disclosure a scope refusal is supposed to prevent.
+    expect(storeOps).toBeLessThan(finance);
+  });
+
+  test("nothing in the left column overlaps anything else", async ({ page }) => {
+    // A screenshot caught the transcript and the step trace rendering ON TOP of
+    // the catalog heading: flex-1 children inside a scrolling column claimed
+    // space their siblings were still using. Nothing in the suite could see it,
+    // because every element was present, visible and correct on its own.
+    await page.setViewportSize({ width: 375, height: 780 });
+    await open(page, "rm_tamil_nadu");
+    await expect(page.getByTestId("answer-canvas")).toBeVisible({ timeout: 40_000 });
+    await ask(page, J1_TA);
+
+    const ids = [
+      "question-input",
+      "recorded-note",
+      "conversation",
+      "step-trace",
+      "answer-canvas",
+      "catalog-panel",
+    ];
+    const boxes: { id: string; top: number; bottom: number }[] = [];
+    for (const id of ids) {
+      const target = page.getByTestId(id);
+      if ((await target.count()) === 0) continue;
+      const box = await target.first().boundingBox();
+      if (box) boxes.push({ id, top: box.y, bottom: box.y + box.height });
+    }
+    boxes.sort((a, b) => a.top - b.top);
+    console.log(boxes.map((b) => `${b.id} ${Math.round(b.top)}–${Math.round(b.bottom)}`).join("\n"));
+
+    for (let i = 1; i < boxes.length; i += 1) {
+      const above = boxes[i - 1]!;
+      const below = boxes[i]!;
+      expect(
+        below.top,
+        `${below.id} starts at ${Math.round(below.top)} but ${above.id} runs to ${Math.round(above.bottom)}`,
+      ).toBeGreaterThanOrEqual(above.bottom - 1);
+    }
+  });
+
+  test("the left column carries something before a conversation exists", async ({ page }) => {
+    await open(page, "rm_tamil_nadu");
+    const main = page.locator("main");
+    await expect(main.getByTestId("question-input")).toBeVisible();
+    await expect(main.getByTestId("examples")).toBeVisible();
+    await expect(main.getByTestId("catalog-panel")).toBeVisible();
+    // Not "is something there" but "is the first screen carrying its weight":
+    // the ask box, three examples it can actually answer, a worked answer with
+    // a receipt, and the governed layer. The version this replaced was a
+    // heading over white space with the examples below the fold.
+    await expect(main.getByTestId("receipt-card")).toBeVisible({ timeout: 40_000 });
+    expect(await main.getByTestId("example-question").count()).toBeGreaterThanOrEqual(3);
+    expect(await main.getByTestId("catalog-metric-row").count()).toBeGreaterThanOrEqual(10);
+    const text = await main.innerText();
+    console.log(`first screen carries ${text.length} characters before any question`);
+    expect(text.length).toBeGreaterThan(900);
   });
 });
 
