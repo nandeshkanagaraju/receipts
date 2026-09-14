@@ -114,12 +114,17 @@ Dubai.
 Needs Python 3.11 (the package pins `>=3.11,<3.12`) and Docker for `make up`.
 
 ```bash
-make setup    # creates .venv on python3.11, installs the package, installs the hooks
+make setup    # .venv on python3.11, the package, the commit-msg hook
 . .venv/bin/activate
 make data     # generate the synthetic warehouse (~3.5 min)
 make up       # API, SPA and MCP in one container, at :8000
 make eval     # re-run a scored evaluation and diff it against the committed one
 ```
+
+To run the suite, two artifacts have to exist first, because the tests that need
+them fail rather than skip (SDD §773): `make web` builds the SPA, and `make
+up-db` starts the Postgres that `test_adapters_agree` compares DuckDB against.
+Then `make test` — 1,286 tests, no skips.
 
 `make data` needs `KESTREL_SEALED_SEED`, which plants the anomalies the blind
 holdout is graded against. It is not in the repo and will not be: a published
@@ -129,7 +134,8 @@ it is not the graded one, so its `data_version` differs from
 `docs/FREEZE_MANIFEST.json` and its sealed plants are not the ones behind the
 holdout numbers above. Those numbers are reproducible from the committed
 artifacts, not from a regenerated warehouse — which is what a sealed holdout
-costs.
+costs. Five tests assert the graded warehouse and so fail against a demo one;
+the suite names them at the end of the run, and any other failure is a real one.
 
 `make bench` reports latency per stage and cost per 1,000 questions.
 `make web-e2e` runs the browser journeys.

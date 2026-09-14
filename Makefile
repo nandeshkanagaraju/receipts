@@ -92,13 +92,22 @@ data:
 		echo "  This warehouse runs the suite and the demo. It is NOT the graded one:"; \
 		echo "  its data_version differs from docs/FREEZE_MANIFEST.json, and the sealed"; \
 		echo "  anomalies behind the blind holdout are different plants. README, Setup."; \
+		DEMO_MARKER=yes; \
 	else \
 		echo "seed present: yes"; \
+		DEMO_MARKER=""; \
 	fi; \
 	TIMER=""; \
 	if /usr/bin/time -l true >/dev/null 2>&1; then TIMER="/usr/bin/time -l"; \
 	elif /usr/bin/time -v true >/dev/null 2>&1; then TIMER="/usr/bin/time -v"; fi; \
-	$$TIMER $(PY) -m kestrel_gen --seed 20260910 --scale $${SCALE:-0.55} --out data
+	$$TIMER $(PY) -m kestrel_gen --seed 20260910 --scale $${SCALE:-0.55} --out data; \
+	rc=$$?; \
+	if [ $$rc -eq 0 ] && [ -n "$$DEMO_MARKER" ]; then \
+		echo "built from the published demo seed, not KESTREL_SEALED_SEED" > data/DEMO_SEED; \
+	else \
+		rm -f data/DEMO_SEED; \
+	fi; \
+	exit $$rc
 
 # SET defaults to dev. The holdout has its own target and its own confirmation,
 # so reaching it takes two deliberate acts rather than one forgotten flag (D17).

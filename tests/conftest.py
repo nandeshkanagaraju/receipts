@@ -130,7 +130,44 @@ def _elapsed(config: pytest.Config) -> float | None:
     return None if started is None else time.monotonic() - started
 
 
+# A clone with no sealed seed builds from the demo seed (Makefile, `data`). The
+# warehouse is real and runs everything, but it is not the graded one, so the
+# handful of tests that assert the graded warehouse cannot pass against it. They
+# fail, loudly, as SDD §773 requires — this note is so a reader can tell that
+# apart from having broken something.
+DEMO_MARKER = REPO / "data" / "DEMO_SEED"
+
+GRADED_ONLY = (
+    "tests/charter/test_freeze.py::test_frozen_documents_match_manifest",
+    "tests/charter/test_freeze.py::test_sealed_hashes_match_when_the_files_are_present",
+    "tests/charter/test_gen_frozen_gate.py::test_gate_holds_once_the_generator_is_frozen",
+    "tests/charter/test_gen_frozen_gate.py::test_meta_the_unstubbed_gate_writes_the_expected_marker",
+    "tests/integration/test_reference.py::test_reference_double_computation",
+)
+
+
+def _demo_warehouse_note(terminalreporter) -> None:
+    if not DEMO_MARKER.exists():
+        return
+    terminalreporter.write_line("")
+    terminalreporter.write_line(
+        "This warehouse was built from the published demo seed, not KESTREL_SEALED_SEED.",
+        yellow=True,
+    )
+    terminalreporter.write_line(
+        "These tests assert the graded warehouse and cannot pass against a demo one:",
+        yellow=True,
+    )
+    for nodeid in GRADED_ONLY:
+        terminalreporter.write_line(f"  {nodeid}", yellow=True)
+    terminalreporter.write_line(
+        "Any OTHER failure is a real one. See README, Try it.",
+        yellow=True,
+    )
+
+
 def pytest_terminal_summary(terminalreporter, exitstatus, config) -> None:
+    _demo_warehouse_note(terminalreporter)
     elapsed = _elapsed(config)
     if elapsed is None:
         return
