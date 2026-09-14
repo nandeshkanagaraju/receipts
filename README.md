@@ -93,7 +93,7 @@ be the result.
   as integer minor units (D1) — each enforced by a charter test that walks the
   AST rather than grepping.
 
-1,282 tests. `LIMITATIONS.md` is the list of everything this project cannot
+1,286 tests. `LIMITATIONS.md` is the list of everything this project cannot
 claim, including the three errors I made in the round that produced the result above.
 
 ### Cost
@@ -111,11 +111,26 @@ Answers are replayed from the recorded evaluation, so they are exactly the ones
 that were measured. Switch role in the header and ask the Chennai manager about
 Dubai.
 
+Needs Python 3.11 (the package pins `>=3.11,<3.12`) and Docker for `make up`.
+
 ```bash
+make setup                      # uv venv --python python3.11 .venv
+. .venv/bin/activate
+pip install -e ".[dev]"
 make data     # generate the synthetic warehouse (~3.5 min)
 make up       # API, SPA and MCP in one container, at :8000
 make eval     # re-run a scored evaluation and diff it against the committed one
 ```
+
+`make data` needs `KESTREL_SEALED_SEED`, which plants the anomalies the blind
+holdout is graded against. It is not in the repo and will not be: a published
+seed is a published answer key (PDD §5). Without one the target builds from a
+demo seed and says so. That warehouse runs the suite, the demo and `make bench`;
+it is not the graded one, so its `data_version` differs from
+`docs/FREEZE_MANIFEST.json` and its sealed plants are not the ones behind the
+holdout numbers above. Those numbers are reproducible from the committed
+artifacts, not from a regenerated warehouse — which is what a sealed holdout
+costs.
 
 `make bench` reports latency per stage and cost per 1,000 questions.
 `make web-e2e` runs the browser journeys.

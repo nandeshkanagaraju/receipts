@@ -36,7 +36,7 @@ REPO = Path(__file__).resolve().parents[2]
 DB = REPO / "data" / "kestrel.duckdb"
 SQL_DIR = REPO / "eval" / "reference_sql"
 
-pytestmark = pytest.mark.skipif(not DB.exists(), reason="kestrel.duckdb not built")
+pytestmark = pytest.mark.usefixtures("require_warehouse")
 
 
 class ReferenceSQLStub:

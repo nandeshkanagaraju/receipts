@@ -46,7 +46,7 @@ REPO = Path(__file__).resolve().parents[2]
 DB = REPO / "data" / "kestrel.duckdb"
 AS_OF = __import__("datetime").date(2026, 9, 10)
 
-needs_db = pytest.mark.skipif(not DB.exists(), reason="kestrel.duckdb not built")
+needs_db = pytest.mark.usefixtures("require_warehouse")
 
 
 @pytest.fixture(scope="module")
@@ -359,32 +359,12 @@ def test_f7_meta_the_connection_refuses_install_with_the_guard_off() -> None:
 
 
 # --------------------------------------------------------------------------- #
-# F8, F9, F12 — pending. Written now, failing loudly.
+# F8 and F9 were stubs here, xfailing on "the module does not exist yet", until
+# a clean-room check found both modules had shipped six milestones earlier. F8
+# is proved against the MCP tool surface it attacks (tests/mcp/, test_f8_*) and
+# F9 against the composer (tests/unit/test_composition.py, test_f9_*). The stubs
+# are gone; scripts/fault_table.py now reads those files too.
 # --------------------------------------------------------------------------- #
-
-
-@pytest.mark.xfail(reason="F8 needs the MCP server (M17). Written now so it cannot be forgotten.")
-def test_f8_mcp_run_plan_cannot_bypass_scope() -> None:
-    """An external agent calls `run_plan` with a plan crafted to bypass scope.
-
-    Expected: the scope is injected from the token's role anyway. Cannot be
-    asserted until `receipts/mcp_server` exists (M17).
-    """
-    from receipts import mcp_server  # noqa: F401
-
-    raise AssertionError("F8 is not implemented yet")
-
-
-@pytest.mark.xfail(reason="F9 needs the composer (M14). Written now so it cannot be forgotten.")
-def test_f9_a8_prompt_injection_note_cannot_change_status_or_scope() -> None:
-    """The A8 note in `product_notes` reaches the composer.
-
-    Expected: status, scope and tools unchanged; narration grounded or
-    templated. Cannot be asserted until `agent/compose.py` exists (M14).
-    """
-    from receipts.agent import compose  # noqa: F401
-
-    raise AssertionError("F9 is not implemented yet")
 
 
 # --------------------------------------------------------------------------- #

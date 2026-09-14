@@ -31,7 +31,7 @@ REPO = Path(__file__).resolve().parents[2]
 DB = REPO / "data" / "kestrel.duckdb"
 AS_OF = date(2026, 9, 10)
 
-needs_db = pytest.mark.skipif(not DB.exists(), reason="the artifact is not built")
+needs_db = pytest.mark.usefixtures("require_warehouse")
 
 
 class ScriptedSQL:

@@ -73,14 +73,25 @@ define NOT_BUILT
 @echo "make $(1): not built yet — implemented in module $(2)" >&2; exit 1
 endef
 
+# A clone has no .env, so it has no sealed seed: that seed plants the anomalies
+# the blind holdout is graded against, and publishing it would end the holdout
+# (PDD §5). Without one, build the warehouse from the published demo seed so the
+# repo is runnable, and say plainly which numbers that warehouse cannot carry.
+DEMO_SEALED_SEED = 20260910
+
 data:
 	@if [ -z "$$KESTREL_SEALED_SEED" ] && [ -f .env ]; then \
 		set -a; . ./.env; set +a; \
 	fi; \
 	if [ -z "$$KESTREL_SEALED_SEED" ]; then \
-		echo "KESTREL_SEALED_SEED is not set and .env has no value for it" >&2; exit 1; \
+		export KESTREL_SEALED_SEED=$(DEMO_SEALED_SEED); \
+		echo "seed present: no — building with the published demo seed $(DEMO_SEALED_SEED)."; \
+		echo "  This warehouse runs the suite and the demo. It is NOT the graded one:"; \
+		echo "  its data_version differs from docs/FREEZE_MANIFEST.json, and the sealed"; \
+		echo "  anomalies behind the blind holdout are different plants. README, Setup."; \
+	else \
+		echo "seed present: yes"; \
 	fi; \
-	echo "seed present: yes"; \
 	TIMER=""; \
 	if /usr/bin/time -l true >/dev/null 2>&1; then TIMER="/usr/bin/time -l"; \
 	elif /usr/bin/time -v true >/dev/null 2>&1; then TIMER="/usr/bin/time -v"; fi; \

@@ -155,3 +155,23 @@ def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:
 @pytest.fixture(scope="session")
 def repo() -> Path:
     return REPO
+
+
+# --------------------------------------------------------------------------- #
+# SDD §773: a test that asserts against the real `data/` artifact FAILS when the
+# artifact is absent. It never skips. Five modules used `skipif(not DB.exists())`
+# and so went silent — 84 tests — in any clone without a warehouse.
+# --------------------------------------------------------------------------- #
+
+WAREHOUSE = REPO / "data" / "kestrel.duckdb"
+
+
+@pytest.fixture
+def require_warehouse() -> None:
+    """Fail loudly, per SDD §773, when the warehouse this test asserts on is absent."""
+    if not WAREHOUSE.exists():
+        pytest.fail(
+            f"the warehouse is missing: {WAREHOUSE}\n"
+            "Run `make data` (see README, Setup). SDD §773: tests that assert on the "
+            "artifact fail when it is absent; they never skip."
+        )

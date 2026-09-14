@@ -29,7 +29,7 @@ REPO = Path(__file__).resolve().parents[2]
 DB = REPO / "data" / "kestrel.duckdb"
 ROLES = ("rm_tamil_nadu", "global_finance", "store_ops_uk")
 
-pytestmark = pytest.mark.skipif(not DB.exists(), reason="kestrel.duckdb not built")
+pytestmark = pytest.mark.usefixtures("require_warehouse")
 
 
 @pytest.fixture(scope="module")

@@ -56,7 +56,12 @@ def main() -> int:
             sys.executable,
             "-m",
             "pytest",
+            # F8 is proved against the MCP tool surface and F9 against the
+            # composer, so neither lives in the injection file. Reading only
+            # that file reported both as PENDING long after they were covered.
             "tests/injection/test_fault_injection.py",
+            "tests/mcp/test_mcp_parity_and_scope.py",
+            "tests/unit/test_composition.py",
             "-o",
             "addopts=",
             "-v",

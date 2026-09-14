@@ -43,7 +43,7 @@ LAST = date(2026, 9, 9)
 FIRST = date(2025, 3, 1)
 RATIO_PLACES = Decimal("0.00000001")
 
-needs_db = pytest.mark.skipif(not DB.exists(), reason="kestrel.duckdb not built")
+needs_db = pytest.mark.usefixtures("require_warehouse")
 
 
 @pytest.fixture(scope="module")

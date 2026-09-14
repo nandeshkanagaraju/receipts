@@ -1963,3 +1963,70 @@ so a fifth cannot appear without someone deciding to add it.
   step. At 375px neither side fits and the receipt step covers 30.6%, which is
   the least bad of three bad options on a phone and is allowed explicitly rather
   than by the assertion being loose.
+
+## M21.7: a clean-room clone could not follow the README, and two guards had gone quiet
+
+A fresh clone from the public URL, a fresh venv, and nothing but `README.md` to
+go on. Four things failed. None was caught by CI, because CI starts from a
+checkout that already has a seed, a warehouse and an installed package.
+
+- **`make data` — the README's first command — exited 1 in a clone.**
+  `KESTREL_SEALED_SEED is not set and .env has no value for it`. `.env` is
+  gitignored and will stay that way: the sealed seed plants the anomalies the
+  blind holdout is graded against, and publishing it publishes the answer key
+  (PDD §5). But the effect was that nobody who cloned this repo could build the
+  warehouse, and so could not run `make up`, `make eval`, `make bench`, or the
+  172 tests that need `data/` — 88 of which failed and 84 skipped. The target
+  now falls back to a published demo seed and prints what that costs: a
+  warehouse whose `data_version` differs from `docs/FREEZE_MANIFEST.json` and
+  whose sealed plants are not the ones behind the holdout numbers. The graded
+  numbers are reproducible from the committed artifacts, not from a regenerated
+  warehouse. That is what a sealed holdout
+  costs, and the README now says so instead of implying otherwise.
+
+- **The README never said to install anything.** No `make setup`, no
+  `pip install -e .`, no venv, and no mention that the package pins
+  `>=3.11,<3.12`. On a machine whose `python3` is 3.14 the install fails with
+  `Package 'receipts' requires a different Python`, which does not tell you to
+  go and find 3.11. All four lines are in the README now.
+
+- **84 tests skipped instead of failing when the warehouse was absent.** SDD
+  §773 is explicit: a test that asserts against the real `data/` artifact fails
+  when the artifact is missing, it never skips. Five modules used
+  `skipif(not DB.exists())` and so went silent in exactly the situation the rule
+  was written for. They now fail through a `require_warehouse` fixture that says
+  which file is missing and which command builds it. The suite reports 1,286
+  collected, 0 skipped — previously 101 skipped in a clone.
+
+- **The fault table reported F8 and F9 as PENDING six milestones after both
+  shipped.** `scripts/fault_table.py` ran one file, `test_fault_injection.py`,
+  and that file held two stubs that raised `"F8 is not implemented yet"` under
+  `xfail` with reasons naming M17 and M14. Both modules existed. Both faults
+  were in fact covered — F8 by seven tests against the MCP tool surface it
+  attacks, F9 by three against the composer — and the table could not see either
+  file. So the project's own adversarial scorecard understated itself, and the
+  two stubs could never have passed no matter what the code did. The stubs are
+  deleted and the table reads all three files: 12 of 12 cases pass, F8 with 7
+  tests and F9 with 3.
+
+The common shape is the one this project keeps finding: **a guard that cannot
+fail is not a guard.** A skip, an `xfail` on an unconditional raise, and a
+scorecard pointed at the wrong file all report the same thing whether the code
+is right or wrong. The test count in the README had drifted nine short for the
+same reason — nothing recomputed it — and is now pinned by
+`tests/charter/test_readme_test_count.py`, which collects the suite and compares.
+
+### What the check did not find
+
+Every number in the README traced to a committed artifact: the holdout table and
+T2 to `eval/results/holdout/*/report.json`, the commit `dd5227a` to
+`eval/results/holdout/LOCK`, the dev figures to `eval/results/dev/receipts/`,
+the cost and token figures to `eval/results/bench.json`, and the four thresholds
+to `config/thresholds.yaml`. All four freeze tags resolve from the remote to the
+commits they should, and the 60 freeze gates pass in a clean clone. The
+repository is genuinely public, checked against a known-public and a nonexistent
+repo as controls.
+
+One thing is reported rather than fixed: `docs/FREEZE_MANIFEST.json` says the
+translations are frozen separately "(tag: `translations-frozen`)", and no such
+tag exists locally or on the remote. `docs/` is not mine to edit.
