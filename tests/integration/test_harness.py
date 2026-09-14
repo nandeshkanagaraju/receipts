@@ -256,3 +256,115 @@ def test_outcomes_are_from_the_population_vocabulary(oracle_report: dict) -> Non
         Outcome(
             trial_id="x", qid="DV-001", population="ANS", language="en", outcome="Correct-clarify"
         )
+
+
+# --------------------------------------------------------------------------- #
+# D17, as decided in ADR-023: once per system, and the language set is part of
+# the identity.
+# --------------------------------------------------------------------------- #
+def test_the_second_arm_of_the_holdout_is_permitted(tmp_path: Path, monkeypatch) -> None:
+    """Both arms, once each. The thesis needs a ratio and a ratio needs two.
+
+    The original lock was one file holding one SHA, so the first arm took it and
+    the second was refused -- which left the holdout half-measured and T2
+    unmeasurable. Found before the run rather than during it.
+    """
+    monkeypatch.setattr(harness, "RESULTS", tmp_path)
+    first = harness.holdout_lock(confirm="yes", sha="aaa111", system="receipts", languages=("en",))
+    second = harness.holdout_lock(confirm="yes", sha="aaa111", system="baseline", languages=("en",))
+    assert first == second
+    runs = harness._lock_records(first)
+    print(f"\nlock records {len(runs)} runs: {[(r['system'], r['languages']) for r in runs]}")
+    assert [r["system"] for r in runs] == ["receipts", "baseline"]
+    assert all(r["languages"] == ["en"] for r in runs)
+
+
+def test_the_same_system_twice_is_refused(tmp_path: Path, monkeypatch) -> None:
+    """The thing D17 is actually for: no re-rolling until the number looks better."""
+    monkeypatch.setattr(harness, "RESULTS", tmp_path)
+    harness.holdout_lock(confirm="yes", sha="bbb222", system="receipts", languages=("en",))
+    with pytest.raises(SystemExit) as exit_info:
+        harness.holdout_lock(confirm="yes", sha="bbb222", system="receipts", languages=("en",))
+    print(f"same system twice -> {exit_info.value}")
+    assert "already been run for 'receipts'" in str(exit_info.value)
+    assert "not a holdout" in str(exit_info.value)
+
+
+def test_the_same_system_in_a_different_language_set_is_refused(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """English now and Tamil later is two measurements of one holdout.
+
+    Refused as firmly as a repeat, and the message says why rather than reciting
+    that a lock exists.
+    """
+    monkeypatch.setattr(harness, "RESULTS", tmp_path)
+    harness.holdout_lock(confirm="yes", sha="ccc333", system="receipts", languages=("en",))
+    with pytest.raises(SystemExit) as exit_info:
+        harness.holdout_lock(confirm="yes", sha="ccc333", system="receipts", languages=("ta",))
+    message = str(exit_info.value)
+    print(f"different language set -> {message}")
+    assert "['en']" in message and "['ta']" in message
+    assert "two measurements, not one" in message
+
+
+def test_the_language_set_is_compared_as_a_set_not_a_string(tmp_path: Path, monkeypatch) -> None:
+    """Order must not decide identity: ("en","ta") and ("ta","en") are one set."""
+    monkeypatch.setattr(harness, "RESULTS", tmp_path)
+    harness.holdout_lock(confirm="yes", sha="ddd444", system="receipts", languages=("ta", "en"))
+    with pytest.raises(SystemExit, match="not a holdout"):
+        harness.holdout_lock(confirm="yes", sha="ddd444", system="receipts", languages=("en", "ta"))
+
+
+def test_a_lock_in_the_old_format_still_refuses(tmp_path: Path, monkeypatch) -> None:
+    """A bare-SHA lock from the previous scheme means something HAS run.
+
+    Reading it as "no runs recorded" would silently permit a fresh holdout on top
+    of a completed one, which is the single outcome this lock exists to prevent.
+    """
+    monkeypatch.setattr(harness, "RESULTS", tmp_path)
+    lock = tmp_path / "holdout" / "LOCK"
+    lock.parent.mkdir(parents=True, exist_ok=True)
+    lock.write_text("deadbeefcafe\n", encoding="utf-8")
+    records = harness._lock_records(lock)
+    print(f"\nold-format lock parsed as: {records}")
+    assert records and records[0]["sha"] == "deadbeefcafe"
+    with pytest.raises(SystemExit, match="already been run"):
+        harness.holdout_lock(confirm="yes", sha="x", system="", languages=())
+
+
+def test_meta_the_lock_records_are_what_refuse(tmp_path: Path, monkeypatch) -> None:
+    """Fault injection: empty the records and the same call goes through.
+
+    Without this the refusal tests would pass if `holdout_lock` refused for any
+    reason at all -- a typo in a path, a mkdir failure -- rather than because a
+    run was recorded.
+    """
+    monkeypatch.setattr(harness, "RESULTS", tmp_path)
+    harness.holdout_lock(confirm="yes", sha="eee555", system="receipts", languages=("en",))
+    with pytest.raises(SystemExit):
+        harness.holdout_lock(confirm="yes", sha="eee555", system="receipts", languages=("en",))
+
+    monkeypatch.setattr(harness, "_lock_records", lambda _lock: [])
+    again = harness.holdout_lock(confirm="yes", sha="eee555", system="receipts", languages=("en",))
+    print("\nwith the records blanked, the same call is permitted -> the records refuse")
+    assert again.exists()
+
+
+def test_the_cli_passes_the_system_and_languages_to_the_lock() -> None:
+    """Reachability: the lock is called with what it needs to discriminate.
+
+    A lock that discriminates on system and language, called with neither, is a
+    lock that refuses the second arm exactly as the old one did.
+    """
+    import ast
+    import inspect
+
+    tree = ast.parse(inspect.getsource(harness.main))
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Call) and getattr(node.func, "id", "") == "holdout_lock":
+            kwargs = {kw.arg for kw in node.keywords}
+            print(f"\nholdout_lock called with: {sorted(kwargs)}")
+            assert {"confirm", "system", "languages"} <= kwargs
+            return
+    raise AssertionError("main() never calls holdout_lock")

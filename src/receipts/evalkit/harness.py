@@ -280,7 +280,7 @@ def _thresholds() -> dict[str, Any]:
     return thresholds
 
 
-def _provenance(set_name: str) -> dict[str, Any]:
+def _provenance(set_name: str, languages: tuple[str, ...]) -> dict[str, Any]:
     """Identifiers only. Nothing here varies between two runs of the same commit."""
     manifest = REPO / "data" / "MANIFEST.json"
     data_version = (
@@ -306,6 +306,11 @@ def _provenance(set_name: str) -> dict[str, Any]:
         "model": f"{primary.provider}/{primary.model}",
         "set": set_name,
         "cut_populations": sorted(CUT_POPULATIONS),
+        # Which languages this run actually covered. A restricted run whose
+        # report does not say so is a report that reads like a full one --
+        # and the restriction here was a cost decision, which is exactly the
+        # kind of thing that gets forgotten and then quoted as a full result.
+        "languages": list(languages),
     }
 
 
@@ -403,8 +408,15 @@ def run(
     write: bool = True,
     trials: list[Trial] | None = None,
     references: dict[str, ReferenceAnswer] | None = None,
+    languages: tuple[str, ...] | None = None,
 ) -> dict[str, Any]:
-    """Run one system over one set and return its report."""
+    """Run one system over one set and return its report.
+
+    `languages` restricts which variants run. Without it the holdout expands to
+    288 trials across four languages; with `("en",)` it is 91. That is a cost
+    decision and it is recorded in the report's provenance, because a restricted
+    run whose artifact does not say so reads exactly like a full one.
+    """
     if system_name in SYSTEMS:
         system = SYSTEMS[system_name]
     elif system_name in SYSTEM_BUILDERS:
@@ -413,6 +425,15 @@ def run(
         raise SystemExit(f"unknown system {system_name!r}; known: {list(ALL_SYSTEMS)}")
 
     all_trials = trials if trials is not None else questions.trials(set_name)
+    if languages is not None:
+        wanted = set(languages)
+        unknown = wanted - set(questions.LANGUAGES)
+        if unknown:
+            raise SystemExit(f"unknown language(s) {sorted(unknown)}; known: {questions.LANGUAGES}")
+        all_trials = [t for t in all_trials if t.language in wanted]
+        if not all_trials:
+            raise SystemExit(f"no trials in {set_name} for language(s) {sorted(wanted)}")
+    languages_run = tuple(sorted({t.language for t in all_trials}))
     rows = {r["qid"]: r for r in questions.load(set_name)}
     failed_references: list[str] = []
     if references is not None:
@@ -463,7 +484,7 @@ def run(
         outcomes,
         system=system_name,
         set_name=set_name,
-        provenance=_provenance(set_name),
+        provenance=_provenance(set_name, languages_run),
     )
     built["thresholds"] = report.evaluate_thresholds(built["populations"], _thresholds())
     # Surfaced in the report rather than logged: a reference that would not build
@@ -522,25 +543,87 @@ def run(
     return built
 
 
-def holdout_lock(*, confirm: str | None, sha: str | None = None) -> Path:
-    """D17: the holdout runs once, and the lock is how that is enforced."""
+def holdout_lock(
+    *,
+    confirm: str | None,
+    sha: str | None = None,
+    system: str = "",
+    languages: tuple[str, ...] = (),
+) -> Path:
+    """D17: the holdout runs once per system, and the lock is how that is enforced.
+
+    **Once per system, not once ever** (ADR-023). The original lock was a single
+    file holding a commit SHA, so the first arm took it and the second was
+    refused -- which left the holdout half-measured and T2, a ratio needing both
+    arms, unmeasurable. "Runs once" protects against re-rolling a number until it
+    looks better; it was never meant to forbid measuring the baseline you are
+    comparing against.
+
+    **The language set is part of the identity.** A run of the same system with a
+    different language set is refused as firmly as a repeat. Running English now
+    and Tamil later would be two measurements of one holdout, presented as one;
+    if the other languages are ever wanted that is a deliberate new decision, not
+    something the lock lets through quietly.
+
+    The lock is JSON and append-only in spirit: each permitted run adds a record
+    and nothing removes one.
+    """
     if confirm != "yes":
         raise SystemExit(
             "the holdout runs once (D17). Set CONFIRM_HOLDOUT=yes if that is what you mean."
         )
     lock = RESULTS / "holdout" / "LOCK"
+    wanted = tuple(sorted(languages))
+    record = {"system": system, "languages": list(wanted), "sha": sha or _git_sha()}
+
+    existing: list[dict[str, Any]] = []
     if lock.exists():
+        existing = _lock_records(lock)
         try:
             shown = lock.relative_to(REPO)
         except ValueError:  # a temp results dir in a test
             shown = lock
-        raise SystemExit(
-            f"the holdout has already been run; {shown} records "
-            f"{lock.read_text(encoding='utf-8').strip()[:40]}. A second run is not a holdout."
-        )
+        for prior in existing:
+            if prior.get("system") != system:
+                continue
+            prior_languages = tuple(prior.get("languages") or ())
+            if prior_languages == wanted:
+                raise SystemExit(
+                    f"the holdout has already been run for {system!r} in "
+                    f"{list(wanted)}; {shown} records it at {prior.get('sha', '')[:12]}. "
+                    "A second run is not a holdout."
+                )
+            raise SystemExit(
+                f"the holdout has already been run for {system!r} in "
+                f"{list(prior_languages)}, and this run asks for {list(wanted)}. "
+                "Two language sets on one holdout are two measurements, not one. "
+                "If that is intended it is a new decision, not a re-run."
+            )
+
     lock.parent.mkdir(parents=True, exist_ok=True)
-    lock.write_text((sha or _git_sha()) + "\n", encoding="utf-8")
+    lock.write_text(
+        json.dumps({"runs": [*existing, record]}, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
     return lock
+
+
+def _lock_records(lock: Path) -> list[dict[str, Any]]:
+    """The runs a lock file records.
+
+    Tolerates the original format -- a bare commit SHA on one line -- because a
+    lock written by an earlier version still means "something has run", and
+    reading it as nothing would silently permit a second holdout.
+    """
+    text = lock.read_text(encoding="utf-8").strip()
+    if not text:
+        return []
+    try:
+        loaded = json.loads(text)
+    except json.JSONDecodeError:
+        return [{"system": "", "languages": [], "sha": text.splitlines()[0]}]
+    runs = loaded.get("runs")
+    return list(runs) if isinstance(runs, list) else []
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -556,7 +639,19 @@ def main(argv: list[str] | None = None) -> int:
             "an expensive path before paying for all of it."
         ),
     )
+    ap.add_argument(
+        "--language",
+        action="append",
+        default=None,
+        metavar="CODE",
+        help=(
+            "restrict the run to these languages (repeatable). Without it every "
+            "present variant expands: the holdout is 288 trials across four "
+            "languages, not 91. The report records which languages ran."
+        ),
+    )
     args = ap.parse_args(argv)
+    languages = tuple(args.language) if args.language else None
 
     if args.set_name == "holdout":
         if args.limit:
@@ -564,16 +659,28 @@ def main(argv: list[str] | None = None) -> int:
             # would burn the one attempt on a sample. Refused before the lock, so
             # the refusal cannot be mistaken for the lock having been taken.
             raise SystemExit("--limit is not allowed on the holdout; it runs once, in full (D17)")
-        holdout_lock(confirm=os.environ.get("CONFIRM_HOLDOUT"))
+        holdout_lock(
+            confirm=os.environ.get("CONFIRM_HOLDOUT"),
+            system=args.system,
+            languages=languages or tuple(sorted(questions.LANGUAGES)),
+        )
 
     if args.limit:
-        sample = questions.trials(args.set_name)[: args.limit]
+        # Filter BEFORE slicing. Slicing first took the first N trials in
+        # (qid, language, role) order -- which for N=3 is one question in three
+        # languages -- and the language filter then reduced them to one. It
+        # announced "3 trial(s)" and ran one, which is the wrong number printed
+        # confidently.
+        pool = questions.trials(args.set_name)
+        if languages:
+            pool = [t for t in pool if t.language in set(languages)]
+        sample = pool[: args.limit]
         print(f"smoke run: {len(sample)} trial(s), no report written")
-        built = run(args.system, args.set_name, write=False, trials=sample)
+        built = run(args.system, args.set_name, write=False, trials=sample, languages=languages)
         print(built["headline"])
         return 0
 
-    built = run(args.system, args.set_name)
+    built = run(args.system, args.set_name, languages=languages)
     print(built["headline"])
     print()
     print(f"{'population':<12} {'n':>5}  {'correct':>8}  {'silent-wrong':>13}")
