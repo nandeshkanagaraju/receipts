@@ -14,8 +14,12 @@
 #
 # The image is the one already in ECR. Nothing is rebuilt.
 #
-# HTTP, not HTTPS: a certificate needs a domain, and this is a demo that will be
-# torn down in days. Said plainly rather than left for the browser to announce.
+# HTTPS, via Caddy and Let's Encrypt on the same box. A certificate needs a
+# domain, and the free one here is sslip.io: `13-204-169-218.sslip.io` resolves
+# to 13.204.169.218 with no account, no record to create and nothing to renew,
+# so the Elastic IP IS the hostname. Caddy terminates TLS, redirects 80 to 443
+# and renews on its own. "Not Secure" in the address bar costs more than the
+# hour this took.
 set -euo pipefail
 
 REGION="${AWS_REGION:-ap-south-1}"
@@ -99,10 +103,36 @@ if ! q ec2 describe-security-groups --group-names "${NAME}-sg" >/dev/null 2>&1; 
   log "Creating the security group"
   VPC=$(q ec2 describe-vpcs --filters Name=isDefault,Values=true --query 'Vpcs[0].VpcId' --output text)
   q ec2 create-security-group --group-name "${NAME}-sg" --vpc-id "${VPC}" \
-    --description "Receipts demo, HTTP only" >/dev/null
+    --description "Receipts demo, 80 and 443" >/dev/null
+  # 80 stays open: it is where ACME's HTTP-01 challenge lands, and Caddy
+  # redirects everything else on it to 443.
   q ec2 authorize-security-group-ingress --group-name "${NAME}-sg" \
     --protocol tcp --port 80 --cidr 0.0.0.0/0 >/dev/null
+  q ec2 authorize-security-group-ingress --group-name "${NAME}-sg" \
+    --protocol tcp --port 443 --cidr 0.0.0.0/0 >/dev/null
 fi
+
+# --------------------------------------------------------------------------- #
+# The Elastic IP comes FIRST, because the certificate's hostname is derived from
+# it: sslip.io maps 13-204-169-218.sslip.io to 13.204.169.218, so the address is
+# the domain and there is no DNS record to create. That also means the address
+# has to be known before user-data is written, not after the instance is up.
+#
+# Reused if one is already tagged, so redeploying does not leak a second address
+# and does not change the URL.
+# --------------------------------------------------------------------------- #
+ALLOC=$(q ec2 describe-addresses --filters "Name=tag:Name,Values=${NAME}" \
+        --query 'Addresses[0].AllocationId' --output text 2>/dev/null || echo None)
+if [[ -z "${ALLOC}" || "${ALLOC}" == "None" ]]; then
+  log "Allocating an Elastic IP"
+  ALLOC=$(q ec2 allocate-address --domain vpc \
+    --tag-specifications "ResourceType=elastic-ip,Tags=[{Key=Name,Value=${NAME}}]" \
+    --query AllocationId --output text)
+fi
+IP=$(q ec2 describe-addresses --allocation-ids "${ALLOC}" \
+     --query 'Addresses[0].PublicIp' --output text)
+HOST="${IP//./-}.sslip.io"
+log "Address ${IP}, hostname ${HOST}"
 
 AMI=$(q ssm get-parameters --names \
   /aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64 \
@@ -116,9 +146,33 @@ dnf install -y docker
 systemctl enable --now docker
 aws ecr get-login-password --region ${REGION} | docker login --username AWS --password-stdin ${ECR}
 docker pull ${IMAGE}
-docker run -d --restart always --name receipts -p 80:7860 \
+
+# The app no longer publishes a port. Caddy is the only thing on 80 and 443, and
+# reaches the app by container name over a private network.
+docker network create web || true
+docker run -d --restart always --name receipts --network web \
   -e RECEIPTS_LLM_MODE=replay -e DEMO_MODE=true -e RECEIPTS_AUDIT_PATH=/tmp/audit.sqlite \
   ${IMAGE}
+
+mkdir -p /etc/caddy
+cat > /etc/caddy/Caddyfile <<'CADDY'
+${HOST} {
+	reverse_proxy receipts:7860
+	encode gzip
+}
+CADDY
+
+# caddy:2 from Docker Hub. Auto-HTTPS: it asks Let's Encrypt for ${HOST} over
+# the HTTP-01 challenge on port 80, redirects 80 to 443 once it has the cert,
+# and renews without being asked. The volumes keep the certificate and the
+# account key across container restarts -- not across instance replacement,
+# which is why a redeploy re-issues rather than reuses. LE allows that.
+docker volume create caddy_data || true
+docker run -d --restart always --name caddy --network web \
+  -p 80:80 -p 443:443 \
+  -v /etc/caddy/Caddyfile:/etc/caddy/Caddyfile:ro \
+  -v caddy_data:/data \
+  caddy:2
 UD
 
 # Replace, rather than accumulate. Re-running this script IS the redeploy path:
@@ -153,27 +207,32 @@ q ec2 wait instance-running --instance-ids "${IID}"
 # application. Reused if one is already tagged, so redeploying does not leak a
 # second address.
 # --------------------------------------------------------------------------- #
-ALLOC=$(q ec2 describe-addresses --filters "Name=tag:Name,Values=${NAME}" \
-        --query 'Addresses[0].AllocationId' --output text 2>/dev/null || echo None)
-if [[ -z "${ALLOC}" || "${ALLOC}" == "None" ]]; then
-  log "Allocating an Elastic IP"
-  ALLOC=$(q ec2 allocate-address --domain vpc \
-    --tag-specifications "ResourceType=elastic-ip,Tags=[{Key=Name,Value=${NAME}}]" \
-    --query AllocationId --output text)
-fi
 log "Associating ${ALLOC}"
 q ec2 associate-address --instance-id "${IID}" --allocation-id "${ALLOC}" >/dev/null
 
-HOST=$(q ec2 describe-instances --instance-ids "${IID}" \
-  --query 'Reservations[0].Instances[0].PublicDnsName' --output text)
-URL="http://${HOST}"
-log "Waiting for the container (docker install + a 437MB pull)"
-for i in $(seq 1 60); do
+URL="https://${HOST}"
+log "Waiting for the container (docker install + a 437MB pull) and the certificate"
+ok=""
+for i in $(seq 1 80); do
   code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 "${URL}/healthz" || echo 000)
   echo "  ${i}: ${code}"
-  [[ "${code}" == "200" ]] && break
+  if [[ "${code}" == "200" ]]; then ok="yes"; break; fi
   sleep 15
 done
+
+if [[ -z "${ok}" ]]; then
+  echo
+  echo "HTTPS never answered 200. The box may be up with no certificate." >&2
+  echo "Check plain HTTP, which is also what ACME uses:" >&2
+  curl -s -o /dev/null -w '  http://%{host} -> %%{http_code}\n' --max-time 10 "http://${HOST}/healthz" >&2 || true
+  echo "If HTTP works and HTTPS does not, Let's Encrypt refused the name." >&2
+  exit 1
+fi
+
+# Say what the certificate actually is, rather than trusting that 200 meant TLS.
+log "Certificate"
+echo | openssl s_client -connect "${HOST}:443" -servername "${HOST}" 2>/dev/null \
+  | openssl x509 -noout -issuer -subject -dates 2>/dev/null | sed 's/^/  /' || true
 
 log "Live"
 echo "${URL}"
