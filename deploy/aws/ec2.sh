@@ -110,6 +110,19 @@ docker run -d --restart always --name receipts -p 80:7860 \
   ${IMAGE}
 UD
 
+# Replace, rather than accumulate. Re-running this script IS the redeploy path:
+# it terminates the instance that is there and keeps the Elastic IP, so the URL
+# survives. Going through `--teardown` first would release the address and hand
+# back a different link -- which defeats the only reason the address exists.
+old_ids=$(q ec2 describe-instances --filters "Name=tag:Name,Values=${NAME}" \
+          "Name=instance-state-name,Values=pending,running,stopping,stopped" \
+          --query 'Reservations[].Instances[].InstanceId' --output text)
+if [[ -n "${old_ids}" ]]; then
+  log "Replacing ${old_ids}"
+  q ec2 terminate-instances --instance-ids ${old_ids} >/dev/null
+  q ec2 wait instance-terminated --instance-ids ${old_ids}
+fi
+
 log "Launching ${TYPE}"
 IID=$(q ec2 run-instances --image-id "${AMI}" --instance-type "${TYPE}" \
   --security-groups "${NAME}-sg" \
