@@ -128,8 +128,8 @@
           "outcomes": {
             "Correct-deny": 0,
             "Error": 0,
-            "Leak": 1,
-            "Other": 3,
+            "Leak": 0,
+            "Other": 4,
             "Untested": 0
           }
         },
@@ -140,8 +140,8 @@
           "outcomes": {
             "Correct-deny": 0,
             "Error": 0,
-            "Leak": 3,
-            "Other": 1,
+            "Leak": 0,
+            "Other": 4,
             "Untested": 0
           }
         },
@@ -152,8 +152,8 @@
           "outcomes": {
             "Correct-deny": 0,
             "Error": 0,
-            "Leak": 3,
-            "Other": 1,
+            "Leak": 0,
+            "Other": 4,
             "Untested": 0
           }
         }
@@ -165,14 +165,14 @@
       "outcomes": {
         "Correct-deny": 0,
         "Error": 0,
-        "Leak": 7,
-        "Other": 5,
+        "Leak": 0,
+        "Other": 12,
         "Untested": 0
       },
-      "raw_wrong_count": 7,
-      "raw_wrong_rate": "0.5833",
-      "silent_wrong_count": 7,
-      "silent_wrong_rate": "0.5833",
+      "raw_wrong_count": 0,
+      "raw_wrong_rate": "0.0000",
+      "silent_wrong_count": 0,
+      "silent_wrong_rate": "0.0000",
       "untested_count": 0
     },
     "LIVE": {
@@ -346,6 +346,11 @@
       "WHY"
     ],
     "data_version": "1c253c54cd598c861e800f5bf34b8c5f5c2a4ea294b3a4444671db7848344f4b",
+    "languages": [
+      "en",
+      "hi",
+      "ta"
+    ],
     "model": "openai/gpt-5.5-2026-04-23",
     "set": "dev"
   },

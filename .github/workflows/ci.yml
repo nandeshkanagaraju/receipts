@@ -193,14 +193,23 @@ jobs:
         run: make semantic-lint
       - name: Reports are byte-identical to the committed ones (D16, SDD §28)
         # In-process determinism is a different claim from "the committed report
-        # is what this commit produces". This regenerates both control systems'
-        # dev reports and diffs them against what is in git. A report that drifts
-        # from its commit is a measurement nobody can reproduce.
+        # is what this commit produces". This regenerates EVERY system's dev
+        # report and diffs them against what is in git. A report that drifts from
+        # its commit is a measurement nobody can reproduce.
+        #
+        # It used to regenerate only oracle and null -- the two that need no
+        # model -- so the baseline and Receipts reports were never re-derived
+        # here. The baseline's went stale at M12, when the canary fix removed
+        # seven phantom leaks, and stayed stale for nine milestones because
+        # nothing regenerated it. Both replay from committed recordings and make
+        # no network call, so there was never a reason to leave them out.
         run: |
           set -o pipefail
           git diff --quiet -- eval/results || {
             echo "eval/results was dirty before regeneration" >&2; exit 1; }
           make eval SYSTEM=oracle > /dev/null
+          make eval SYSTEM=baseline > /dev/null
+          make eval SYSTEM=receipts > /dev/null
           make eval SYSTEM=null > /dev/null
           if ! git diff --exit-code -- eval/results; then
             echo "regenerated reports differ from the committed ones" >&2

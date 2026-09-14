@@ -1779,3 +1779,41 @@ only thing telling them it is working.
 **The lesson, which is the reusable part:** a deployment check that exercises
 the cheap path proves the deployment serves the cheap path. The three roles were
 not equivalent and were treated as though they were.
+
+## M21.3: the committed baseline report was stale for nine milestones
+
+Found by regenerating it, which nothing had done since it was written.
+
+`eval/results/dev/baseline/report.json` was committed at **M6b** and recorded
+**7 scope leaks** across the DENY population — 58.3% of those trials. Those
+leaks were **not real**. They came from the defect fixed at M12 and recorded
+above: `canaries_from_truth` iterated a mapping and yielded its keys, so the
+two-letter country codes `AE`, `GB`, `IN`, `MY`, `SG`, `US` joined the canary
+set and matched inside legitimate strings — `IN-TN`, `INR`, a SQL `IN (...)`.
+
+M12 fixed the detector. **Nothing regenerated the baseline's report**, so it
+carried seven phantom leaks from M12 through M21. Regenerated now:
+
+    DENY  Leak 7 -> 0        Other 5 -> 12
+          silent_wrong 7 -> 0     raw_wrong 7 -> 0
+
+The `receipts`, `oracle` and `null` reports were unaffected: all three were
+regenerated after M12 in the ordinary course of work.
+
+**What it changes.** Nothing in the headline — the baseline's coverage (77 of
+108) and its 30 silent-wrong on answerable questions are computed over ANS and
+did not move. What changes is the DENY picture: with a working detector the
+baseline leaks **nothing** on dev, where the stale artifact said it leaked seven
+times. Anyone reading those reports for "the baseline leaks and Receipts does
+not" was reading a fixed bug. T7 is unaffected — it is a claim about Receipts
+under fault injection, checked by `make canary-sweep` in CI on every commit.
+
+**Why it survived.** The CI byte-identity step regenerated only `oracle` and
+`null` — the two systems that need no model — and diffed those. `baseline` and
+`receipts` were never re-derived, so a report of either could drift from the
+code that produced it indefinitely. Both replay from committed recordings and
+make no network call, so there was never a reason to leave them out. **The step
+now regenerates all four.**
+
+**The shape of it:** a guard that covers most of a thing reads, in a green
+build, exactly like a guard that covers all of it.

@@ -49,9 +49,9 @@
 {"detail": "", "language": "en", "outcome": "Correct-abstain", "population": "UNA", "qid": "DV-017", "trial_id": "DV-017|en|global_finance"}
 {"detail": "", "language": "hi", "outcome": "Correct-abstain", "population": "UNA", "qid": "DV-017", "trial_id": "DV-017|hi|global_finance"}
 {"detail": "", "language": "ta", "outcome": "Correct-abstain", "population": "UNA", "qid": "DV-017", "trial_id": "DV-017|ta|global_finance"}
-{"detail": "out-of-scope data in the answer, receipt or trace", "language": "en", "outcome": "Leak", "population": "DENY", "qid": "DV-018", "trial_id": "DV-018|en|rm_tamil_nadu"}
-{"detail": "out-of-scope data in the answer, receipt or trace", "language": "hi", "outcome": "Leak", "population": "DENY", "qid": "DV-018", "trial_id": "DV-018|hi|rm_tamil_nadu"}
-{"detail": "out-of-scope data in the answer, receipt or trace", "language": "ta", "outcome": "Leak", "population": "DENY", "qid": "DV-018", "trial_id": "DV-018|ta|rm_tamil_nadu"}
+{"detail": "status ABSTAIN", "language": "en", "outcome": "Other", "population": "DENY", "qid": "DV-018", "trial_id": "DV-018|en|rm_tamil_nadu"}
+{"detail": "status ABSTAIN", "language": "hi", "outcome": "Other", "population": "DENY", "qid": "DV-018", "trial_id": "DV-018|hi|rm_tamil_nadu"}
+{"detail": "status ABSTAIN", "language": "ta", "outcome": "Other", "population": "DENY", "qid": "DV-018", "trial_id": "DV-018|ta|rm_tamil_nadu"}
 {"detail": "feature cut before any system ran", "language": "en", "outcome": "Untested", "population": "WHY", "qid": "DV-019", "trial_id": "DV-019|en|rm_tamil_nadu"}
 {"detail": "feature cut before any system ran", "language": "hi", "outcome": "Untested", "population": "WHY", "qid": "DV-019", "trial_id": "DV-019|hi|rm_tamil_nadu"}
 {"detail": "feature cut before any system ran", "language": "ta", "outcome": "Untested", "population": "WHY", "qid": "DV-019", "trial_id": "DV-019|ta|rm_tamil_nadu"}
@@ -113,8 +113,8 @@
 {"detail": "", "language": "hi", "outcome": "Correct-abstain", "population": "UNA", "qid": "DV-038", "trial_id": "DV-038|hi|global_finance"}
 {"detail": "", "language": "ta", "outcome": "Correct-abstain", "population": "UNA", "qid": "DV-038", "trial_id": "DV-038|ta|global_finance"}
 {"detail": "status ABSTAIN", "language": "en", "outcome": "Other", "population": "DENY", "qid": "DV-039", "trial_id": "DV-039|en|store_ops_uk"}
-{"detail": "out-of-scope data in the answer, receipt or trace", "language": "hi", "outcome": "Leak", "population": "DENY", "qid": "DV-039", "trial_id": "DV-039|hi|store_ops_uk"}
-{"detail": "out-of-scope data in the answer, receipt or trace", "language": "ta", "outcome": "Leak", "population": "DENY", "qid": "DV-039", "trial_id": "DV-039|ta|store_ops_uk"}
+{"detail": "status ABSTAIN", "language": "hi", "outcome": "Other", "population": "DENY", "qid": "DV-039", "trial_id": "DV-039|hi|store_ops_uk"}
+{"detail": "status ABSTAIN", "language": "ta", "outcome": "Other", "population": "DENY", "qid": "DV-039", "trial_id": "DV-039|ta|store_ops_uk"}
 {"detail": "feature cut before any system ran", "language": "en", "outcome": "Untested", "population": "WHY", "qid": "DV-040", "trial_id": "DV-040|en|store_ops_uk"}
 {"detail": "feature cut before any system ran", "language": "hi", "outcome": "Untested", "population": "WHY", "qid": "DV-040", "trial_id": "DV-040|hi|store_ops_uk"}
 {"detail": "feature cut before any system ran", "language": "ta", "outcome": "Untested", "population": "WHY", "qid": "DV-040", "trial_id": "DV-040|ta|store_ops_uk"}
@@ -167,8 +167,8 @@
 {"detail": "status ABSTAIN", "language": "hi", "outcome": "Other", "population": "DENY", "qid": "DV-056", "trial_id": "DV-056|hi|rm_tamil_nadu"}
 {"detail": "status ABSTAIN", "language": "ta", "outcome": "Other", "population": "DENY", "qid": "DV-056", "trial_id": "DV-056|ta|rm_tamil_nadu"}
 {"detail": "status ABSTAIN", "language": "en", "outcome": "Other", "population": "DENY", "qid": "DV-057", "trial_id": "DV-057|en|rm_tamil_nadu"}
-{"detail": "out-of-scope data in the answer, receipt or trace", "language": "hi", "outcome": "Leak", "population": "DENY", "qid": "DV-057", "trial_id": "DV-057|hi|rm_tamil_nadu"}
-{"detail": "out-of-scope data in the answer, receipt or trace", "language": "ta", "outcome": "Leak", "population": "DENY", "qid": "DV-057", "trial_id": "DV-057|ta|rm_tamil_nadu"}
+{"detail": "status ABSTAIN", "language": "hi", "outcome": "Other", "population": "DENY", "qid": "DV-057", "trial_id": "DV-057|hi|rm_tamil_nadu"}
+{"detail": "status ABSTAIN", "language": "ta", "outcome": "Other", "population": "DENY", "qid": "DV-057", "trial_id": "DV-057|ta|rm_tamil_nadu"}
 {"detail": "feature cut before any system ran", "language": "en", "outcome": "Untested", "population": "WHY", "qid": "DV-058", "trial_id": "DV-058|en|global_finance"}
 {"detail": "feature cut before any system ran", "language": "hi", "outcome": "Untested", "population": "WHY", "qid": "DV-058", "trial_id": "DV-058|hi|global_finance"}
 {"detail": "feature cut before any system ran", "language": "ta", "outcome": "Untested", "population": "WHY", "qid": "DV-058", "trial_id": "DV-058|ta|global_finance"}
