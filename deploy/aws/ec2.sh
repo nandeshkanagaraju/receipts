@@ -15,8 +15,8 @@
 # The image is the one already in ECR. Nothing is rebuilt.
 #
 # HTTPS, via Caddy and Let's Encrypt on the same box. A certificate needs a
-# domain, and the free one here is sslip.io: `13-204-169-218.sslip.io` resolves
-# to 13.204.169.218 with no account, no record to create and nothing to renew,
+# domain, and the free one here is sslip.io: `13-232-84-149.sslip.io` resolves
+# to 13.232.84.149 with no account, no record to create and nothing to renew,
 # so the Elastic IP IS the hostname. Caddy terminates TLS, redirects 80 to 443
 # and renews on its own. "Not Secure" in the address bar costs more than the
 # hour this took.
@@ -114,7 +114,7 @@ fi
 
 # --------------------------------------------------------------------------- #
 # The Elastic IP comes FIRST, because the certificate's hostname is derived from
-# it: sslip.io maps 13-204-169-218.sslip.io to 13.204.169.218, so the address is
+# it: sslip.io maps 13-232-84-149.sslip.io to 13.232.84.149, so the address is
 # the domain and there is no DNS record to create. That also means the address
 # has to be known before user-data is written, not after the instance is up.
 #
