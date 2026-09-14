@@ -238,6 +238,64 @@ test.describe("the first screen", () => {
     await expect(page.getByTestId("catalog-capability").first()).toBeVisible();
   });
 
+  test("each metric names the team that owns its definition", async ({ page }) => {
+    // "Who owns this number" is the question that separates a governed layer
+    // from a list of columns. It has been in every metric's YAML since M5 and
+    // was not served by the API until now.
+    await open(page, "global_finance");
+    const owners = page.getByTestId("catalog-owner");
+    await expect(owners.first()).toBeVisible();
+    const texts = await owners.allInnerTexts();
+    const teams = new Set(texts.map((t) => t.replace(/^Owned by\s*/, "").trim()));
+    console.log(`owners across ${texts.length} metrics: ${[...teams].sort().join(", ")}`);
+    expect(teams.size).toBeGreaterThanOrEqual(2);
+    for (const team of teams) expect(team.length).toBeGreaterThan(0);
+  });
+
+  test("the schema sits beside the layer and is marked as not being it", async ({ page }) => {
+    await open(page, "global_finance");
+
+    // Metrics is the default: a reviewer who sees the table list first has seen
+    // a database, which every project has.
+    await expect(page.getByTestId("catalog-tab-metrics")).toHaveAttribute("aria-selected", "true");
+    await expect(page.getByTestId("schema-list")).toHaveCount(0);
+
+    await page.getByTestId("catalog-tab-schema").click();
+    const rows = page.getByTestId("schema-table-row");
+    await expect(rows.first()).toBeVisible();
+    const tables = await rows.count();
+    console.log(`schema tables for global_finance: ${tables}`);
+    expect(tables).toBeGreaterThanOrEqual(8);
+
+    // Marked as the underlying schema, not the governed layer.
+    const panel = page.getByTestId("catalog-panel");
+    await expect(panel).toContainText("not the governed layer");
+
+    // Columns with types, and the join path scope is welded onto.
+    await rows.filter({ hasText: "orders" }).first().click();
+    await expect(panel).toContainText("VARCHAR");
+    await expect(panel).toContainText("showrooms.showroom_id");
+
+    // customers is not an entity at all (SDD §5.2) and must appear in neither.
+    expect(await panel.innerText()).not.toContain("customers");
+  });
+
+  test("the schema is scoped by the same allowlist the guard enforces", async ({ page }) => {
+    await open(page, "global_finance");
+    await page.getByTestId("catalog-tab-schema").click();
+    await expect(page.getByTestId("schema-table-row").first()).toBeVisible();
+    const finance = await page.getByTestId("schema-table-row").count();
+
+    await page.getByTestId("role-switcher").selectOption("store_ops_uk");
+    await page.getByTestId("catalog-tab-schema").click();
+    await expect(page.getByTestId("schema-table-row").first()).toBeVisible();
+    const storeOps = await page.getByTestId("schema-table-row").count();
+
+    console.log(`schema tables: global_finance ${finance}, store_ops_uk ${storeOps}`);
+    // A table the role could never reach in a query is not described to it.
+    expect(storeOps).toBeLessThan(finance);
+  });
+
   test("the catalog list is itself scoped: a role sees fewer metrics", async ({ page }) => {
     await open(page, "global_finance");
     await expect(page.getByTestId("catalog-metric-row").first()).toBeVisible();

@@ -28,6 +28,14 @@ export interface Copy {
   readonly catalogTitle: string;
   readonly catalogBlurb: string;
   readonly catalogRunOne: string;
+  readonly tabMetrics: string;
+  readonly tabSchema: string;
+  readonly schemaBlurb: string;
+  readonly ownedBy: string;
+  readonly breakDownBy: string;
+  readonly joinPath: string;
+  readonly primaryKey: string;
+  readonly referenceTable: string;
   readonly definedIn: string;
   readonly exampleAnswerLabel: string;
   readonly traceIdle: string;
@@ -85,6 +93,15 @@ const EN: Copy = {
   catalogBlurb:
     "Every metric a question can reach. Each one is defined in the glossary, and a role only sees the ones its capabilities allow.",
   catalogRunOne: "Run one",
+  tabMetrics: "Governed metrics",
+  tabSchema: "Schema",
+  schemaBlurb:
+    "The underlying tables — not the governed layer. These are columns; the metrics beside them are definitions with an owner, an exclusion list and a glossary reference. The difference is the point.",
+  ownedBy: "Owned by",
+  breakDownBy: "Break down by",
+  joinPath: "Scope join",
+  primaryKey: "Key",
+  referenceTable: "reference",
   definedIn: "Defined in",
   exampleAnswerLabel: "An example, answered when this page loaded",
   traceIdle: "The stages will appear here as your question runs.",
@@ -161,6 +178,15 @@ const TA: Copy = {
   catalogBlurb:
     "ஒரு கேள்வி அணுகக்கூடிய ஒவ்வொரு metric-ம். ஒவ்வொன்றும் glossary-யில் வரையறுக்கப்பட்டுள்ளது; ஒரு பங்கு அதன் அனுமதிகள் இடும் metrics-ஐ மட்டுமே காணும்.",
   catalogRunOne: "ஒன்றை இயக்கு",
+  tabMetrics: "ஆளுகை metrics",
+  tabSchema: "Schema",
+  schemaBlurb:
+    "அடிப்படை tables — ஆளுகை அடுக்கு அல்ல. இவை columns; அருகில் உள்ள metrics என்பவை உரிமையாளர், விலக்குப் பட்டியல் மற்றும் glossary குறிப்புடன் கூடிய வரையறைகள்.",
+  ownedBy: "உரிமையாளர்",
+  breakDownBy: "பிரிக்க",
+  joinPath: "Scope join",
+  primaryKey: "Key",
+  referenceTable: "reference",
   definedIn: "வரையறை",
   exampleAnswerLabel: "இந்தப் பக்கம் ஏற்றப்பட்டபோது பதிலளிக்கப்பட்ட ஓர் எடுத்துக்காட்டு",
   traceIdle: "உங்கள் கேள்வி இயங்கும்போது படிகள் இங்கே தோன்றும்.",
@@ -218,6 +244,15 @@ const HI: Copy = {
   catalogBlurb:
     "हर वह metric जिस तक कोई सवाल पहुँच सकता है। हर एक glossary में परिभाषित है, और कोई भूमिका केवल वही देखती है जिसकी अनुमति उसके पास है।",
   catalogRunOne: "एक चलाएँ",
+  tabMetrics: "शासित metrics",
+  tabSchema: "Schema",
+  schemaBlurb:
+    "अंतर्निहित tables — शासित परत नहीं। ये columns हैं; इनके साथ के metrics परिभाषाएँ हैं, जिनका एक owner, बहिष्करण सूची और glossary संदर्भ है।",
+  ownedBy: "स्वामी",
+  breakDownBy: "विभाजित करें",
+  joinPath: "Scope join",
+  primaryKey: "Key",
+  referenceTable: "reference",
   definedIn: "परिभाषा",
   exampleAnswerLabel: "इस पेज के लोड होने पर दिया गया एक उदाहरण",
   traceIdle: "आपका सवाल चलते ही चरण यहाँ दिखेंगे।",

@@ -33,6 +33,7 @@ from ..agent.session import Session
 from ..domain.types import Grain, QueryPlan, Status, WindowSpec
 from ..observability.audit import AuditEvent
 from ..observability.spend import SpendCapReached
+from ..safety.guard import allowlist_for_role
 from . import sse
 from .auth import AuthError, bearer_token, issue, principal_from
 from .deps import REPO, Runtime, build_runtime
@@ -275,11 +276,67 @@ def create_app(runtime: Runtime | None = None) -> FastAPI:
                 "glossary_ref": m.glossary_ref,
                 "required_capability": m.required_capability,
                 "excludes": list(m.excludes),
+                # Who is accountable for the definition. It has been in every
+                # metric's YAML since M5 and was never served -- and "who owns
+                # this number" is the question that separates a governed layer
+                # from a list of columns.
+                "owner": m.owner,
+                "entity": m.entity,
             }
             for m in state.deps.catalog.metrics
             if m.required_capability is None or m.required_capability in held
         ]
         return {"metrics": metrics}
+
+    @router.get("/catalog/schema")
+    def catalog_schema(request: Request) -> dict[str, Any]:
+        """The PHYSICAL schema: tables, columns, types and join paths.
+
+        Served beside the governed layer and never as it. The distinction is the
+        whole argument: `payment_attempts.amount_minor` is a column, and
+        "captured GMV" is a definition with an owner, an exclusion list and a
+        glossary reference. A reviewer who sees only the first has seen a
+        database; one who sees only the second has to take the layer on trust.
+
+        Scoped by the SAME allowlist the safety guard enforces (§12.1), so a
+        table the role could never reach in a query is not described to it
+        either. `customers` is absent from both, because it is not an entity at
+        all (SDD §5.2) -- the allowlist cannot include it by accident.
+        """
+        who = principal(request)
+        allowed = allowlist_for_role(who.role, state.deps.catalog, state.roles)
+        columns = state.deps.columns
+        types = state.deps.column_types
+
+        tables = []
+        for entity in sorted(state.deps.catalog.entities, key=lambda e: e.name):
+            if entity.name not in allowed:
+                continue
+            tables.append(
+                {
+                    "name": entity.name,
+                    "primary_key": list(entity.primary_key),
+                    "time_column": entity.time_column,
+                    "test_flag": entity.test_flag,
+                    "reference": entity.reference,
+                    "required_capability": entity.required_capability,
+                    # How the compiler reaches this table from `showrooms`, the
+                    # only table carrying a region. This is where scope is welded
+                    # in (§11.2), so it is the join path that matters most.
+                    "scope_path": list(entity.scope_path),
+                    "columns": [
+                        {"name": c, "type": types.get((entity.name, c), "")}
+                        for c in columns.get(entity.name, ())
+                    ],
+                }
+            )
+        return {
+            "tables": tables,
+            "note": (
+                "The physical schema. The governed layer is /catalog/metrics: "
+                "these are columns, those are definitions with owners."
+            ),
+        }
 
     @router.get("/catalog/metrics/{name}")
     def catalog_metric(name: str, request: Request) -> dict[str, Any]:

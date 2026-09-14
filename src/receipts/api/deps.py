@@ -118,7 +118,7 @@ def build_runtime(*, audit_path: Path | None = None, llm: Any = None) -> Runtime
     import gate_dev
 
     from ..config import load_settings
-    from ..execute.adapters.duckdb import DuckDBAdapter, table_columns
+    from ..execute.adapters.duckdb import DuckDBAdapter, column_types, table_columns
     from ..llm.budget import BudgetedLLM, QuestionBudget
     from ..llm.replay import ReplayLLM
     from ..semantic import loader
@@ -152,6 +152,7 @@ def build_runtime(*, audit_path: Path | None = None, llm: Any = None) -> Runtime
         timeout_s=settings.timeout_s,
         freeform_enabled=settings.freeform.enabled,
         columns=table_columns(db_path),
+        column_types=column_types(db_path),
     )
     return Runtime(
         deps=deps,

@@ -80,6 +80,9 @@ class Deps:
     # the free-form model needs to know that `orders.business_date` exists, and
     # must not be handed the rows.
     columns: dict[str, tuple[str, ...]] = field(default_factory=dict)
+    # (table, column) -> SQL type. Read once at startup beside `columns`,
+    # for the schema view the catalog is shown against.
+    column_types: dict[tuple[str, str], str] = field(default_factory=dict)
     freeform_max_tokens: int = 1200
     grounding_enabled: bool = True
 

@@ -1592,6 +1592,20 @@ Two smaller properties of the same deployment, for completeness:
 - **Rate-limit counters are per process** and likewise reset. One container, so
   no divergence — but a second replica would each keep their own.
 
+## M20.1a: a correction — metrics have always carried an owner
+
+An earlier round reported that the semantic layer had no `owner` field and that
+"who owns this number" could not be shown. That was wrong. Every metric YAML has
+carried `owner:` since M5 — three teams across sixteen metrics,
+`payments-analytics`, `finance-analytics` and `commerce-analytics` — and
+`Metric.owner` is on the domain object.
+
+The error was in how it was looked for: `head -30` of a file whose `owner:` line
+is line 31. The conclusion was reported with more confidence than a truncated
+read deserved, and it removed a real capability from consideration for a round.
+
+It is now served by `/catalog/metrics` and shown on every row.
+
 ## M20.1: `CatalogPanel` is a second SDD §22 deviation
 
 SDD §22's component table names `CatalogDrawer (becomes CatalogRunForm in
@@ -1648,3 +1662,39 @@ The demo stays in replay, which has the property a live path cannot: it answers
 **exactly the questions that were measured**, with the responses the published
 numbers came from. The eval harness and all recordings remain on OpenAI
 `gpt-5.5-2026-04-23` and were never in scope for this change.
+
+## M21.1: Tanglish is not reachable in the demo, and the toggle is not why
+
+`ta-Latn` is a first-class language in the engine. `Lang.TA_LATN` exists, the
+detector identifies it correctly — both a hand-written eval row and a freshly
+typed sentence return `ta-Latn` — and the pipeline would answer in it.
+
+**It is unreachable in the demo because no recording exists, and none can.**
+The demo replays recorded model responses, and the recordings were made from
+`dev.jsonl`, which carries **only `en`, `ta` and `hi`** — 60 rows each, no
+`ta-Latn` at all. The 40 hand-written `ta-Latn` rows live in `eval.jsonl`, and
+the rest in the holdout; both are sets the demo must not draw from.
+
+Asked in Tanglish, the demo returns `MODEL_UNAVAILABLE`. Verified twice: once
+with an eval row and once with a typed sentence.
+
+**Adding `ta-Latn` to the language toggle would make it worse, not better.** The
+toggle selects the interface language and the examples shown; it does not create
+recordings. A Tanglish option would render the chrome in Tanglish, offer three
+example questions that have no Tanglish form, and return 503 on every one. A
+control that is present and cannot work is a worse disclosure than a control
+that is absent.
+
+Making it work needs `ta-Latn` text for the nine distinct demo questions, which
+does not exist and cannot simply be added: `eval/questions/` is frozen at
+`questions-frozen`, so `dev.jsonl` cannot gain variants without a reopen tag in
+that family. The text would have to live outside the frozen set and would carry
+authored rather than `human` provenance, which is not the standard the eval and
+holdout rows meet.
+
+Recording the nine, once the text existed, would cost about **$0.33** at the
+measured per-question rate.
+
+**What this costs the claim:** the demo shows two of the three languages the
+system supports. `ta-Latn` is measured in the eval and holdout sets, not
+demonstrated live.

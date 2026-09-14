@@ -5,6 +5,7 @@ import type {
   LoginResponse,
   MetricSummary,
   Readyz,
+  SchemaTable,
   Stage,
 } from "./types";
 
@@ -60,6 +61,14 @@ export async function metrics(token: string): Promise<MetricSummary[]> {
   });
   if (!response.ok) throw new ApiError(unknownFailure("could not load the catalog"));
   return ((await response.json()) as { metrics: MetricSummary[] }).metrics;
+}
+
+export async function schema(token: string): Promise<SchemaTable[]> {
+  const response = await fetch(`${BASE}/catalog/schema`, {
+    headers: { authorization: `Bearer ${token}` },
+  });
+  if (!response.ok) throw new ApiError(unknownFailure("could not load the schema"));
+  return ((await response.json()) as { tables: SchemaTable[] }).tables;
 }
 
 export interface CatalogRunResult {

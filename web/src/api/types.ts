@@ -113,6 +113,27 @@ export interface MetricSummary {
   /** What a role must hold to use it at all. Null means anyone in scope. */
   required_capability: string | null;
   excludes: string[];
+  /** The team accountable for the definition. */
+  owner: string;
+  /** The table the metric aggregates over. */
+  entity: string;
+}
+
+export interface SchemaColumn {
+  name: string;
+  type: string;
+}
+
+export interface SchemaTable {
+  name: string;
+  primary_key: string[];
+  time_column: string | null;
+  test_flag: string | null;
+  reference: boolean;
+  required_capability: string | null;
+  /** How the compiler reaches this table from `showrooms`, where scope lives. */
+  scope_path: string[];
+  columns: SchemaColumn[];
 }
 
 /** The stages the API publishes, in order (receipts.api.sse.STAGES). */

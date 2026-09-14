@@ -202,6 +202,28 @@ class _deadline:
 assert isinstance(DuckDBAdapter(Path(".")), Adapter)
 
 
+def column_types(db_path: Path) -> dict[tuple[str, str], str]:
+    """(table, column) -> declared SQL type. Read-only, sorted, startup-only.
+
+    Separate from `table_columns` because that one feeds the free-form prompt and
+    its output is hashed into the replay key (D5). Adding types there would have
+    changed every recorded key for a display feature.
+    """
+    import duckdb
+
+    if not db_path.exists():
+        return {}
+    connection = duckdb.connect(str(db_path), read_only=True)
+    try:
+        rows = connection.execute(
+            "SELECT table_name, column_name, data_type FROM information_schema.columns "
+            "WHERE table_schema = 'main' ORDER BY table_name, ordinal_position"
+        ).fetchall()
+    finally:
+        connection.close()
+    return {(str(t), str(c)): str(d) for t, c, d in rows}
+
+
 def table_columns(db_path: Path) -> dict[str, tuple[str, ...]]:
     """Table -> column names, read once at startup for the free-form prompt.
 
